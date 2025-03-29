@@ -86,7 +86,15 @@ textarea{
                             margin-right: 16px;
                             font-weight: normal;
                         }
-
+                        @media (max-width: 768px) {
+                            .container {
+                                padding: 0; /* Side-by-side layout on desktop */
+                            }
+                            form{
+                                padding: 0;
+                                margin-bottom: 20px;
+                            }
+                        }
                         button {
                                   background-color: var(--clr-white);
                                     color: black;
