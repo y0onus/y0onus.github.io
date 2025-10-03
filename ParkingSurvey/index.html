@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta property="og:image" content="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/bannnner.png?raw=true">
+  <meta property="og:description" content="Parking Survey Form">
+  <meta name="description" content="Parking Survey Form">
+  <script src="https://kit.fontawesome.com/3b161c540c.js" crossorigin="anonymous"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+  <title>Parking Survey • Yoonus4040</title>
+
+  <style>
+     @import "normalize.css";
+                        @import url('https://fonts.googleapis.com/css2?family=Rubik+Broken+Fax&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Silkscreen&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+                        *,
+                        *:after,
+                        *:before {
+                                box-sizing: border-box;
+                        }
+                        :root {
+                                --content-width: 900px;
+                        }
+                        form {
+                                     color: black;
+                            padding: 179px;
+                            border-radius: 8px;
+                            width: 100%;
+                            box-sizing: border-box;
+                        }
+
+                        .form-element {
+                            margin-bottom: 24px;
+                        }
+
+                        label {
+                            display: block;
+                            font-weight: bold;
+                                font-size: 18px;
+                            margin-bottom: 8px;
+                                  font-weight: 100;
+                                     color: rgba(230, 228, 222, .89);
+                        }
+                          input{
+                                  border-radius: 20px;
+                          }
+                        textarea:focus {
+                                 outline: 1px solid #1b81f5;
+                        }
+                        input:focus{
+                                 outline: 1px solid #1b81f5;
+                        }
+                        input{
+                                outline: none;
+                        }
+                        input,
+                        textarea {
+                                background-color: rgb(250 250 250 / 9%);
+                            width: 100%;
+                                 outline: none;
+                                 padding: 16px 24px;
+                            box-sizing: border-box;
+                            margin-top: 8px;
+                            margin-bottom: 16px;
+                            border: 1px solid #171717;
+                            font-size: 16px;
+                                color: var(--clr-white);
+                                resize: vertical;
+                        }
+textarea{
+           border-radius: 30px;
+              min-height: 169px;
+}
+                        .radio-buttons label {
+                            display: inline-block;
+                            margin-right: 16px;
+                            font-weight: normal;
+                        }
+                        @media (max-width: 768px) {
+                            .container {
+                                padding: 0; /* Side-by-side layout on desktop */
+                            }
+                            form{
+                                padding: 0;
+                                margin-bottom: 20px;
+                            }
+                        }
+                        button {
+                                  background-color: var(--clr-white);
+                                    color: black;
+                                    padding: 16px 24px;
+                                       border: 1px solid #171717;
+                                    border-radius: 50px;
+                                    cursor: pointer;
+                                    font-size: 18px;
+                        }
+
+                        button:hover {
+                            background-color:var(--clr-white);
+                        }
+                        body {
+                                scroll-snap-type: y mandatory;
+                                overflow-y: scroll;
+                        }
+
+                        header {
+                                height: 80px;
+                                width: 100vw;
+                        }
+
+                        header nav {
+                            padding: 3rem 6rem;
+                            margin-inline: auto;
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between; /* Logo on one side, buttons on the other */
+                            gap: 1rem;
+                        }
+
+                        nav img {
+                            height: 22px;
+                        }
+
+                        nav .menuitem {
+                            display: flex;
+                            align-items: center;
+                            justify-content: flex-end; /* Align buttons to the right */
+                            gap: 2rem; /* Increase gap between buttons */
+                        }
+
+                        nav .menuitem a {
+                            font-size: 1.1rem; /* Slightly larger text size */
+                            color: #F6F3F7;
+                            text-decoration: none;
+                            transition: color 0.3s ease;
+                        }
+
+                        nav .menuitem a:hover {
+                            color: #ffffff; /* Change color on hover */
+                        }
+
+                        /* Remove the circle */
+                        nav .circle {
+                            display: none;
+                        }
+
+                        .section_1 {
+                            height: 100vh; /* Cover the entire viewport height */
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: center; /* Center content vertically */
+                            align-items: center; /* Center content horizontally */
+                            text-align: center; /* Center text */
+                            gap: 1rem;
+                            scroll-snap-align: start; /* Ensure it snaps to the top */
+                        }
+
+                        .section_1 .section_detail {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 2rem;
+                        }
+                        .section_1 p {
+                                margin-inline: auto;
+                                max-width: 440px;
+                                min-width: 250px;
+                        }
+
+                        .section_1 video {
+                                margin-inline: auto;
+                                overflow: hidden;
+                                aspect-ratio: 16 / 9;
+                                object-fit: cover;
+                                object-position: top;
+                        }
+
+                        .section_2 .section_detail {
+                            display: flex;
+                            gap: var(--spacing-5);
+                            flex-direction: column; /* Stack elements vertically by default */
+                        }
+
+                        .section_2 .section_2--left {
+                            text-transform: uppercase;
+                        }
+
+                        .section_2 .section_2--right {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0.2rem;
+                        }
+
+                        /* Desktop layout */
+                        @media (min-width: 768px) {
+                            .section_2 .section_detail {
+                                flex-direction: row; /* Side-by-side layout on desktop */
+                            }
+                        }
+
+
+                        footer {
+                                  border-top-left-radius: 20px 20px;
+                                border-top-right-radius: 20px 20px;
+                                background-color: var(--clr-accent-400);
+                        }
+
+                        footer h3 {
+                                color: var(--clr-black);
+                                font-weight: var(--fw-medium);
+                                letter-spacing: -1px;
+                        }
+
+                        footer .footer--top {
+                                display: grid;
+                                grid-auto-flow: column;
+                                grid-template-columns: 2fr 1fr;
+                                gap: var(--spacing-5);
+                                align-items: center;
+                                padding-block: calc(var(--spacing-10) * 1.5);
+                        }
+
+                        footer .footer--top button {
+                                margin-inline: auto;
+                        }
+
+                        footer .copy_tag {
+                                color: var(--clr-black);
+                                text-align: center;
+                        }
+
+
+
+                        @font-face {
+                                font-family: "pp_mori";
+                                src: url("../../assets/fonts/ppmori-extralight-webfont.woff2") format("woff2"),
+                                        url("../../assets/fonts/ppmori-extralight-webfont.woff") format("woff");
+                                font-weight: 300;
+                        }
+
+                        @font-face {
+                                font-family: "pp_mori";
+                                src: url("../../assets/fonts/ppmori-regular-webfont.woff2") format("woff2"),
+                                        url("../../assets/fonts/ppmori-regular-webfont.woff") format("woff");
+                                font-weight: 400;
+                        }
+
+                        @font-face {
+                                font-family: "pp_mori";
+                                src: url("../../assets/fonts/ppmori-semibold-webfont.woff2") format("woff2"),
+                                        url("../../assets/fonts/ppmori-semibold-webfont.woff") format("woff");
+                                font-weight: 500;
+                        }
+
+
+                        :root {
+                                --ff-display: "pp_mori", sans-serif, Apple Color Emoji, Segoe UI Emoji,
+                                        Segoe UI Symbol, Noto Color Emoji;
+                                --ff-body: "pp_mori", sans-serif, Apple Color Emoji, Segoe UI Emoji,
+                                        Segoe UI Symbol, Noto Color Emoji;
+                                --ff-mono: ;
+
+                                --fs-d1: clamp(2.566rem, -0.1492rem + 10.8608vw, 5.96rem);
+                                --fs-d2: clamp(2.281rem, 0.2914rem + 7.9584vw, 4.768rem);
+                                --fs-d3: clamp(2.027rem, 0.5966rem + 5.7216vw, 3.815rem);
+                                --fs-1: clamp(1.802rem, 0.802rem + 4vw, 3.052rem);
+                                --fs-2: clamp(1.602rem, 0.9308rem + 2.6848vw, 2.441rem);
+                                --fs-3: clamp(1.424rem, 1.0008rem + 1.6928vw, 1.953rem);
+                                --fs-4: clamp(1.266rem, 1.0284rem + 0.9504vw, 1.563rem);
+                                --fs-5: clamp(1.125rem, 1.025rem + 0.4vw, 1.25rem);
+                                --fs-6: clamp(1rem, 1rem + 0vw, 1rem);
+                                --fs-regular: clamp(0.875rem, 0.8158rem + 0.2105vw, 1rem);
+                                --fs-small: clamp(0.8125rem, 0.7875rem + 0.1vw, 0.875rem);
+                                --fs-xsmall: clamp(0.6875rem, 0.6375rem + 0.2vw, 0.8125rem);
+
+                                --fw-light: 300;
+                                --fw-regular: 400;
+                                --fw-medium: 500;
+                                --clr-accent-400: #e6e4de;
+
+
+                                --clr-neutral-200: hsl(0, 0%, 75%);
+                                --clr-neutral-300: hsl(0, 0%, 60%);
+                                --clr-neutral-400: hsl(0, 0%, 45%);
+                                --clr-neutral-500: hsl(0, 0%, 30%);
+                                --clr-neutral-600: hsl(0, 0%, 15%);
+
+                                --clr-black: #141414;
+                                --clr-white: #e6e4de;
+
+                                --clr-heading: var(--clr-white);
+                                --clr-text: var(--clr-neutral-300);
+                                --clr-bg: var(--clr-black);
+
+                                --spacing-1: clamp(0.875rem, 0.8rem + 0.2667vw, 1rem);
+                                --spacing-2: clamp(1.2rem, 0.8211rem + 1.3474vw, 2rem);
+                                --spacing-3: clamp(1.5rem, 0.7895rem + 2.5263vw, 3rem);
+                                --spacing-4: clamp(2rem, 1.0526rem + 3.3684vw, 4rem);
+                                --spacing-5: clamp(2.5rem, 1.3158rem + 4.2105vw, 5rem);
+                                --spacing-8: clamp(4rem, 2.1053rem + 6.7368vw, 8rem);
+                                --spacing-10: clamp(5rem, 2.6316rem + 8.4211vw, 10rem);
+
+                                --spacing-left: clamp(0rem, -44.4444rem + 92.5926vw, 25%);
+
+                                --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+                                --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+                                --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+                                --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+                                        0 4px 6px -4px rgb(0 0 0 / 0.1);
+                                --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+                                        0 8px 10px -6px rgb(0 0 0 / 0.1);
+                                --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+                                --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+                        }
+
+
+                        .container {
+                            --width__screen: 100%;
+                            --width__laptops: 1400px;
+                            --width__blogs: 1100px;
+                            --padding: 1rem;
+
+                            width: min(var(--width__screen), 100% - (var(--padding) * 8));
+                            margin-inline: auto;
+                            padding-inline: var(--padding); /* Add consistent padding */
+                        }
+
+                        /* Ensure all sections use the container class */
+                        section {
+                            width: 100%;
+                            padding-inline: var(--padding); /* Match the container padding */
+                        }
+
+                        @media only screen and (max-width: 1200px) {}
+
+                        @media only screen and (max-width: 992px) {
+                                .container {
+                                        width: min(var(--width__screen), 100% - (var(--padding) * 5));
+                                }
+
+                                .section-1 video {
+                                        width: 100%;
+                                }
+                        }
+
+                        @media only screen and (max-width: 768px) {}
+
+                        @media only screen and (max-width: 576px) {
+                                .container {
+                                        width: min(var(--width__screen), 100% - (var(--padding) * 3));
+                                }
+
+                                header nav {
+                                        padding: 1.5rem;
+                                }
+                        }
+
+                        *,
+                        *::before,
+                        *::after {
+                                -webkit-box-sizing: border-box;
+                                box-sizing: border-box;
+                                scroll-behavior: smooth;
+                        }
+
+                        * {
+                                margin: 0;
+                                padding: 0;
+                                font-family: var(--ff-body);
+                        }
+
+                        html:focus-within {
+                                scroll-behavior: smooth;
+                        }
+
+                        body {
+                                overflow-x: hidden;
+                                text-rendering: optimizeSpeed;
+                                background-color: var(--clr-bg);
+                                color: var(--clr-text);
+                                line-height: 1.5;
+                        }
+
+                        ul[role="list"],
+                        ol[role="list"] {
+                                list-style: none;
+                        }
+
+                        img,
+                        picture,
+                        svg {
+                                max-width: 100%;
+                                display: block;
+                        }
+
+                        @media (prefers-reduced-motion: media) {
+                                html:focus-within {
+                                        scroll-behavior: auto;
+                                }
+
+                                *,
+                                *::before,
+                                ::after {
+                                        -webkit-animation-duration: 0.01ms !important;
+                                        animation-duration: 0.01ms !important;
+                                        -webkit-animation-iteration-count: 1 !important;
+                                        animation-iteration-count: 1 !important;
+                                        -webkit-transition-duration: 0.01ms !important;
+                                        -o-transition-duration: 0.01ms !important;
+                                        transition-duration: 0.01ms !important;
+                                        scroll-behavior: auto !important;
+                                }
+                        }
+
+
+                        .d1,
+                        .d2,
+                        .d3,
+                        h1,
+                        h2,
+                        h3,
+                        h4,
+                        h5,
+                        h6 {
+                                font-family: var(--ff-display);
+                                font-weight: var(--fw-regular);
+                                color: var(--clr-heading);
+                                letter-spacing: -2px;
+                        }
+
+                        .d1 {
+                                font-size: var(--fs-d1);
+                                line-height: calc(var(--fs-d1) * 1);
+                        }
+
+                        .d2 {
+                                font-size: var(--fs-d2);
+                                line-height: calc(var(--fs-d2) * 1);
+                        }
+
+                        .d3 {
+                                font-size: var(--fs-d3);
+                                line-height: calc(var(--fs-d3) * 1);
+                        }
+
+                        h1 {
+                                font-size: var(--fs-1);
+                                line-height: calc(var(--fs-1) * 1);
+                        }
+
+                        h2 {
+                                font-size: var(--fs-2);
+                                line-height: calc(var(--fs-2) * 1.2);
+                        }
+
+                        h3 {
+                                font-size: var(--fs-3);
+                                line-height: calc(var(--fs-3) * 1.2);
+                        }
+
+                        h4 {
+                                font-size: var(--fs-4);
+                                line-height: calc(var(--fs-4) * 1.2);
+                        }
+
+                        h5 {
+                                font-size: var(--fs-5);
+                                line-height: calc(var(--fs-5) * 1.2);
+                        }
+
+                        h6 {
+                                font-size: var(--fs-6);
+                                line-height: calc(var(--fs-6) * 1.2);
+                        }
+
+                        p {
+                                font-size: var(--fs-regular);
+                                font-weight: var(--fw-regular);
+                                color: var(--clr-text);
+                        }
+
+                        a {
+                                text-decoration: none;
+                                font-size: var(--fs-regular);
+                                font-weight: var(--fw-regular);
+                                color: var(--clr-heading);
+                        }
+
+                        .py-2 {
+                                padding-block: var(--spacing-2);
+                        }
+
+                        .py-3 {
+                                padding-block: var(--spacing-3);
+                        }
+
+                        .py-4 {
+                                padding-block: var(--spacing-4);
+                        }
+
+                        .py-5 {
+                                padding-block: var(--spacing-5);
+                        }
+
+                        .py-8 {
+                                padding-block: var(--spacing-8);
+                        }
+
+                        .py-10 {
+                                padding-block: var(--spacing-10);
+                        }
+
+                        .pb-2 {
+                                padding-bottom: var(--spacing-2);
+                        }
+
+                        .pb-3 {
+                                padding-bottom: var(--spacing-3);
+                        }
+
+                        .pb-4 {
+                                padding-bottom: var(--spacing-4);
+                        }
+
+                        .pb-5 {
+                                padding-bottom: var(--spacing-5);
+                        }
+
+                        .pb-8 {
+                                padding-bottom: var(--spacing-8);
+                        }
+
+                        .pb-10 {
+                                padding-bottom: var(--spacing-10);
+                        }
+
+                        .pt-2 {
+                                padding-top: var(--spacing-2);
+                        }
+
+                        .pt-3 {
+                                padding-top: var(--spacing-3);
+                        }
+
+                        .pt-4 {
+                                padding-top: var(--spacing-4);
+                        }
+
+                        .pt-5 {
+                                padding-top: var(--spacing-5);
+                        }
+
+                        .pt-8 {
+                                padding-top: var(--spacing-8);
+                        }
+
+                        .pt-10 {
+                                padding-top: var(--spacing-10);
+                        }
+
+                        .flow *+* {
+                                margin-top: clamp(1.5rem, 1.28rem + 0.64vw, 2rem);
+                        }
+
+                        .flow-sm *+* {
+                                margin-top: clamp(0.625rem, 0.425rem + 0.8vw, 0.875rem);
+                        }
+
+                        .flow-xsm *+* {
+                                margin-top: clamp(0.375rem, 0.175rem + 0.8vw, 0.625rem);
+                        }
+
+                        .ch-xsmall {
+                                max-width: clamp(20ch, 24ch + 25.2632vw, 40ch);
+                        }
+
+                        .ch-small {
+                                max-width: clamp(30ch, 24ch + 25.2632vw, 60ch);
+                        }
+
+                        .ch-medium {
+                                max-width: clamp(40ch, 34ch + 25.2632vw, 70ch);
+                        }
+
+                        .ch-large {
+                                max-width: clamp(50ch, 40ch + 25.2632vw, 80ch);
+                        }
+
+                        .pe-none {
+                                pointer-events: none !important;
+                        }
+
+                        .user-select-none {
+                                -webkit-user-select: none !important;
+                                -moz-user-select: none !important;
+                                -ms-user-select: none !important;
+                                user-select: none !important;
+                        }
+
+
+                        .a {
+                                color: var(--clr-black);
+                        }
+
+                        .btn {
+                                cursor: pointer;
+                                width: fit-content;
+                                border: none;
+                                outline: transparent;
+                                background: var(--clr-accent-400);
+                                font-weight: var(--fw-medium) !important;
+                                padding: 0.5rem 1.25rem;
+                                border-radius: 100vw;
+                                text-decoration: none;
+                                text-transform: uppercase;
+                                color: var(--clr-black);
+                                transition: transform 0.3s ease;
+                        }
+
+                        .btn:is(:hover, :focus-visible) {
+                                transform: scale(1.02);
+                        }
+
+                        .btn-circle {
+                                height: 140px;
+                                width: 140px;
+                                border-radius: 100vw;
+                                border: none;
+                                outline: transparent;
+                                font-weight: var(--fw-medium);
+                        }
+
+                        .line {
+                                max-width: 100%;
+                                opacity: 0.2;
+                                border-bottom: 1px solid var(--clr-black);
+                        }
+
+                        ::-moz-selection {
+                                color: #0e1111;
+                                background: #F0F0F0;
+                        }
+
+                        ::selection {
+                                color: #0e1111;
+                                background: #F0F0F0;
+                        }
+                        @import url('https://fonts.googleapis.com/css2?family=Ballet&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap');
+
+                        .design-font {
+                            font-family: 'Ballet', cursive;
+                            font-size: 1.2em;
+                        }
+
+                        .fun-font {
+                            font-family: 'Pixelify Sans', sans-serif;
+                            font-size: 1em;
+                        }
+                        .section_3 {
+                            padding-block: calc(var(--spacing-10) * 1.5);
+                        }
+
+                        .section_3 {
+                            padding-block: var(--spacing-5);
+                            width: 100%; /* Ensure the section takes full width */
+                        }
+
+                        .bento-grid {
+                            display: grid;
+                            grid-template-columns: 2fr 1fr; /* Large box takes 2/3, small boxes take 1/3 */
+                            grid-template-rows: repeat(2, 1fr); /* Two rows for the small boxes */
+                            gap: 2rem; /* Space between boxes */
+                            max-width: 130%; /* Ensure the grid takes full width */
+                            margin-inline: 0; /* Remove auto margin to align to edges */
+                            padding-inline: 0; /* Remove padding to align to edges */
+                        }
+
+                        .bento-box {
+                            position: relative;
+                            background-size: cover;
+                            background-position: center;
+                            border-radius: 8px; /* Rounded corners */
+                            overflow: hidden; /* Ensure the image doesn't overflow */
+                            transition: transform 0.5s ease; /* Smooth transition for the hover effect */
+                        }
+
+                        .bento-box:hover {
+                            transform: scale(0.98); /* Lightly shrink the box on hover */
+                        }
+
+                        .bento-box.large {
+                            grid-row: span 5; /* Large box spans both rows */
+                            height: 600px; /* Adjust height as needed */
+                        }
+
+                        .bento-box.small {
+                            height: 290px; /* Adjust height as needed */
+                        }
+
+                        .work-text {
+                            position: absolute;
+                            top: 1rem;
+                            left: 1rem;
+                            font-size: 0.875rem; /* Small font size */
+                            color: var(--clr-white); /* White text */
+                            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+                            padding: 0.25rem 0.5rem;
+                            border-radius: 4px; /* Rounded corners for the text background */
+                        }
+
+                        /* Responsive adjustments */
+                        @media (max-width: 768px) {
+                            .bento-grid {
+                                grid-template-columns: 1fr; /* Stack boxes on smaller screens */
+                                grid-template-rows: auto;
+                            }
+
+                            .bento-box.large,
+                            .bento-box.small {
+                                height: 300px; /* Uniform height for all boxes on smaller screens */
+                            }
+                        }
+
+
+
+                        .nav-logo {
+                            height: 22px; /* Keep the current size */
+                            width: auto; /* Maintain aspect ratio */
+                        }
+
+                        .hamburger {
+                            display: none; /* Hidden by default */
+                            cursor: pointer;
+                            font-size: 1.5rem;
+                            color: #F6F3F7;
+                        }
+
+                        .menuitem {
+                            display: flex;
+                            align-items: center;
+                            gap: 2rem;
+                        }
+
+                        /* Mobile styles */
+                        @media (max-width: 768px) {
+                            .hamburger {
+                                display: block; /* Show hamburger on mobile */
+                            }
+
+                            .menuitem {
+                                display: none !important; /* Hide regular nav on mobile */
+                            }
+                        }
+
+                        /* Overlay Styles */
+                        .overlay {
+                            display: none; /* Hidden by default */
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background-color: var(--clr-black);
+                            z-index: 1000;
+                            flex-direction: column;
+                            justify-content: flex-start; /* Align content to the top */
+                            align-items: flex-start; /* Align content to the left */
+                            padding: 2rem; /* Add padding for spacing */
+                        }
+
+                        .overlay.active {
+                            display: flex; /* Show overlay when active */
+                        }
+
+                        .overlay .close-btn {
+                            position: absolute;
+                            top: 1rem;
+                            right: 1rem;
+                            font-size: 2rem;
+                            color: #F6F3F7;
+                            cursor: pointer;
+                        }
+
+                        .overlay .nav-logo {
+                            margin-bottom: 2rem; /* Space between logo and links */
+                        }
+
+                        .overlay .overlay-links {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: flex-start; /* Align links to the left */
+                            gap: 1.5rem; /* Space between links */
+                        }
+
+                        .overlay .overlay-links a {
+                            font-size: 2.5rem;
+                            color: #F6F3F7;
+                            text-decoration: none;
+                            transition: color 0.3s ease;
+                        }
+
+                        .overlay .overlay-links a:hover {
+                            color: #ffffff;
+                        }
+
+                        /* Mobile styles */
+                        @media (max-width: 768px) {
+                            .hamburger {
+                                display: block; /* Show hamburger on mobile */
+                            }
+
+                            nav .menuitem {
+                                display: none !important; /* Force hide menuitem on mobile */
+                            }
+                        }
+
+                        /* Desktop styles */
+                        @media (min-width: 769px) {
+                            .hamburger {
+                                display: none; /* Hide hamburger on desktop */
+                            }
+
+                            nav .menuitem {
+                                display: flex !important; /* Force show menuitem on desktop */
+                            }
+                        }
+  </style>
+</head>
+<body>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/locomotive-scroll@3.5.4/dist/locomotive-scroll.css" />
+                <div id="main" data-locomotive-scroll>
+                            <header>
+                                <nav>
+                                        <a href="/">
+                                            <img src="/assets/yaa.png" alt="nav logo" class="nav-logo" />
+                                        </a>
+                                        <div class="hamburger" id="hamburger">&#9776;</div>
+                                        <div class="menuitem">
+                                            <a href="/">Home</a>
+                                            <a href="/works">Works</a>
+                                            <a href="/contact/">Contact</a>
+                                            <a target="_blank" href="https://instagram.com/y0onus/?igshid=ZDdkNTZiNTM%3D">Instagram</a>
+                                        </div>
+                                    </nav>
+                                    
+                            </header>
+            
+                           <!-- Overlay for Mobile Nav -->
+<div class="overlay" id="overlay">
+        <div class="close-btn" id="close-btn">&times;</div>
+        <a href="/">
+            <img src="/assets/yaa.png" alt="nav logo" class="nav-logo" />
+        </a>
+        <div class="overlay-links">
+            <a href="/">Home</a>
+            <a href="/works">Works</a>
+            <a href="/contact/">Contact</a>
+            <a target="_blank" href="https://instagram.com/y0onus/?igshid=ZDdkNTZiNTM%3D">Instagram</a>
+        </div>
+    </div>
+
+  <!-- Main Survey Form -->
+  <main class="container">
+    <form id="surveyForm" action="https://api.web3forms.com/submit" method="POST">
+      <input type="hidden" name="access_key" value="4764ea8d-50a6-4cd9-b4ca-b50a21a3fcb1">
+
+      <h2>Parking Survey</h2>
+
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="q1">How would you describe your experience with finding parking in busy neighborhoods such as Malé or Hulhumalé?</label>
+      <textarea id="q1" name="experience" required></textarea>
+
+      <label for="q2">What challenges do you usually face when trying to park near offices, shops, or crowded areas?</label>
+      <textarea id="q2" name="challenges" required></textarea>
+
+      <label for="q3">Do you think the current parking spaces are enough to meet the demand in busy areas? Why or why not?</label>
+      <textarea id="q3" name="demand" required></textarea>
+
+      <label for="q4">Do you think automated parking systems or multi-level parking buildings could help solve the problem? Please explain.</label>
+      <textarea id="q4" name="solutions" required></textarea>
+
+      <button type="submit">Submit Survey</button>
+    </form>
+  </main>
+  <footer class="container">
+                                <section>
+                                    <div class="footer--top">
+                                        <h3>HAVE A PROJECT IN MIND? LET’S BRING IT TO LIFE.</h3>
+                                        <button class="btn-circle"><a href="/contact/" class="a">Get in Touch</a></button>
+                                    </div>
+                                    <div class="line"></div>
+                                    <div class="footer--bottom py-2">
+                                        <p class="copy_tag">&copy; 2025 y0onus all rights reserved</p>
+                                    </div>
+                                </section>
+                            </footer>
+
+  <script>
+    // Mobile nav toggle
+    const hamburger = document.getElementById("hamburger");
+    const overlay = document.getElementById("overlay");
+    const closeBtn = document.getElementById("close-btn");
+
+    hamburger.addEventListener("click", () => overlay.classList.add("active"));
+    closeBtn.addEventListener("click", () => overlay.classList.remove("active"));
+
+    // Form validation
+    const form = document.getElementById("surveyForm");
+
+    form.addEventListener("submit", (e) => {
+      const inputs = form.querySelectorAll("input[required], textarea[required]");
+      let valid = true;
+
+      inputs.forEach((input) => {
+        if (!input.value.trim()) {
+          valid = false;
+          input.style.borderColor = "red";
+        } else {
+          input.style.borderColor = "#ccc";
+        }
+      });
+
+      if (!valid) {
+        e.preventDefault();
+        alert("Please fill in all required fields before submitting.");
+      }
+    });
+  </script>
+</body>
+</html>
