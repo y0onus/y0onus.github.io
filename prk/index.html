@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Parkin'</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=BBH+Sans+Bartle&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Funnel+Display&display=swap" rel="stylesheet">
+
+    <style>
+        /* Reset and basic styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Funnel Display', sans-serif; /* Default font */
+            background-color: #02000a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Desktop Navbar */
+        nav.desktop-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            border-bottom: 1px solid #333;
+        }
+
+        nav.desktop-nav .left {
+            font-family: 'BBH Sans Bartle', sans-serif; /* Parkin' font */
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        nav.desktop-nav .right {
+            display: flex;
+            gap: 20px;
+        }
+
+        nav.desktop-nav .right a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* Mobile Top "Parkin'" */
+        .mobile-top {
+            display: none; /* hidden on desktop */
+            text-align: center;
+            font-family: 'BBH Sans Bartle', sans-serif; /* Parkin' font */
+            font-weight: bold;
+            font-size: 1.5rem;
+            padding: 20px 0;
+        }
+
+        /* Main content */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 30px;
+        }
+
+        .status-box {
+            display: flex;
+            gap: 50px;
+        }
+
+        .box {
+            text-align: center;
+        }
+
+        .box h2 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .box p {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        /* Mobile Bottom Navbar */
+        .mobile-nav {
+            display: none; /* hidden on desktop */
+            justify-content: space-between;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            padding: 10px 30px;
+            border-top: 1px solid #333;
+            background-color: #02000a;
+        }
+
+        .mobile-nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            nav.desktop-nav {
+                display: none; /* hide desktop navbar on mobile */
+            }
+
+            .mobile-top {
+                display: block; /* show mobile top text */
+            }
+
+            .mobile-nav {
+                display: flex; /* show mobile bottom nav */
+            }
+
+            .status-box {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyDl0rqWQ8xQAwFmoIR_uYxy9bTlell0Rm8",
+          authDomain: "parkin-50303.firebaseapp.com",
+          databaseURL: "https://parkin-50303-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "parkin-50303",
+          storageBucket: "parkin-50303.firebasestorage.app",
+          messagingSenderId: "988337852711",
+          appId: "1:988337852711:web:0ce1147e49d40f7dcfd902",
+          measurementId: "G-5S0YPCP45B"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        const parkedElem = document.getElementById("parked");
+        const freeElem = document.getElementById("free");
+
+        const parkingRef = ref(database, 'parking');
+        onValue(parkingRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                parkedElem.textContent = data.parked;
+                freeElem.textContent = data.free_slots;
+            }
+        });
+    </script>
+</head>
+<body>
+    <!-- Desktop Navbar -->
+    <nav class="desktop-nav">
+        <div class="left">Parkin'</div>
+        <div class="right">
+            <a href="#">Home</a>
+            <a href="#">API</a>
+            <a href="#">Report</a>
+        </div>
+    </nav>
+
+    <!-- Mobile Top Text -->
+    <div class="mobile-top">Parkin'</div>
+
+    <!-- Main content -->
+    <div class="main">
+        <div class="status-box">
+            <div class="box">
+                <h2>Occupied</h2>
+                <p id="parked">0</p>
+            </div>
+            <div class="box">
+                <h2>Free Slots</h2>
+                <p id="free">0</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navbar -->
+    <div class="mobile-nav">
+        <a href="#">Report</a>
+        <a href="#">API</a>
+    </div>
+</body>
+</html>
