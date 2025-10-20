@@ -22,14 +22,18 @@ body {
   touch-action: pan-y;
 }
 
+.parking-wrapper { 
+  flex: 1; 
+  overflow: hidden; 
+  position: relative;
+}
+
 .parking-container {
   display: flex;
   justify-content: space-between;
   width: 100%;
-  height: 85vh;
-  overflow-y: auto;
+  height: 100%;
   padding: 5px 0;
-  margin-bottom: 0;
   transition: transform 0.4s ease;
 }
 
@@ -44,7 +48,7 @@ body {
 .slot {
   width: 95%;
   height: 180px;
-  margin: 0px 0;
+  margin: 8px 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -133,20 +137,22 @@ body {
 </head>
 <body>
 
-<div class="parking-container" id="parking-container">
-  <div class="side left-side" id="left-side">
-    <script>
-      for (let i = 1; i <= 12; i++) {
-        document.write(`<div class="slot free" id="slot${i}">A${String(i).padStart(2,'0')}</div>`);
-      }
-    </script>
-  </div>
-  <div class="side right-side" id="right-side">
-    <script>
-      for (let i = 13; i <= 24; i++) {
-        document.write(`<div class="slot free" id="slot${i}">A${String(i).padStart(2,'0')}</div>`);
-      }
-    </script>
+<div class="parking-wrapper">
+  <div class="parking-container" id="parking-container">
+    <div class="side left-side" id="left-side">
+      <script>
+        for (let i = 1; i <= 12; i++) {
+          document.write(`<div class="slot free" id="slot${i}">A${String(i).padStart(2,'0')}</div>`);
+        }
+      </script>
+    </div>
+    <div class="side right-side" id="right-side">
+      <script>
+        for (let i = 13; i <= 24; i++) {
+          document.write(`<div class="slot free" id="slot${i}">A${String(i).padStart(2,'0')}</div>`);
+        }
+      </script>
+    </div>
   </div>
 </div>
 
