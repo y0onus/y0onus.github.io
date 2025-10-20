@@ -1,256 +1,267 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Parkin'</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Parkin'</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link href="https://fonts.googleapis.com/css2?family=BBH+Sans+Bartle&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Funnel+Display&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link href="https://fonts.googleapis.com/css2?family=BBH+Sans+Bartle&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Funnel+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Funnel Display', sans-serif;
-      background-color: #02000a;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      overflow: hidden;
-      touch-action: pan-y;
-    }
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Funnel Display', sans-serif;
+  background-color: #02000a;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow: hidden;
+  touch-action: pan-y;
+}
 
-    .parking-container {
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      height: 85vh;
-      overflow-y: auto;
-      padding: 5px 0;
-      margin-bottom: 0;
-    }
+.parking-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  height: 85vh;
+  overflow-y: auto;
+  padding: 5px 0;
+  margin-bottom: 0;
+  transition: transform 0.4s ease;
+}
 
-    .side {
-      width: 50%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 5px 0;
-    }
+.side {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 0;
+}
 
-    .slot {
-      width: 95%;
-      height: 180px;
-      margin: 8px 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: bold;
-      font-size: 1.6rem;
-      color: #fff;
-      border-radius: 0;
-      background-color: #111;
-      border: 2px dashed #888;
-      position: relative;
-      flex-shrink: 0;
-    }
+.slot {
+  width: 95%;
+  height: 180px;
+  margin: 8px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.6rem;
+  color: #fff;
+  border-radius: 0;
+  background-color: #111;
+  border: 2px dashed #888;
+  position: relative;
+  flex-shrink: 0;
+}
 
-    .slot.occupied::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 180px;
-      height: 180px;
-      background-image: url('car.png');
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
+.slot.occupied::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 180px;
+  height: 180px;
+  background-image: url('car.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
 
-    .left-side .slot { align-self: flex-start; }
-    .right-side .slot { align-self: flex-end; }
+.left-side .slot { align-self: flex-start; }
+.right-side .slot { align-self: flex-end; }
 
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 30vh;
-      background-color: rgba(17, 17, 17, 0.7);
-      backdrop-filter: blur(8px);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      border-top: 1px solid #333;
-      z-index: 100;
-      padding: 10px 20px;
-    }
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 30vh;
+  background-color: rgba(17, 17, 17, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-top: 1px solid #333;
+  z-index: 100;
+  padding: 10px 20px;
+}
 
-    .bottom-nav .nav-buttons {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
+.bottom-nav .nav-buttons {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
 
-    .bottom-nav button {
-      background-color: #333;
-      border: none;
-      color: white;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      font-size: 1.5rem;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      transition: background-color 0.2s;
-    }
+.bottom-nav button {
+  background-color: #333;
+  border: none;
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s;
+}
 
-    .bottom-nav button:hover { background-color: #444; }
+.bottom-nav button:hover { background-color: #444; }
 
-    .bottom-center { text-align: center; }
-    .bottom-center h2 { font-size: 1.2rem; margin-bottom: 6px; }
-    .bottom-center p { font-size: 1rem; }
+.bottom-center { text-align: center; }
+.bottom-center h2 { font-size: 1.2rem; margin-bottom: 6px; }
+.bottom-center p { font-size: 1rem; }
 
-    @media (max-width: 768px) {
-      .slot {
-        width: 100%;
-        height: 150px;
-        font-size: 1.3rem;
-        border-radius: 0;
-      }
-    }
-  </style>
+@media (max-width: 768px) {
+  .slot {
+    width: 100%;
+    height: 150px;
+    font-size: 1.3rem;
+    border-radius: 0;
+  }
+}
+</style>
 </head>
 <body>
 
-  <div class="parking-container">
-    <div class="side left-side" id="left-side">
-      <script>
-        for (let i = 1; i <= 12; i++) {
-          document.write(`<div class="slot free" id="slot${i}">A${String(i).padStart(2,'0')}</div>`);
-        }
-      </script>
-    </div>
-    <div class="side right-side" id="right-side">
-      <script>
-        for (let i = 13; i <= 24; i++) {
-          document.write(`<div class="slot free" id="slot${i}">A${String(i).padStart(2,'0')}</div>`);
-        }
-      </script>
-    </div>
-  </div>
-
-  <div class="bottom-nav">
-    <div class="nav-buttons">
-      <button id="prev-floor"><i class="fa fa-arrow-left"></i></button>
-      <button id="next-floor"><i class="fa fa-arrow-right"></i></button>
-    </div>
-    <div class="bottom-center">
-      <h2 id="floor-label">Floor 1</h2>
-      <p><span id="total-parked">0</span> Parked | <span id="total-free">24</span> Free</p>
-    </div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDl0rqWQ8xQAwFmoIR_uYxy9bTlell0Rm8",
-      authDomain: "parkin-50303.firebaseapp.com",
-      databaseURL: "https://parkin-50303-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "parkin-50303",
-      storageBucket: "parkin-50303.firebasestorage.app",
-      messagingSenderId: "988337852711",
-      appId: "1:988337852711:web:0ce1147e49d40f7dcfd902",
-      measurementId: "G-5S0YPCP45B"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    const totalParked = document.getElementById("total-parked");
-    const totalFree = document.getElementById("total-free");
-
-    let currentFloor = 1;
-    const maxFloors = 4;
-    const floorCodes = ["A","B","C","D"];
-
-    function updateFloorData(floor) {
-      const floorCode = floorCodes[floor - 1];
-      const floorRef = ref(db, `parking/${floorCode}`);
-
-      onValue(floorRef, snapshot => {
-        const data = snapshot.val();
-        if (!data) return;
-
-        const parkedSlots = data.parked_slots || [];
-        const freeSlots = data.free_slots || [];
-
-        let parkedCount = 0;
-        let freeCount = 0;
-
-        for (let i = 1; i <= 24; i++) {
-          const slotId = `${floorCode}${String(i).padStart(2, '0')}`;
-          const slotElem = document.getElementById(`slot${i}`);
-          if (!slotElem) continue;
-
-          if (parkedSlots.includes(slotId)) {
-            slotElem.classList.remove("free");
-            slotElem.classList.add("occupied");
-            parkedCount++;
-          } else {
-            slotElem.classList.remove("occupied");
-            slotElem.classList.add("free");
-            freeCount++;
-          }
-
-          slotElem.textContent = slotId;
-        }
-
-        totalParked.textContent = parkedCount;
-        totalFree.textContent = freeCount;
-      });
-    }
-
-    function goToFloor(floor) {
-      currentFloor = floor;
-      document.getElementById("floor-label").textContent = `Floor ${currentFloor}`;
-      updateFloorData(currentFloor);
-    }
-
-    document.getElementById("next-floor").addEventListener("click", () => {
-      if (currentFloor < maxFloors) goToFloor(currentFloor + 1);
-    });
-
-    document.getElementById("prev-floor").addEventListener("click", () => {
-      if (currentFloor > 1) goToFloor(currentFloor - 1);
-    });
-
-    let touchStartX = 0;
-    let touchEndX = 0;
-
-    document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
-    document.addEventListener('touchend', (e) => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); });
-
-    function handleSwipe() {
-      const diff = touchEndX - touchStartX;
-      if (Math.abs(diff) > 50) {
-        if (diff > 0 && currentFloor > 1) goToFloor(currentFloor - 1);
-        if (diff < 0 && currentFloor < maxFloors) goToFloor(currentFloor + 1);
+<div class="parking-container" id="parking-container">
+  <div class="side left-side" id="left-side">
+    <script>
+      for (let i = 1; i <= 12; i++) {
+        document.write(`<div class="slot free" id="slot${i}">A${String(i).padStart(2,'0')}</div>`);
       }
+    </script>
+  </div>
+  <div class="side right-side" id="right-side">
+    <script>
+      for (let i = 13; i <= 24; i++) {
+        document.write(`<div class="slot free" id="slot${i}">A${String(i).padStart(2,'0')}</div>`);
+      }
+    </script>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-buttons">
+    <button id="prev-floor"><i class="fa fa-arrow-left"></i></button>
+    <button id="next-floor"><i class="fa fa-arrow-right"></i></button>
+  </div>
+  <div class="bottom-center">
+    <h2 id="floor-label">Floor 1</h2>
+    <p><span id="total-parked">0</span> Parked | <span id="total-free">24</span> Free</p>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDl0rqWQ8xQAwFmoIR_uYxy9bTlell0Rm8",
+  authDomain: "parkin-50303.firebaseapp.com",
+  databaseURL: "https://parkin-50303-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "parkin-50303",
+  storageBucket: "parkin-50303.firebasestorage.app",
+  messagingSenderId: "988337852711",
+  appId: "1:988337852711:web:0ce1147e49d40f7dcfd902",
+  measurementId: "G-5S0YPCP45B"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const totalParked = document.getElementById("total-parked");
+const totalFree = document.getElementById("total-free");
+const parkingContainer = document.getElementById("parking-container");
+
+let currentFloor = 1;
+const maxFloors = 4;
+const floorCodes = ["A","B","C","D"];
+
+function updateFloorData(floor, direction = 0) {
+  const floorCode = floorCodes[floor - 1];
+  const floorRef = ref(db, `parking/${floorCode}`);
+
+  onValue(floorRef, snapshot => {
+    const data = snapshot.val();
+    if (!data) return;
+
+    const parkedSlots = data.parked_slots || [];
+    const freeSlots = data.free_slots || [];
+
+    let parkedCount = 0;
+    let freeCount = 0;
+
+    for (let i = 1; i <= 24; i++) {
+      const slotId = `${floorCode}${String(i).padStart(2,'0')}`;
+      const slotElem = document.getElementById(`slot${i}`);
+      if (!slotElem) continue;
+
+      if (parkedSlots.includes(slotId)) {
+        slotElem.classList.remove("free");
+        slotElem.classList.add("occupied");
+        parkedCount++;
+      } else {
+        slotElem.classList.remove("occupied");
+        slotElem.classList.add("free");
+        freeCount++;
+      }
+
+      slotElem.textContent = slotId;
     }
 
-    updateFloorData(currentFloor);
-  </script>
+    totalParked.textContent = parkedCount;
+    totalFree.textContent = freeCount;
+
+    parkingContainer.style.transition = "none";
+    parkingContainer.style.transform = `translateX(${direction * 100}%)`;
+
+    setTimeout(() => {
+      parkingContainer.style.transition = "transform 0.4s ease";
+      parkingContainer.style.transform = "translateX(0)";
+    }, 50);
+  });
+}
+
+function goToFloor(floor) {
+  const direction = floor > currentFloor ? 1 : -1;
+  currentFloor = floor;
+  document.getElementById("floor-label").textContent = `Floor ${currentFloor}`;
+  updateFloorData(currentFloor, direction);
+}
+
+document.getElementById("next-floor").addEventListener("click", () => {
+  if (currentFloor < maxFloors) goToFloor(currentFloor + 1);
+});
+
+document.getElementById("prev-floor").addEventListener("click", () => {
+  if (currentFloor > 1) goToFloor(currentFloor - 1);
+});
+
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
+document.addEventListener('touchend', (e) => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); });
+
+function handleSwipe() {
+  const diff = touchEndX - touchStartX;
+  if (Math.abs(diff) > 50) {
+    if (diff > 0 && currentFloor > 1) goToFloor(currentFloor - 1);
+    if (diff < 0 && currentFloor < maxFloors) goToFloor(currentFloor + 1);
+  }
+}
+
+updateFloorData(currentFloor);
+</script>
 </body>
 </html>
