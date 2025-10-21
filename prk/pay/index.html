@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Parking Payment</title>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAoTJC7m08ReZb8pn-SGn2StYnU2joGiI4",
+  authDomain: "parkinexit.firebaseapp.com",
+  databaseURL: "https://parkinexit-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "parkinexit",
+  storageBucket: "parkinexit.firebasestorage.app",
+  messagingSenderId: "329975993199",
+  appId: "1:329975993199:web:8c07ec4b42f108dcf4ce9a",
+  measurementId: "G-3KQ5SL6BXZ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const params = new URLSearchParams(window.location.search);
+const slot = params.get("slot");
+const reqId = params.get("id");
+
+async function loadPaymentInfo() {
+  const reqRef = ref(db, `exit_requests/${reqId}`);
+  const snapshot = await get(reqRef);
+  if (!snapshot.exists()) return;
+
+  const data = snapshot.val();
+  const minutesParked = Math.ceil((Date.now() - data.start_time)/60000);
+  const total = minutesParked; // $1 per minute
+
+  document.getElementById("info").innerHTML = `
+    <p>Slot: ${slot}</p>
+    <p>Minutes Parked: ${minutesParked}</p>
+    <p>Rate: $1/minute</p>
+    <p>Total Payment: $${total}</p>
+  `;
+}
+
+async function payNow() {
+  // Mark slot as free
+  await update(ref(db, `parking_slots/${slot}`), { status: "free", start_time: null });
+  // Mark request as paid
+  await update(ref(db, `exit_requests/${reqId}`), { status: "paid" });
+
+  alert("Payment successful! Gate will open.");
+  // Redirect after short delay to allow gate to open
+  setTimeout(() => {
+    window.location.href = "https://yoonus.xyz/prk";
+  }, 2000);
+}
+
+window.onload = loadPaymentInfo;
+window.payNow = payNow;
+</script>
+<style>
+  body { text-align:center; font-family:sans-serif; background:#02000a; color:white; display:flex; flex-direction:column; justify-content:center; height:100vh; }
+  #info { font-size:1.5em; margin-bottom:20px; }
+  button { padding:10px 20px; font-size:1.5em; border:2px solid #292929; border-radius:8px; background:transparent; color:white; cursor:pointer; }
+  button:hover { color:#242424; }
+</style>
+</head>
+<body>
+<h1>Payment Page</h1>
+<div id="info"></div>
+<button onclick="payNow()">Pay & Exit</button>
+</body>
+</html>
