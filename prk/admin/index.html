@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Parking Slot Verification</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAoTJC7m08ReZb8pn-SGn2StYnU2joGiI4",
+      authDomain: "parkinexit.firebaseapp.com",
+      databaseURL: "https://parkin-50303-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "parkinexit",
+      storageBucket: "parkinexit.firebasestorage.app",
+      messagingSenderId: "329975993199",
+      appId: "1:329975993199:web:8c07ec4b42f108dcf4ce9a",
+      measurementId: "G-3KQ5SL6BXZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    async function requestFreeSlot() {
+      const input = document.getElementById("slotCode");
+      const code = input.value.trim().toUpperCase();
+
+      if (!/^[A-D]\d{2}$/.test(code)) {
+        alert("Invalid format! Use A01–D24.");
+        return;
+      }
+
+      // Send request to Firebase
+      const reqRef = ref(db, "exit_requests/" + code);
+      await set(reqRef, {
+        status: "pending",
+        timestamp: Date.now()
+      });
+
+      document.querySelector(".container").innerHTML = `
+        <h1>Scan to Verify</h1>
+        <img src="https://github.com/y0onus/y0onus.github.io/blob/main/prk/qr-code.png?raw=true" alt="Scan QR to Verify" width="300">
+        <p>Scan this QR code on another device to confirm freeing slot ${code}.</p>
+      `;
+    }
+
+    function appendKey(char) {
+      const input = document.getElementById("slotCode");
+      if (input.value.length >= 3) return;
+      input.value += char.toUpperCase();
+    }
+
+    function backspace() {
+      const input = document.getElementById("slotCode");
+      input.value = input.value.slice(0, -1);
+    }
+
+    window.requestFreeSlot = requestFreeSlot;
+    window.appendKey = appendKey;
+    window.backspace = backspace;
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Funnel+Display&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Funnel Display', sans-serif;
+      color: #fff;
+      text-align: center;
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background-color: #02000a;
+    }
+    input {
+      font-size: 5em;
+      padding: 10px;
+      width: 300px;
+      text-align: center;
+      text-transform: uppercase;
+      border-radius: 8px;
+      color: white;
+      background-color: #02000a;
+      border: none;
+      outline: none;
+    }
+    button.submit-btn {
+      margin-top: 20px;
+      font-size: 1.2em;
+      padding: 25px 150px;
+      border: 2px solid #252525;
+      border-radius: 8px;
+      background-color: transparent;
+      color: white;
+      cursor: pointer;
+    }
+    .keyboard {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 80px 80px 80px 80px;
+      gap: 15px;
+      justify-content: center;
+    }
+    .keyboard button {
+      padding: 25px;
+      font-size: 1.8em;
+      border-radius: 12px;
+      border: 2px solid #2e2e2e;
+      background-color: transparent;
+      color: rgb(206, 206, 206);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Enter Slot Code</h1>
+    <input id="slotCode" maxlength="3" placeholder="A01">
+
+    <div class="keyboard">
+      <button onclick="appendKey('A')">A</button>
+      <button onclick="appendKey('1')">1</button>
+      <button onclick="appendKey('2')">2</button>
+      <button onclick="appendKey('3')">3</button>
+      <button onclick="appendKey('B')">B</button>
+      <button onclick="appendKey('4')">4</button>
+      <button onclick="appendKey('5')">5</button>
+      <button onclick="appendKey('6')">6</button>
+      <button onclick="appendKey('C')">C</button>
+      <button onclick="appendKey('7')">7</button>
+      <button onclick="appendKey('8')">8</button>
+      <button onclick="appendKey('9')">9</button>
+      <button onclick="appendKey('D')">D</button>
+      <button onclick="appendKey('0')">0</button>
+      <button onclick="backspace()">⌫</button>
+    </div>
+
+    <button class="submit-btn" onclick="requestFreeSlot()">Submit</button>
+  </div>
+</body>
+</html>
