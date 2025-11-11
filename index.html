@@ -757,6 +757,19 @@
                         display: flex !important; /* Force show menuitem on desktop */
                     }
                 }
+.nav-logo {
+    height: 67px;
+    width: auto;
+    animation: tiltLogo 16s ease-in-out infinite;
+}
+
+@keyframes tiltLogo {
+    0% { transform: rotate(0deg); }
+    50% { transform: rotate(30deg); }
+    100% { transform: rotate(0deg); }
+}
+
+
         </style>
 </head>
 
@@ -766,7 +779,7 @@
                    <header>
                                 <nav>
                                         <a href="/">
-                                            <img src="/assets/yaa.png" alt="nav logo" class="nav-logo" />
+                                            <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="nav logo" class="nav-logo" />
                                         </a>
                                         <div class="hamburger" id="hamburger">&#9776;</div>
                                         <div class="menuitem">
@@ -778,6 +791,7 @@
                                     </nav>
                                     
                             </header>
+            
             
                            <!-- Overlay for Mobile Nav -->
 <div class="overlay" id="overlay">
