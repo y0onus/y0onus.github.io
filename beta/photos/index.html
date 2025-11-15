@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Interactive Gallery</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/CustomEase.min.js"></script>
+<script src="https://unpkg.com/split-type@0.3.4/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tweakpane@4.0.4/dist/tweakpane.min.js"></script>
+
+<style>
+    @import url("https://fonts.cdnfonts.com/css/thegoodmonolith");
+
+@font-face {
+  src: url("https://fonts.cdnfonts.com/css/pp-neue-montreal") format("woff2");
+  font-family: "PP Neue Montreal", sans-serif;
+  font-weight: 400;
+}
+
+:root {
+  --spacing-base: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --color-text: #ffffff;
+  --color-text-dim: 0.6;
+  --transition-medium: 0.3s ease;
+  --font-size-base: 14px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+body {
+  font-family: "PP Neue Montreal", sans-serif;
+  background-color: #141414;
+  color: #ffffff;
+  overflow: hidden;
+  position: relative;
+}
+
+
+
+.coordinates-section {
+  grid-column: 1 / span 3;
+  font-family: "TheGoodMonolith", monospace;
+}
+
+/* Key hint styling */
+.key-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 1px solid var(--color-text);
+  border-radius: 3px;
+  font-size: 12px;
+  margin: 0 3px;
+  min-width: 20px;
+  height: 20px;
+}
+
+/* Footer text styling */
+.footer p {
+  font-family: "TheGoodMonolith", monospace;
+}
+
+/* Global link styling */
+a {
+  position: relative;
+  cursor: pointer;
+  color: var(--color-text);
+  padding: 0;
+  display: inline-block;
+  z-index: 1;
+  text-decoration: none;
+  font-size: var(--font-size-base);
+  opacity: 1;
+  transition: color var(--transition-medium);
+  font-weight: 700;
+}
+
+a::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background-color: var(--color-text);
+  z-index: -1;
+  transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+a:hover::after,
+.links span:hover::after {
+  width: 100%;
+}
+
+a:hover,
+.links span:hover {
+  color: #141414;
+  mix-blend-mode: difference;
+  opacity: 1;
+}
+
+p {
+  display: block;
+  text-decoration: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01rem;
+  -webkit-font-smoothing: antialiased;
+}
+
+ul {
+  list-style: none;
+}
+
+h3 {
+  font-size: 14px;
+  margin-bottom: var(--spacing-base);
+  font-weight: 600;
+}
+
+/* Header and Footer */
+.header,
+.footer {
+  position: absolute;
+  left: 0;
+  width: 100vw;
+  padding: 1.5rem;
+  z-index: 10000;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  column-gap: var(--spacing-base);
+}
+
+.header {
+  top: 0;
+}
+
+.footer {
+  bottom: 0;
+}
+
+/* Grid column assignments */
+.nav-section {
+  grid-column: 1 / span 3;
+}
+
+.values-section {
+  grid-column: 5 / span 2;
+}
+
+.location-section {
+  grid-column: 7 / span 2;
+}
+
+.contact-section {
+  grid-column: 9 / span 2;
+}
+
+.social-section {
+  grid-column: 11 / span 2;
+  text-align: right;
+}
+
+/* Bottom bar */
+.coordinates-section {
+  grid-column: 1 / span 3;
+}
+
+.links-section {
+  grid-column: 5 / span 4;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-base);
+}
+
+.info-section {
+  grid-column: 9 / span 4;
+  text-align: right;
+}
+
+/* ===== LOGO COMPONENT ===== */
+.logo-container {
+  margin-bottom: var(--spacing-md);
+  display: block;
+  width: 3rem;
+  height: 1.5rem;
+  position: relative;
+}
+
+.logo-circles {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  transition: transform var(--transition-medium);
+  width: 1.4rem;
+  height: 1.4rem;
+  background-color: var(--color-text);
+  top: 50%;
+}
+
+.circle-1 {
+  left: 0;
+  transform: translate(0, -50%);
+}
+
+.circle-2 {
+  left: 0.8rem;
+  transform: translate(0, -50%);
+  mix-blend-mode: exclusion;
+}
+
+.logo-container:hover .circle-1 {
+  transform: translate(-0.5rem, -50%);
+}
+
+.logo-container:hover .circle-2 {
+  transform: translate(0.5rem, -50%);
+}
+
+.container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.canvas {
+  position: absolute;
+  will-change: transform;
+}
+
+.item {
+  position: absolute;
+  overflow: hidden;
+  background-color: #141414;
+  cursor: pointer;
+  border-radius: var(--border-radius, 0px);
+}
+
+.item-image-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.item-image-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  box-shadow: #141414;
+  z-index: 1;
+}
+
+.item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  transition: transform 0.3s ease;
+}
+
+.item:hover img {
+  transform: scale(var(--hover-scale, 1.05));
+}
+
+.item-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 10px;
+  z-index: 2;
+}
+
+/* Project title needs to be above everything */
+.project-title {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+  z-index: 10002;
+  /* Increased to be above expanded-item */
+}
+
+.project-title p {
+  position: relative;
+  height: 42px;
+  color: #ffffff;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+  overflow: hidden;
+}
+
+.project-title p .word {
+  position: relative;
+  display: inline-block;
+  font-family: "PP Neue Montreal", sans-serif;
+  font-size: 36px;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  transform: translateY(0%);
+  will-change: transform;
+}
+
+.item-name {
+  font-family: "PP Neue Montreal", sans-serif;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  margin-bottom: 2px;
+  position: relative;
+  overflow: hidden;
+  height: 16px;
+}
+
+.item-name .word {
+  position: relative;
+  display: inline-block;
+  will-change: transform;
+}
+
+.item-number {
+  font-family: "TheGoodMonolith", monospace;
+  color: #888888;
+  font-size: 10px;
+  font-weight: 400;
+  position: relative;
+  overflow: hidden;
+  height: 14px;
+}
+
+.item-number .char {
+  position: relative;
+  display: inline-block;
+  will-change: transform;
+}
+
+/* Expanded item should be above overlay but below titles and captions */
+.expanded-item {
+  position: fixed;
+  z-index: 10000;
+  /* Lower than project-title and caption-clone */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #141414;
+  overflow: hidden;
+  cursor: pointer;
+  border-radius: var(--border-radius, 0px);
+}
+
+.expanded-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #141414;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 9999;
+  /* Below expanded-item but above other content */
+}
+
+.overlay.active {
+  pointer-events: auto;
+}
+
+/* Page vignette effect */
+.page-vignette-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9998;
+  /* Below overlay */
+}
+
+.page-vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: inset 0 0 var(--page-vignette-size, 0px) #141414;
+  filter: blur(5px);
+}
+
+.page-vignette-strong {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: inset 0 0 var(--page-vignette-strong-size, 0px) #141414;
+  filter: blur(10px);
+}
+
+.page-vignette-extreme {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: inset 0 0 var(--page-vignette-extreme-size, 0px) #141414;
+  filter: blur(15px);
+}
+
+
+/* Tweakpane styles */
+.tp-dfwv {
+  z-index: 10000 !important;
+}
+
+/* Make sure the Tweakpane tab is visible when collapsed */
+.tp-rotv {
+  opacity: 0.5 !important;
+}
+
+.tp-rotv.tp-rotv-expanded {
+  opacity: 1 !important;
+}
+
+.tp-rotv.tp-rotv-collapsed {
+  opacity: 0.7 !important;
+}
+
+/* Caption clone needs to be above expanded item */
+.caption-clone {
+  position: fixed;
+  z-index: 10002;
+  /* Same as project-title to be above expanded-item */
+}
+
+/* Clone styles for animation */
+.caption-clone {
+  position: fixed;
+  z-index: 10001;
+}
+
+.caption-clone .item-name,
+.caption-clone .item-number {
+  overflow: hidden;
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="canvas" id="canvas"></div>
+  <div class="overlay" id="overlay"></div>
+</div>
+
+<div class="project-title">
+  <p></p>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  gsap.registerPlugin(CustomEase);
+  CustomEase.create("hop", "0.9, 0, 0.1, 1");
+
+  const items = [
+    "Project One", "Project Two", "Project Three", "Project Four", "Project Five",
+    "Project Six", "Project Seven", "Project Eight", "Project Nine", "Project Ten",
+    "Project Eleven", "Project Twelve", "Project Thirteen", "Project Fourteen", "Project Fifteen"
+  ];
+  
+  const imageUrls = [
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-01.png?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-02.jpg?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-03.jpg?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-04.jpg?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-05.jpg?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-06.jpg?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-1.jpg?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-2.jpg?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-5.jpg?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-5.jpg?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-6.jpg?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-6.jpg?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-7.jpg?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-8.png?raw=true",
+    "https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/assets/ph25-9.png?raw=true"
+  ];
+  
+  const container = document.querySelector(".container");
+  const canvas = document.getElementById("canvas");
+  const overlay = document.getElementById("overlay");
+  const projectTitleElement = document.querySelector(".project-title p");
+  
+  // Updated settings for cleaner look and bigger expanded view
+  const settings = {
+  baseWidth: 380, // Increased from 350
+  minHeight: 280, // Increased from 250
+  maxHeight: 550, // Increased from 500
+  itemGap: 20, // Reduced from 40 for closer spacing
+  hoverScale: 1.03,
+  expandedScale: 0.85,
+  dragEase: 0.075,
+  momentumFactor: 200,
+  bufferZone: 3,
+  borderRadius: 0,
+  vignetteSize: 0,
+  vignetteStrength: 0.7,
+  overlayOpacity: 0.95,
+  overlayEaseDuration: 0.8,
+  zoomDuration: 0.6,
+  titleAutoHideDelay: 3,
+  titleAutoHideDuration: 1
+  };
+  
+  let itemGap = settings.itemGap;
+  const columns = 4;
+  const itemCount = items.length;
+  
+  // Dynamic cell sizing based on content
+  let cellWidth = settings.baseWidth + settings.itemGap;
+  let cellHeight = settings.maxHeight + settings.itemGap;
+  
+  let isDragging = false;
+  let startX, startY;
+  let targetX = 0, targetY = 0;
+  let currentX = 0, currentY = 0;
+  let dragVelocityX = 0, dragVelocityY = 0;
+  let lastDragTime = 0;
+  let mouseHasMoved = false;
+  let visibleItems = new Set();
+  let lastUpdateTime = 0;
+  let lastX = 0, lastY = 0;
+  let isExpanded = false;
+  let activeItem = null;
+  let activeItemId = null;
+  let canDrag = true;
+  let originalPosition = null;
+  let expandedItem = null;
+  let overlayAnimation = null;
+  let titleSplit = null;
+  let paneInstance = null;
+  let titleAutoHideTimeout = null;
+  let imageData = [];
+  let imagesLoaded = 0;
+  let imageAssignments = new Map();
+
+  // Preload images and store their dimensions
+  function preloadImages(callback) {
+    imageUrls.forEach((url, index) => {
+      const img = new Image();
+      img.onload = function() {
+        imageData[index] = {
+          url: url,
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+          aspectRatio: img.naturalWidth / img.naturalHeight
+        };
+        imagesLoaded++;
+        if (imagesLoaded === imageUrls.length) {
+          callback();
+        }
+      };
+      img.onerror = function() {
+        imageData[index] = {
+          url: url,
+          width: settings.baseWidth,
+          height: settings.minHeight,
+          aspectRatio: settings.baseWidth / settings.minHeight
+        };
+        imagesLoaded++;
+        if (imagesLoaded === imageUrls.length) {
+          callback();
+        }
+      };
+      img.src = url;
+    });
+  }
+
+  // Calculate item size based on image aspect ratio for cleaner look
+  function getItemSize(row, col) {
+    const itemNum = Math.abs((row * columns + col) % itemCount);
+    const imgData = imageData[itemNum];
+    
+    if (imgData && imagesLoaded === imageUrls.length) {
+      const baseWidth = settings.baseWidth;
+      const targetHeight = baseWidth / imgData.aspectRatio;
+      
+      // Constrain height within reasonable limits
+      const constrainedHeight = Math.max(
+        settings.minHeight, 
+        Math.min(settings.maxHeight, targetHeight)
+      );
+      
+      return {
+        width: baseWidth,
+        height: constrainedHeight
+      };
+    }
+    
+    // Fallback
+    return {
+      width: settings.baseWidth,
+      height: settings.minHeight
+    };
+  }
+
+  // Generate a unique ID for each grid position
+  function getItemId(col, row) {
+    return `${col},${row}`;
+  }
+
+  // Get the absolute position for an item
+  function getItemPosition(col, row) {
+    const xPos = col * cellWidth;
+    const yPos = row * cellHeight;
+    
+    return {
+      x: xPos,
+      y: yPos
+    };
+  }
+
+  // Get image index for a position, ensuring no adjacent duplicates
+  function getImageIndexForPosition(col, row) {
+    const itemId = getItemId(col, row);
+    
+    if (imageAssignments.has(itemId)) {
+      return imageAssignments.get(itemId);
+    }
+    
+    const adjacentPositions = [
+      { col: col - 1, row: row }, { col: col + 1, row: row },
+      { col: col, row: row - 1 }, { col: col, row: row + 1 },
+      { col: col - 1, row: row - 1 }, { col: col + 1, row: row - 1 },
+      { col: col - 1, row: row + 1 }, { col: col + 1, row: row + 1 }
+    ];
+    
+    const usedImages = new Set();
+    adjacentPositions.forEach(pos => {
+      const adjId = getItemId(pos.col, pos.row);
+      if (imageAssignments.has(adjId)) {
+        usedImages.add(imageAssignments.get(adjId));
+      }
+    });
+    
+    const availableImages = [];
+    for (let i = 0; i < imageUrls.length; i++) {
+      if (!usedImages.has(i)) {
+        availableImages.push(i);
+      }
+    }
+    
+    let imageIndex;
+    if (availableImages.length > 0) {
+      imageIndex = availableImages[Math.floor(Math.random() * availableImages.length)];
+    } else {
+      imageIndex = Math.floor(Math.random() * imageUrls.length);
+    }
+    
+    imageAssignments.set(itemId, imageIndex);
+    return imageIndex;
+  }
+
+  function updateVisibleItems() {
+    const buffer = settings.bufferZone;
+    const viewWidth = window.innerWidth * (1 + buffer);
+    const viewHeight = window.innerHeight * (1 + buffer);
+    
+    const startCol = Math.floor((-currentX - viewWidth / 2) / cellWidth);
+    const endCol = Math.ceil((-currentX + viewWidth * 1.5) / cellWidth);
+    const startRow = Math.floor((-currentY - viewHeight / 2) / cellHeight);
+    const endRow = Math.ceil((-currentY + viewHeight * 1.5) / cellHeight);
+    
+    const currentItems = new Set();
+    
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const itemId = getItemId(col, row);
+        currentItems.add(itemId);
+        
+        if (visibleItems.has(itemId)) continue;
+        if (activeItemId === itemId && isExpanded) continue;
+        
+        const itemSize = getItemSize(row, col);
+        const position = getItemPosition(col, row);
+        
+        const item = document.createElement("div");
+        item.className = "item";
+        item.id = itemId;
+        item.style.width = `${itemSize.width}px`;
+        item.style.height = `${itemSize.height}px`;
+        item.style.left = `${position.x}px`;
+        item.style.top = `${position.y}px`;
+        item.dataset.col = col;
+        item.dataset.row = row;
+        item.dataset.width = itemSize.width;
+        item.dataset.height = itemSize.height;
+        
+        const itemNum = getImageIndexForPosition(col, row);
+        
+        const imageContainer = document.createElement("div");
+        imageContainer.className = "item-image-container";
+        
+        const img = document.createElement("img");
+        img.src = imageUrls[itemNum];
+        img.alt = `Image ${itemNum + 1}`;
+        
+        // Use contain to show full image without cropping
+        img.style.objectFit = "contain";
+        img.style.width = "100%";
+        img.style.height = "100%";
+        
+        imageContainer.appendChild(img);
+        item.appendChild(imageContainer);
+        
+        // REMOVED CAPTION ELEMENTS - cleaner look without titles
+        
+        item.addEventListener("click", (e) => {
+          if (mouseHasMoved || isDragging) return;
+          handleItemClick(item, itemNum);
+        });
+        
+        canvas.appendChild(item);
+        visibleItems.add(itemId);
+      }
+    }
+    
+    visibleItems.forEach((itemId) => {
+      if (!currentItems.has(itemId) || (activeItemId === itemId && isExpanded)) {
+        const item = document.getElementById(itemId);
+        if (item && item.parentNode === canvas) {
+          canvas.removeChild(item);
+        }
+        visibleItems.delete(itemId);
+      }
+    });
+  }
+
+  function handleItemClick(item, itemIndex) {
+    if (isExpanded) {
+      if (expandedItem) closeExpandedItem();
+    } else {
+      expandItem(item, itemIndex);
+    }
+  }
+
+  function expandItem(item, itemIndex) {
+    isExpanded = true;
+    activeItem = item;
+    activeItemId = item.id;
+    canDrag = false;
+    container.style.cursor = "auto";
+    
+    const imgSrc = item.querySelector("img").src;
+    const itemWidth = parseInt(item.dataset.width);
+    const itemHeight = parseInt(item.dataset.height);
+    
+    // REMOVED TITLE ANIMATION - cleaner look without project titles
+    
+    const rect = item.getBoundingClientRect();
+    originalPosition = {
+      id: item.id,
+      rect: rect,
+      imgSrc: imgSrc,
+      width: itemWidth,
+      height: itemHeight
+    };
+    
+    overlay.classList.add("active");
+    animateOverlayIn();
+    
+    expandedItem = document.createElement("div");
+    expandedItem.className = "expanded-item";
+    expandedItem.style.width = `${itemWidth}px`;
+    expandedItem.style.height = `${itemHeight}px`;
+    expandedItem.style.zIndex = "10000";
+    expandedItem.style.borderRadius = `var(--border-radius, 0px)`;
+    
+    const img = document.createElement("img");
+    img.src = imgSrc;
+    
+    // Use contain for expanded view to show full image
+    img.style.objectFit = "contain";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    
+    expandedItem.appendChild(img);
+    expandedItem.addEventListener("click", closeExpandedItem);
+    document.body.appendChild(expandedItem);
+    
+    // Fade out other items
+    document.querySelectorAll(".item").forEach((el) => {
+      if (el !== activeItem) {
+        gsap.to(el, {
+          opacity: 0,
+          duration: settings.overlayEaseDuration,
+          ease: "power2.inOut"
+        });
+      }
+    });
+    
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    const imgData = imageData[itemIndex];
+    let targetWidth, targetHeight;
+    
+    if (imgData) {
+      const imageAspectRatio = imgData.aspectRatio;
+      
+      // Calculate maximum dimensions (90% of viewport for bigger view)
+      const maxWidth = viewportWidth * 0.9;
+      const maxHeight = viewportHeight * 0.9;
+      
+      if (imageAspectRatio > 1) {
+        // Landscape - use wider dimension
+        targetWidth = Math.min(maxWidth, viewportWidth * settings.expandedScale);
+        targetHeight = targetWidth / imageAspectRatio;
+        
+        if (targetHeight > maxHeight) {
+          targetHeight = maxHeight;
+          targetWidth = targetHeight * imageAspectRatio;
+        }
+      } else {
+        // Portrait - use taller dimension  
+        targetHeight = Math.min(maxHeight, viewportHeight * settings.expandedScale);
+        targetWidth = targetHeight * imageAspectRatio;
+        
+        if (targetWidth > maxWidth) {
+          targetWidth = maxWidth;
+          targetHeight = targetWidth / imageAspectRatio;
+        }
+      }
+    } else {
+      // Fallback - bigger default size
+      targetWidth = viewportWidth * settings.expandedScale;
+      const aspectRatio = itemHeight / itemWidth;
+      targetHeight = targetWidth * aspectRatio;
+      
+      const maxHeight = viewportHeight * 0.9;
+      if (targetHeight > maxHeight) {
+        const scaleFactor = maxHeight / targetHeight;
+        targetHeight = maxHeight;
+        targetWidth = targetWidth * scaleFactor;
+      }
+    }
+    
+    gsap.fromTo(
+      expandedItem,
+      {
+        width: itemWidth,
+        height: itemHeight,
+        x: rect.left + itemWidth / 2 - window.innerWidth / 2,
+        y: rect.top + itemHeight / 2 - window.innerHeight / 2
+      },
+      {
+        width: targetWidth,
+        height: targetHeight,
+        x: 0,
+        y: 0,
+        duration: settings.zoomDuration,
+        ease: "hop"
+      }
+    );
+  }
+
+  function closeExpandedItem() {
+    if (!expandedItem || !originalPosition) return;
+    
+    if (titleAutoHideTimeout) {
+      clearTimeout(titleAutoHideTimeout);
+      titleAutoHideTimeout = null;
+    }
+    
+    // REMOVED TITLE ANIMATION
+    
+    animateOverlayOut();
+    
+    document.querySelectorAll(".item").forEach((el) => {
+      if (el.id !== activeItemId) {
+        gsap.to(el, {
+          opacity: 1,
+          duration: settings.overlayEaseDuration,
+          delay: 0.3,
+          ease: "power2.inOut"
+        });
+      }
+    });
+    
+    const originalItem = document.getElementById(activeItemId);
+    const originalRect = originalPosition.rect;
+    const originalWidth = originalPosition.width;
+    const originalHeight = originalPosition.height;
+    
+    gsap.to(expandedItem, {
+      width: originalWidth,
+      height: originalHeight,
+      x: originalRect.left + originalWidth / 2 - window.innerWidth / 2,
+      y: originalRect.top + originalHeight / 2 - window.innerHeight / 2,
+      duration: settings.zoomDuration,
+      ease: "hop",
+      onComplete: () => {
+        if (expandedItem && expandedItem.parentNode) {
+          document.body.removeChild(expandedItem);
+        }
+        
+        if (originalItem) {
+          originalItem.style.visibility = "visible";
+        }
+        
+        expandedItem = null;
+        isExpanded = false;
+        activeItem = null;
+        originalPosition = null;
+        activeItemId = null;
+        canDrag = true;
+        container.style.cursor = "grab";
+        dragVelocityX = 0;
+        dragVelocityY = 0;
+        
+        overlay.classList.remove("active");
+      }
+    });
+  }
+
+  function animateOverlayIn() {
+    if (overlayAnimation) overlayAnimation.kill();
+    
+    overlayAnimation = gsap.to(overlay, {
+      opacity: settings.overlayOpacity,
+      duration: settings.overlayEaseDuration,
+      ease: "power2.inOut",
+      overwrite: true
+    });
+  }
+
+  function animateOverlayOut() {
+    if (overlayAnimation) overlayAnimation.kill();
+    
+    overlayAnimation = gsap.to(overlay, {
+      opacity: 0,
+      duration: settings.overlayEaseDuration,
+      ease: "power2.inOut"
+    });
+  }
+
+  function animate() {
+    if (canDrag) {
+      const ease = settings.dragEase;
+      currentX += (targetX - currentX) * ease;
+      currentY += (targetY - currentY) * ease;
+      
+      canvas.style.transform = `translate(${currentX}px, ${currentY}px)`;
+      
+      const now = Date.now();
+      const distMoved = Math.sqrt(
+        Math.pow(currentX - lastX, 2) + Math.pow(currentY - lastY, 2)
+      );
+      
+      if (distMoved > 100 || now - lastUpdateTime > 120) {
+        updateVisibleItems();
+        lastX = currentX;
+        lastY = currentY;
+        lastUpdateTime = now;
+      }
+    }
+    
+    requestAnimationFrame(animate);
+  }
+
+  // Event listeners (same as before)
+  container.addEventListener("mousedown", (e) => {
+    if (!canDrag) return;
+    
+    isDragging = true;
+    mouseHasMoved = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    container.style.cursor = "grabbing";
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!isDragging || !canDrag) return;
+    
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      mouseHasMoved = true;
+    }
+    
+    const now = Date.now();
+    const dt = Math.max(10, now - lastDragTime);
+    lastDragTime = now;
+    
+    dragVelocityX = dx / dt;
+    dragVelocityY = dy / dt;
+    
+    targetX += dx;
+    targetY += dy;
+    
+    startX = e.clientX;
+    startY = e.clientY;
+  });
+
+  window.addEventListener("mouseup", (e) => {
+    if (!isDragging) return;
+    
+    isDragging = false;
+    
+    if (canDrag) {
+      container.style.cursor = "grab";
+      
+      if (Math.abs(dragVelocityX) > 0.1 || Math.abs(dragVelocityY) > 0.1) {
+        const momentumFactor = settings.momentumFactor;
+        targetX += dragVelocityX * momentumFactor;
+        targetY += dragVelocityY * momentumFactor;
+      }
+    }
+  });
+
+  overlay.addEventListener("click", () => {
+    if (isExpanded) closeExpandedItem();
+  });
+
+  container.addEventListener("touchstart", (e) => {
+    if (!canDrag) return;
+    
+    isDragging = true;
+    mouseHasMoved = false;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  });
+
+  window.addEventListener("touchmove", (e) => {
+    if (!isDragging || !canDrag) return;
+    
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      mouseHasMoved = true;
+    }
+    
+    targetX += dx;
+    targetY += dy;
+    
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  });
+
+  window.addEventListener("touchend", () => {
+    isDragging = false;
+  });
+
+  window.addEventListener("resize", () => {
+    if (isExpanded && expandedItem) {
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      const imgData = imageData[imageAssignments.get(activeItemId)];
+      let targetWidth, targetHeight;
+      
+      if (imgData) {
+        const imageAspectRatio = imgData.aspectRatio;
+        const maxWidth = viewportWidth * 0.9;
+        const maxHeight = viewportHeight * 0.9;
+        
+        if (imageAspectRatio > 1) {
+          targetWidth = Math.min(maxWidth, viewportWidth * settings.expandedScale);
+          targetHeight = targetWidth / imageAspectRatio;
+          
+          if (targetHeight > maxHeight) {
+            targetHeight = maxHeight;
+            targetWidth = targetHeight * imageAspectRatio;
+          }
+        } else {
+          targetHeight = Math.min(maxHeight, viewportHeight * settings.expandedScale);
+          targetWidth = targetHeight * imageAspectRatio;
+          
+          if (targetWidth > maxWidth) {
+            targetWidth = maxWidth;
+            targetHeight = targetWidth / imageAspectRatio;
+          }
+        }
+      } else {
+        targetWidth = viewportWidth * settings.expandedScale;
+        const aspectRatio = originalPosition.height / originalPosition.width;
+        targetHeight = targetWidth * aspectRatio;
+        
+        const maxHeight = viewportHeight * 0.9;
+        if (targetHeight > maxHeight) {
+          const scaleFactor = maxHeight / targetHeight;
+          targetHeight = maxHeight;
+          targetWidth = targetWidth * scaleFactor;
+        }
+      }
+      
+      gsap.to(expandedItem, {
+        width: targetWidth,
+        height: targetHeight,
+        duration: 0.3,
+        ease: "power2.out"
+      });
+    } else {
+      updateVisibleItems();
+    }
+  });
+
+  // Initialize
+  preloadImages(function() {
+    updateVisibleItems();
+    animate();
+  });
+});
+</script>
+</body>
+</html>
