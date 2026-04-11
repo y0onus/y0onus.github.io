@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Yoonus</title>
+    <title>Yoonus | Visual Alchemist — Light Projects</title>
     <meta name="description" content="Ibrahim Yoonus - Graphic Designer & Photographer from the Maldives, crafting striking visuals and authentic moments.">
     <meta property="og:image" content="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/bannnner.png?raw=true">
     <meta property="og:description" content="Creative professional turning ideas into compelling visuals.">
@@ -710,31 +710,26 @@
 </head>
 <body>
 <div data-scroll-container id="scroll-container">
+<nav class="glass-nav" id="glassNav">
+    <a href="index.html">Home</a>
+    <a href="/p">Projects</a>
+    <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="nav-logo-center">
+    <a href="/g" class="active">Gallery</a>
+    <a href="/c">Contact</a>
+</nav>
 
-    <!-- Glass nav (pure glass, no dark fill) -->
-    <div class="glass-nav" id="glassNav">
-        <a href="#about"    data-scroll-to="section_2">About</a>
-        <a href="#projects" data-scroll-to="projects">Projects</a>
-        <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="nav-logo-center">
-        <a href="#gallery"  data-scroll-to="section_3">Gallery</a>
-        <a href="#contact"  data-scroll-to="footer">Contact</a>
-    </div>
-
-    <!-- Mobile header -->
-    <div class="mobile-header">
+  <div class="mobile-header">
         <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="mobile-logo">
         <div class="mobile-menu-btn" id="mobileMenuBtn">
             <span class="material-symbols-rounded">dehaze</span>
         </div>
     </div>
-
-    <!-- Mobile dropdown -->
-    <div class="mobile-dropdown" id="mobileDropdown">
-        <a href="#about"    data-scroll-to="section_2">About</a>
-        <a href="#projects" data-scroll-to="projects">Projects</a>
-        <a href="#gallery"  data-scroll-to="section_3">Gallery</a>
-        <a href="#contact"  data-scroll-to="footer">Contact</a>
-        </div>
+<div class="mobile-dropdown" id="mobileDropdown">
+    <a href="index.html">Home</a>
+    <a href="/p">Projects</a>
+    <a href="/g">Gallery</a>
+    <a href="/c">Contact</a>
+</div>
 
     <main>
         <!-- HERO -->
@@ -880,7 +875,7 @@
         const el = document.createElement('div');
         el.className = 'floating-rect';
         const pos = randPos();
-        el.style.cssText = `left:${pos.left};top:${pos.top};width:9px;height:20px;`;
+        el.style.cssText = `left:${pos.left};top:${pos.top};width:15px;height:30px;`;
         const color = uniqueColor(); active.add(color);
         el.style.backgroundColor = color;
         section.appendChild(el);
@@ -891,13 +886,12 @@
         const { el } = r;
         while (true) {
             el.style.transition = 'opacity 0.55s cubic-bezier(0.16,1,0.3,1), filter 0.55s ease';
-            el.style.filter = 'blur(1.5px) drop-shadow(0 0 4px currentColor)';
+            el.style.filter = 'blur(15px) drop-shadow(0 0 4px currentColor)';
             el.style.opacity = '0.8';
             await new Promise(res => setTimeout(res, 1400 + Math.random() * 1200));
 
             el.style.transition = 'opacity 0.5s ease-in, filter 0.5s ease-in';
             el.style.opacity = '0';
-            el.style.filter = 'blur(4px)';
             await new Promise(res => setTimeout(res, 500));
 
             const pos = randPos();
