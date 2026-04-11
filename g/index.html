@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Gallery — Yoonus | Pixel Alchemist</title>
+    <meta name="description" content="Visual archive — graphics, photography and art by Ibrahim Yoonus.">
+    <link rel="icon" href="yaafav.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Pixelify+Sans&family=Ballet:opsz@16..72&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=dehaze" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXV7Y6lN2rK31En0ziA1K94DCSsiZ9rx0",
+            authDomain: "maxvotex-45850.firebaseapp.com",
+            databaseURL: "https://maxvotex-45850-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "maxvotex-45850",
+            storageBucket: "maxvotex-45850.firebasestorage.app",
+            messagingSenderId: "48808531623",
+            appId: "1:48808531623:web:d7999d95a7b5e3843dad82"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let allItems = [];
+        let activeFilter = 'all';
+
+        // Simplified bento: direct image loading, no lossy placeholder system
+        function buildBento(items) {
+            const grid = document.getElementById('bentoGrid');
+            grid.innerHTML = '';
+            if (!items.length) {
+                grid.innerHTML = '<div class="bento-empty">⚡ no pixels yet — stay tuned ⚡</div>';
+                return;
+            }
+
+            items.forEach((item, i) => {
+                const isLarge = (i % 5 === 0);
+                const box = document.createElement('div');
+                box.className = `bento-box ${isLarge ? 'large' : 'small'} bento-animate`;
+                box.setAttribute('data-full', item.fullImage || '');
+                box.setAttribute('data-title', item.title || '');
+                box.setAttribute('data-cat', item.category || '');
+                box.style.setProperty('--delay', (i * 0.06) + 's');
+
+                // Direct high-res image (no lossy/lossless confusion)
+                const imageSrc = item.fullImage || '';
+                
+                box.innerHTML = `
+                    <div class="bento-img-wrapper">
+                        <img class="bento-img" src="${imageSrc}" alt="${item.title || 'Gallery piece'}" loading="lazy">
+                        <div class="bento-overlay"></div>
+                    </div>
+                    ${item.category ? `<span class="cat-pill">${item.category}</span>` : ''}
+                    <span class="work-text">${item.title || ''}</span>
+                `;
+
+                box.addEventListener('click', () => openLightbox(imageSrc, item.title, item.category));
+                grid.appendChild(box);
+            });
+
+            // Simple fade-in reveal with intersection observer
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (!e.isIntersecting) return;
+                    e.target.classList.add('in-view');
+                    io.unobserve(e.target);
+                });
+            }, { threshold: 0.1, rootMargin: '40px 0px 40px 0px' });
+
+            grid.querySelectorAll('.bento-box').forEach(b => io.observe(b));
+        }
+
+        function applyFilter(cat) {
+            activeFilter = cat;
+            const filtered = cat === 'all' ? allItems : allItems.filter(i => (i.category || '').toLowerCase() === cat);
+            buildBento(filtered);
+
+            document.querySelectorAll('.filter-pill').forEach(p => {
+                p.classList.toggle('active', p.dataset.filter === cat);
+            });
+        }
+
+        window.applyFilter = applyFilter;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('bentoGrid');
+            grid.innerHTML = '<div class="bento-loading"><span></span><span></span><span></span></div>';
+
+            onValue(ref(db, 'gallery'), (snap) => {
+                const data = snap.val();
+                if (!data) { allItems = []; buildBento([]); return; }
+                allItems = Object.entries(data)
+                    .map(([id, v]) => ({ id, ...v }))
+                    .sort((a, b) => (b.order || 0) - (a.order || 0));
+                applyFilter(activeFilter);
+            });
+        });
+
+        // Lightbox
+        function openLightbox(src, title, cat) {
+            const lb = document.getElementById('lightbox');
+            const lbImg = document.getElementById('lightboxImg');
+            const lbTitle = document.getElementById('lightboxTitle');
+            const lbCat = document.getElementById('lightboxCat');
+            const loader = document.getElementById('lbLoader');
+            
+            if (loader) loader.style.display = 'flex';
+            lbImg.classList.remove('loaded');
+            lbImg.src = src;
+            lbImg.onload = () => {
+                lbImg.classList.add('loaded');
+                if (loader) loader.style.display = 'none';
+            };
+            lbImg.onerror = () => { if (loader) loader.style.display = 'none'; };
+            lbTitle.textContent = title || '';
+            lbCat.textContent = cat || '';
+            lbCat.style.display = cat ? 'inline-block' : 'none';
+            lb.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        window.closeLightbox = function() {
+            document.getElementById('lightbox').classList.remove('active');
+            document.body.style.overflow = '';
+            setTimeout(() => { 
+                const img = document.getElementById('lightboxImg');
+                if (img) img.src = ''; 
+            }, 400);
+        };
+    </script>
+
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --ff-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --ff-pixel: 'Pixelify Sans', monospace;
+            --ff-cursive: 'Ballet', cursive;
+            --clr-black: #141414;
+            --clr-white: #e6e4de;
+            --clr-text: rgba(230, 228, 222, 0.75);
+            --clr-accent: #e6e4de;
+            --fs-giant: clamp(5rem, 16vw, 12rem);
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+        body { background: var(--clr-black); color: var(--clr-text); font-family: var(--ff-sans); font-weight: 300; overflow-x: hidden; }
+        a { text-decoration: none; color: inherit; }
+
+        /* ── NAV ── */
+        .glass-nav {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(255,255,255,0.08); backdrop-filter: blur(22px) saturate(180%);
+            -webkit-backdrop-filter: blur(22px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.18); border-radius: 60px;
+            padding: 0.5rem 2rem; display: flex; align-items: center; gap: 2.5rem;
+            z-index: 1000;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .glass-nav a { font-size: 0.92rem; font-weight: 400; color: rgba(240,238,233,0.9); transition: color 0.25s ease; white-space: nowrap; }
+        .glass-nav a:hover, .glass-nav a.active { color: #fff; }
+        .glass-nav .nav-logo-center { height: 40px; width: auto; animation: tiltLogo 16s ease-in-out infinite; }
+        @keyframes tiltLogo { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(12deg)} }
+        @media (max-width: 768px) { .glass-nav { display: none !important; } }
+
+        /* Mobile */
+        .mobile-header { position: fixed; top: 0; left: 0; width: 100%; padding: 1rem 1.5rem; display: none; justify-content: space-between; align-items: center; z-index: 1001; pointer-events: none; }
+        .mobile-header .mobile-logo { height: 45px; pointer-events: auto; animation: tiltLogo 16s ease-in-out infinite; }
+        .mobile-menu-btn { pointer-events: auto; width: 48px; height: 48px; background: rgba(255,255,255,0.1); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s var(--ease-out-expo); color: var(--clr-white); }
+        .mobile-menu-btn:hover { background: rgba(255,255,255,0.18); transform: scale(0.95); }
+        .mobile-menu-btn .material-symbols-rounded { font-size: 26px; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 26; }
+        @media (max-width: 768px) { .mobile-header { display: flex; } }
+        .mobile-dropdown { position: fixed; top: 75px; right: 20px; background: rgba(255,255,255,0.1); backdrop-filter: blur(24px) saturate(180%); border-radius: 24px; padding: 1rem 0.5rem; display: none; flex-direction: column; gap: 0.4rem; z-index: 1000; border: 1px solid rgba(255,255,255,0.18); min-width: 175px; box-shadow: 0 16px 40px rgba(0,0,0,0.2); opacity: 0; transform: scale(0.92) translateY(-8px); transition: opacity 0.3s var(--ease-out-expo), transform 0.3s var(--ease-out-expo); pointer-events: none; }
+        .mobile-dropdown.active { display: flex; opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+        .mobile-dropdown a { color: rgba(230,228,222,0.9); font-size: 0.98rem; padding: 0.65rem 1.1rem; border-radius: 14px; transition: background 0.2s ease; font-weight: 400; }
+        .mobile-dropdown a:hover { background: rgba(255,255,255,0.12); color: white; }
+
+        /* ── HERO (clean, no floating squares) ── */
+        .page-hero { min-height: 52vh; display: flex; align-items: flex-end; padding: 9rem 2rem 4.5rem; position: relative; background: var(--clr-black); }
+        .hero-inner { max-width: 1300px; width: 100%; margin: 0 auto; position: relative; z-index: 2; }
+        .page-label { font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(230,228,222,0.4); margin-bottom: 1.4rem; font-weight: 500; }
+        
+        /* Pixel font for "ary" part */
+        .page-title { font-size: clamp(4.5rem, 13vw, 10.5rem); font-weight: 700; letter-spacing: -0.04em; color: var(--clr-white); line-height: 0.92; }
+        .pixel-ary {
+            font-family: var(--ff-pixel);
+            display: inline-block;
+            letter-spacing: 0.02em;
+            font-weight: 500;
+            font-size: 0.95em;
+            margin-left: 0.02em;
+        }
+        .page-title .normal-part {
+            font-family: inherit;
+        }
+        
+        .hero-sub { margin-top: 2rem; font-size: 0.9rem; color: rgba(230,228,222,0.4); letter-spacing: 0.05em; }
+
+        /* ── FILTER PILLS ── */
+        .filter-bar { padding: 2.5rem 2rem 0; max-width: 1300px; margin: 0 auto; display: flex; gap: 0.6rem; flex-wrap: wrap; }
+        .filter-pill { font-size: 0.78rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 1.2rem; border-radius: 40px; border: 1px solid rgba(230,228,222,0.18); color: rgba(230,228,222,0.5); cursor: pointer; transition: all 0.3s var(--ease-out-expo); background: transparent; font-family: var(--ff-sans); }
+        .filter-pill:hover { border-color: rgba(230,228,222,0.45); color: rgba(230,228,222,0.85); }
+        .filter-pill.active { background: var(--clr-white); color: var(--clr-black); border-color: var(--clr-white); }
+
+        /* ── BENTO GRID (direct images, no lossy) ── */
+        .gallery-section { padding: 2.5rem 2rem 6rem; }
+        .bento-wrap { max-width: 1300px; margin: 0 auto; }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.2rem;
+        }
+        @media (max-width: 768px) { .bento-grid { grid-template-columns: 1fr; gap: 0.9rem; } }
+
+        .bento-box {
+            position: relative; border-radius: 24px; overflow: hidden;
+            cursor: pointer; background: #1e1e1e;
+            transform: translateY(30px); opacity: 0;
+            transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo), scale 0.45s var(--ease-out-expo);
+            transition-delay: var(--delay, 0s);
+            will-change: transform, opacity;
+        }
+        .bento-box.in-view { opacity: 1; transform: translateY(0); }
+        .bento-box:hover { scale: 0.975; }
+        .bento-box.large { grid-row: span 2; height: 600px; }
+        .bento-box.small { height: 290px; }
+        @media (max-width: 768px) {
+            .bento-box.large, .bento-box.small { height: 280px; grid-row: span 1; }
+        }
+
+        .bento-img-wrapper {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .bento-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        .bento-box:hover .bento-img {
+            transform: scale(1.03);
+        }
+
+        .bento-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0);
+            transition: background 0.35s ease;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .bento-box:hover .bento-overlay {
+            background: rgba(0,0,0,0.2);
+        }
+
+        /* Category pill — top right */
+        .cat-pill {
+            position: absolute; top: 14px; right: 14px; z-index: 10;
+            background: #141414; color: #e6e4de;
+            font-size: 9px; font-weight: 600; letter-spacing: 0.18em;
+            text-transform: uppercase; padding: 5px 12px; border-radius: 40px;
+            font-family: var(--ff-sans);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+        }
+
+        /* WORK TEXT — PIXEL FONT (for gallery item titles) */
+        .work-text {
+            position: absolute; bottom: 14px; left: 14px; z-index: 10;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 6px 14px; border-radius: 40px;
+            font-size: 0.82rem; font-weight: 500; 
+            font-family: var(--ff-pixel), monospace;
+            letter-spacing: 0.02em;
+            color: white;
+            max-width: calc(100% - 28px);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            text-transform: lowercase;
+        }
+
+        /* Loading animation */
+        .bento-loading { grid-column: 1/-1; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 6rem 0; }
+        .bento-loading span { display: block; width: 10px; height: 10px; border-radius: 50%; background: rgba(230,228,222,0.4); animation: loadPulse 1.4s ease-in-out infinite; }
+        .bento-loading span:nth-child(2) { animation-delay: 0.2s; }
+        .bento-loading span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes loadPulse { 0%,80%,100%{transform:scale(0.6);opacity:0.3} 40%{transform:scale(1);opacity:1} }
+
+        .bento-empty {
+            grid-column: 1/-1; text-align: center; padding: 5rem 0;
+            color: rgba(230,228,222,0.4); font-size: 1.2rem;
+            font-family: var(--ff-pixel); letter-spacing: 1px;
+        }
+
+        /* ── LIGHTBOX ── */
+        .lightbox {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.35s ease;
+            backdrop-filter: blur(12px);
+        }
+        .lightbox.active { opacity: 1; pointer-events: auto; }
+        .lightbox-img-wrap {
+            transform: scale(0.92); opacity: 0;
+            transition: transform 0.45s var(--ease-out-expo), opacity 0.4s ease;
+            max-width: 90vw; max-height: 80vh; position: relative;
+        }
+        .lightbox.active .lightbox-img-wrap { transform: scale(1); opacity: 1; }
+        .lightbox-img-wrap img {
+            max-width: 90vw; max-height: 80vh; object-fit: contain;
+            border-radius: 20px; box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            display: block; opacity: 0; transition: opacity 0.4s ease;
+        }
+        .lightbox-img-wrap img.loaded { opacity: 1; }
+        .lb-loader {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            display: flex; gap: 8px; z-index: 5;
+        }
+        .lb-loader span { display: block; width: 10px; height: 10px; border-radius: 50%; background: rgba(230,228,222,0.8); animation: loadPulse 1.2s ease-in-out infinite; }
+        .lb-loader span:nth-child(2) { animation-delay: 0.2s; }
+        .lb-loader span:nth-child(3) { animation-delay: 0.4s; }
+        .lightbox-meta { margin-top: 1.5rem; display: flex; align-items: center; gap: 0.8rem; }
+        #lightboxTitle { font-size: 0.9rem; color: rgba(230,228,222,0.7); font-weight: 400; font-family: var(--ff-sans); }
+        #lightboxCat { font-size: 9px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; padding: 4px 12px; border-radius: 40px; background: #141414; color: #e6e4de; }
+        .lightbox-close {
+            position: absolute; top: 1.5rem; right: 2rem; font-size: 2.4rem;
+            color: rgba(255,255,255,0.6); cursor: pointer; line-height: 1;
+            transition: color 0.2s ease, transform 0.3s var(--ease-out-expo);
+            z-index: 10001;
+        }
+        .lightbox-close:hover { color: #fff; transform: scale(1.1) rotate(5deg); }
+        @media (max-width: 500px) { .lightbox-close { top: 1rem; right: 1.2rem; font-size: 2rem; } }
+
+        /* ── FOOTER ── */
+        footer { background-color: var(--clr-accent); border-top-left-radius: 48px; border-top-right-radius: 48px; margin-top: 0; padding: 4rem 0 0; overflow: hidden; }
+        .container { width: 90%; max-width: 1300px; margin: 0 auto; padding: 0 1rem; }
+        footer h3 { color: #141414; font-size: clamp(2rem, 5vw, 3rem); font-weight: 600; letter-spacing: -0.02em; max-width: 75%; line-height: 1.2; font-family: var(--ff-sans); }
+        .footer--top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2.5rem; margin-bottom: 3rem; }
+        .footer--bottom { border-top: 1px solid rgba(0,0,0,0.15); padding: 2rem 0 1.5rem; color: #141414; font-weight: 400; font-size: 1rem; }
+        .f-line { opacity: 0.25; border-bottom: 1px solid #141414; margin: 1.5rem 0; }
+        .footer-big-handle { width: 100%; background: var(--clr-accent); padding: 3rem 0 1rem; text-align: center; border-top: 1px solid rgba(0,0,0,0.1); }
+        .footer-big-handle h2 { font-size: var(--fs-giant); font-weight: 800; letter-spacing: -0.03em; color: #141414; font-family: var(--ff-sans); white-space: nowrap; overflow-x: auto; padding: 0 1rem; line-height: 1.1; text-transform: lowercase; }
+        .pixel-s { font-family: var(--ff-pixel); display: inline-block; font-weight: 300; font-size: 1.14em; transform: scale(1.05); }
+        .copyright-below { background: var(--clr-accent); text-align: center; padding: 1.5rem 0 2.5rem; font-size: 0.9rem; color: #141414; }
+        .btn-pill { background: var(--clr-accent); border: 1.5px solid #141414; padding: 0.8rem 2rem; border-radius: 100px; font-weight: 500; font-family: var(--ff-sans); font-size: 1.05rem; cursor: pointer; color: #141414; display: inline-flex; align-items: center; gap: 0.6rem; transition: transform 0.35s var(--ease-out-expo), background 0.25s ease; }
+        .btn-pill:hover { transform: scale(0.95); background: #cfccc4; }
+        .btn-pill .arrow { transition: transform 0.35s var(--ease-out-expo); }
+        .btn-pill:hover .arrow { transform: translateX(5px); }
+        @media (max-width: 640px) { footer h3 { max-width: 100%; } .footer-big-handle h2 { white-space: normal; font-size: clamp(2.8rem, 14vw, 6rem); } }
+        @media (max-width: 600px) { .footer--top { flex-direction: column; align-items: flex-start; } }
+    </style>
+</head>
+<body>
+
+<!-- Glass Nav -->
+<nav class="glass-nav" id="glassNav">
+    <a href="index.html">Home</a>
+    <a href="/p">Projects</a>
+    <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="nav-logo-center">
+    <a href="/g" class="active">Gallery</a>
+    <a href="/c">Contact</a>
+</nav>
+
+  <div class="mobile-header">
+        <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="mobile-logo">
+        <div class="mobile-menu-btn" id="mobileMenuBtn">
+            <span class="material-symbols-rounded">dehaze</span>
+        </div>
+    </div>
+<div class="mobile-dropdown" id="mobileDropdown">
+    <a href="index.html">Home</a>
+    <a href="/p">Projects</a>
+    <a href="/g">Gallery</a>
+    <a href="/c">Contact</a>
+</div>
+
+<!-- Hero Section with Pixel "ary" -->
+<section class="page-hero" id="pageHero">
+    <div class="hero-inner">
+        <div class="page-label">Visual Archive</div>
+        <h1 class="page-title">
+            <span class="normal-part">Gall</span><span class="pixel-ary">ery</span>
+        </h1>
+        <p class="hero-sub">Graphics &amp; Photography — click any image to explore</p>
+    </div>
+</section>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <button class="filter-pill active" data-filter="all" onclick="applyFilter('all')">All</button>
+    <button class="filter-pill" data-filter="photo" onclick="applyFilter('photo')">Photo</button>
+    <button class="filter-pill" data-filter="art" onclick="applyFilter('art')">Art</button>
+    <button class="filter-pill" data-filter="graphic" onclick="applyFilter('graphic')">Graphic</button>
+    <button class="filter-pill" data-filter="design" onclick="applyFilter('design')">Design</button>
+</div>
+
+<!-- Bento Grid - Direct images (no lossy) -->
+<section class="gallery-section">
+    <div class="bento-wrap">
+        <div class="bento-grid" id="bentoGrid">
+            <div class="bento-loading"><span></span><span></span><span></span></div>
+        </div>
+    </div>
+</section>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="if(event.target===this)closeLightbox()">
+    <div class="lightbox-close" onclick="closeLightbox()">×</div>
+    <div class="lightbox-img-wrap">
+        <div class="lb-loader" id="lbLoader"><span></span><span></span><span></span></div>
+        <img id="lightboxImg" src="" alt="">
+    </div>
+    <div class="lightbox-meta">
+        <span id="lightboxCat"></span>
+        <span id="lightboxTitle"></span>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer id="contact">
+    <div class="container">
+        <div class="footer--top">
+            <h3>HAVE A PROJECT IN MIND? LET'S BRING IT TO LIFE.</h3>
+            <a href="mailto:hello@yoonus.design" class="btn-pill">Get in Touch <span class="arrow">→</span></a>
+        </div>
+        <div class="f-line"></div>
+        <div class="footer--bottom">
+            <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:1.5rem;margin-bottom:1.2rem;">
+                <span>Mail</span><span>Insta</span><span>Buy me a coffee</span>
+            </div>
+        </div>
+    </div>
+    <div class="footer-big-handle"><h2>@y0onu<span class="pixel-s">s</span></h2></div>
+    <div class="copyright-below"><span>© 2026 y0onus all rights reserved</span></div>
+</footer>
+
+<script>
+// Hero entrance animations
+gsap.from('.page-label', { opacity: 0, y: 20, duration: 0.9, ease: 'power3.out', delay: 0.1 });
+gsap.from('.page-title', { opacity: 0, y: 60, duration: 1.1, ease: 'power3.out', delay: 0.18 });
+gsap.from('.hero-sub',   { opacity: 0, y: 20, duration: 0.8, ease: 'power3.out', delay: 0.32 });
+gsap.from('.filter-bar', { opacity: 0, y: 20, duration: 0.8, ease: 'power3.out', delay: 0.42 });
+
+// Lightbox loader logic
+const lightboxImgElem = document.getElementById('lightboxImg');
+if (lightboxImgElem) {
+    lightboxImgElem.addEventListener('load', function() {
+        const loader = document.getElementById('lbLoader');
+        if (loader) loader.style.display = 'none';
+    });
+    lightboxImgElem.addEventListener('error', () => {
+        const loader = document.getElementById('lbLoader');
+        if (loader) loader.style.display = 'none';
+    });
+}
+document.getElementById('lightbox')?.addEventListener('click', function(e) {
+    if (e.target === this) closeLightbox();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// Mobile menu toggle
+const mobileBtn = document.getElementById('mobileMenuBtn');
+const mobileDropdown = document.getElementById('mobileDropdown');
+if (mobileBtn && mobileDropdown) {
+    mobileBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        mobileDropdown.classList.toggle('active');
+    });
+    document.addEventListener('click', e => {
+        if (mobileDropdown.classList.contains('active') && !mobileDropdown.contains(e.target) && e.target !== mobileBtn)
+            mobileDropdown.classList.remove('active');
+    });
+}
+
+// Remove any possible floating squares remnants (just to be safe)
+const hero = document.getElementById('pageHero');
+if (hero) {
+    const oldRects = hero.querySelectorAll('.floating-rect');
+    oldRects.forEach(r => r.remove());
+}
+</script>
+</body>
+</html>

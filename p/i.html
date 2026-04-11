@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    
+    <!-- Primary Meta Tags for Social Sharing -->
+    <title>Project — Yoonus</title>
+    <meta name="title" content="Yoonus — Project">
+    <meta name="description" content="Creative design & development project by Yoonus.">
+    
+    <!-- Open Graph / Facebook / LinkedIn / Discord -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yoonus.design/project.html">
+    <meta property="og:title" content="Yoonus — Project">
+    <meta property="og:description" content="Creative design & development project by Yoonus.">
+    <meta property="og:image" content="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://yoonus.design/project.html">
+    <meta property="twitter:title" content="Yoonus — Project">
+    <meta property="twitter:description" content="Creative design & development project by Yoonus.">
+    <meta property="twitter:image" content="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true">
+    
+    <!-- Dynamic meta update script (runs after Firebase loads) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXV7Y6lN2rK31En0ziA1K94DCSsiZ9rx0",
+            authDomain: "maxvotex-45850.firebaseapp.com",
+            databaseURL: "https://maxvotex-45850-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "maxvotex-45850",
+            storageBucket: "maxvotex-45850.firebasestorage.app",
+            messagingSenderId: "48808531623",
+            appId: "1:48808531623:web:d7999d95a7b5e3843dad82"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const params = new URLSearchParams(window.location.search);
+        const projectId = params.get('id');
+
+        if (!projectId) { 
+            window.location.href = 'projects.html'; 
+        }
+
+        // Function to update meta tags dynamically
+        function updateMetaTags(title, description, imageUrl) {
+            // Update document title
+            document.title = title ? `${title} — Yoonus` : 'Project — Yoonus';
+            
+            // Update basic meta tags
+            let metaDesc = document.querySelector('meta[name="description"]');
+            if (!metaDesc) {
+                metaDesc = document.createElement('meta');
+                metaDesc.setAttribute('name', 'description');
+                document.head.appendChild(metaDesc);
+            }
+            metaDesc.setAttribute('content', description || 'Creative design & development project by Yoonus.');
+            
+            // Update OG:title
+            let ogTitle = document.querySelector('meta[property="og:title"]');
+            if (!ogTitle) {
+                ogTitle = document.createElement('meta');
+                ogTitle.setAttribute('property', 'og:title');
+                document.head.appendChild(ogTitle);
+            }
+            ogTitle.setAttribute('content', title ? `${title} — Yoonus` : 'Yoonus — Project');
+            
+            // Update OG:description
+            let ogDesc = document.querySelector('meta[property="og:description"]');
+            if (!ogDesc) {
+                ogDesc = document.createElement('meta');
+                ogDesc.setAttribute('property', 'og:description');
+                document.head.appendChild(ogDesc);
+            }
+            ogDesc.setAttribute('content', description || 'Creative design & development project by Yoonus.');
+            
+            // Update OG:image
+            let ogImage = document.querySelector('meta[property="og:image"]');
+            if (!ogImage) {
+                ogImage = document.createElement('meta');
+                ogImage.setAttribute('property', 'og:image');
+                document.head.appendChild(ogImage);
+            }
+            if (imageUrl && imageUrl.trim() !== '') {
+                ogImage.setAttribute('content', imageUrl);
+            }
+            
+            // Update Twitter title
+            let twitterTitle = document.querySelector('meta[name="twitter:title"]');
+            if (!twitterTitle) {
+                twitterTitle = document.createElement('meta');
+                twitterTitle.setAttribute('name', 'twitter:title');
+                document.head.appendChild(twitterTitle);
+            }
+            twitterTitle.setAttribute('content', title ? `${title} — Yoonus` : 'Yoonus — Project');
+            
+            // Update Twitter description
+            let twitterDesc = document.querySelector('meta[name="twitter:description"]');
+            if (!twitterDesc) {
+                twitterDesc = document.createElement('meta');
+                twitterDesc.setAttribute('name', 'twitter:description');
+                document.head.appendChild(twitterDesc);
+            }
+            twitterDesc.setAttribute('content', description || 'Creative design & development project by Yoonus.');
+            
+            // Update Twitter image
+            let twitterImage = document.querySelector('meta[name="twitter:image"]');
+            if (!twitterImage) {
+                twitterImage = document.createElement('meta');
+                twitterImage.setAttribute('name', 'twitter:image');
+                document.head.appendChild(twitterImage);
+            }
+            if (imageUrl && imageUrl.trim() !== '') {
+                twitterImage.setAttribute('content', imageUrl);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const loader = document.getElementById('loader');
+            const content = document.getElementById('projectContent');
+
+            try {
+                const snap = await get(ref(db, `projects/${projectId}`));
+                if (!snap.exists()) { 
+                    window.location.href = 'projects.html'; 
+                    return; 
+                }
+                const p = snap.val();
+                
+                // Update meta tags with project data
+                const projectTitle = p.title || 'Untitled';
+                const projectDesc = p.shortDesc || p.description?.substring(0, 160) || 'Creative design & development project by Yoonus.';
+                const projectImage = p.coverImage || 'https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true';
+                updateMetaTags(projectTitle, projectDesc, projectImage);
+                
+                // Also update OG:url with the actual project ID for better sharing
+                let ogUrl = document.querySelector('meta[property="og:url"]');
+                if (!ogUrl) {
+                    ogUrl = document.createElement('meta');
+                    ogUrl.setAttribute('property', 'og:url');
+                    document.head.appendChild(ogUrl);
+                }
+                ogUrl.setAttribute('content', `${window.location.origin}${window.location.pathname}?id=${projectId}`);
+                
+                let twitterUrl = document.querySelector('meta[name="twitter:url"]');
+                if (!twitterUrl) {
+                    twitterUrl = document.createElement('meta');
+                    twitterUrl.setAttribute('name', 'twitter:url');
+                    document.head.appendChild(twitterUrl);
+                }
+                twitterUrl.setAttribute('content', `${window.location.origin}${window.location.pathname}?id=${projectId}`);
+                
+                document.title = `${projectTitle} — Yoonus`;
+
+                // Hero
+                document.getElementById('heroTitle').textContent = projectTitle;
+                document.getElementById('heroDesc').textContent = p.shortDesc || '';
+                if (p.coverImage) {
+                    const img = document.getElementById('heroCover');
+                    img.src = p.coverImage;
+                    img.style.display = 'block';
+                }
+                if (p.year) document.getElementById('metaYear').textContent = p.year;
+                if (p.role) document.getElementById('metaRole').textContent = p.role;
+                if (p.duration) document.getElementById('metaDuration').textContent = p.duration;
+
+                // Tags
+                const tagsWrap = document.getElementById('heroTags');
+                (p.tags || '').split(',').filter(t => t.trim()).forEach(t => {
+                    const span = document.createElement('span');
+                    span.className = 'tag';
+                    span.textContent = t.trim();
+                    tagsWrap.appendChild(span);
+                });
+
+                // Live link
+                if (p.liveUrl) {
+                    const link = document.getElementById('liveLink');
+                    link.href = p.liveUrl;
+                    link.style.display = 'inline-flex';
+                }
+
+                // Long description
+                if (p.description) {
+                    document.getElementById('longDesc').innerHTML = p.description.replace(/\n/g, '<br>');
+                }
+
+                // Gallery images
+                const gallery = document.getElementById('gallery');
+                const images = p.galleryImages ? (Array.isArray(p.galleryImages) ? p.galleryImages : Object.values(p.galleryImages)) : [];
+                if (images.length) {
+                    gallery.style.display = 'grid';
+                    images.forEach(src => {
+                        const div = document.createElement('div');
+                        div.className = 'gallery-img-wrap';
+                        div.innerHTML = `<img src="${src}" alt="Project image" loading="lazy">`;
+                        gallery.appendChild(div);
+                    });
+                }
+
+                loader.style.display = 'none';
+                content.style.opacity = '1';
+
+                // Animate
+                gsap.from('#heroTitle', { opacity: 0, y: 50, duration: 1.1, ease: 'power3.out', delay: 0.1 });
+                gsap.from('#heroDesc', { opacity: 0, y: 30, duration: 0.9, ease: 'power3.out', delay: 0.25 });
+                gsap.from('.meta-block', { opacity: 0, y: 20, duration: 0.8, ease: 'power3.out', stagger: 0.08, delay: 0.35 });
+
+            } catch(e) {
+                console.error(e);
+                loader.innerHTML = '<p style="color:rgba(230,228,222,0.5)">Failed to load project.</p>';
+            }
+        });
+    </script>
+
+    <link rel="icon" href="yaafav.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Pixelify+Sans&family=Ballet:opsz@16..72&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=dehaze" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --ff-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --ff-pixel: 'Pixelify Sans', monospace;
+            --ff-cursive: 'Ballet', cursive;
+            --clr-black: #141414;
+            --clr-white: #e6e4de;
+            --clr-text: rgba(230, 228, 222, 0.75);
+            --projects-bg: #f5f3ef;
+            --projects-text-primary: #1a1a1a;
+            --projects-text-secondary: #4a4a4a;
+            --projects-border: rgba(0,0,0,0.08);
+            --projects-line: rgba(0,0,0,0.1);
+            --fs-giant: clamp(5rem, 16vw, 12rem);
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        html { -webkit-font-smoothing: antialiased; }
+        body { background-color: var(--clr-black); color: var(--clr-text); font-family: var(--ff-sans); font-weight: 300; overflow-x: hidden; }
+        a { text-decoration: none; color: inherit; }
+
+        /* NAV */
+        .glass-nav { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.08); backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%); border: 1px solid rgba(255,255,255,0.18); border-radius: 60px; padding: 0.5rem 2rem; display: flex; align-items: center; gap: 2.5rem; z-index: 1000; box-shadow: 0 4px 24px rgba(0,0,0,0.12); }
+        .glass-nav a { font-size: 0.92rem; font-weight: 400; color: rgba(240,238,233,0.9); transition: color 0.25s ease; }
+        .glass-nav a:hover { color: #fff; }
+        .glass-nav .nav-logo-center { height: 40px; width: auto; }
+        @media (max-width: 768px) { .glass-nav { display: none !important; } }
+
+        .mobile-header { position: fixed; top: 0; left: 0; width: 100%; padding: 1rem 1.5rem; display: none; justify-content: space-between; align-items: center; z-index: 1001; pointer-events: none; }
+        .mobile-header .mobile-logo { height: 45px; width: auto; pointer-events: auto; }
+        .mobile-menu-btn { pointer-events: auto; width: 48px; height: 48px; background: rgba(255,255,255,0.1); backdrop-filter: blur(16px); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s var(--ease-out-expo); color: var(--clr-white); }
+        .mobile-menu-btn .material-symbols-rounded { font-size: 26px; }
+        @media (max-width: 768px) { .mobile-header { display: flex; } }
+        .mobile-dropdown { position: fixed; top: 75px; right: 20px; background: rgba(255,255,255,0.1); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 24px; padding: 1rem 0.5rem; display: none; flex-direction: column; gap: 0.4rem; z-index: 1000; border: 1px solid rgba(255,255,255,0.18); min-width: 175px; opacity: 0; transform: scale(0.92) translateY(-8px); transition: opacity 0.3s, transform 0.3s; pointer-events: none; }
+        .mobile-dropdown.active { display: flex; opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+        .mobile-dropdown a { color: rgba(230,228,222,0.9); font-size: 0.98rem; padding: 0.65rem 1.1rem; transition: background 0.2s ease; border-radius: 14px; }
+        .mobile-dropdown a:hover { background: rgba(255,255,255,0.12); color: white; }
+
+        /* LOADER */
+        #loader { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+        .loader-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(230,228,222,0.4); margin: 0 4px; animation: loadDot 1.4s ease-in-out infinite; }
+        .loader-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loader-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes loadDot { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+        #projectContent { opacity: 0; transition: opacity 0.6s ease; }
+
+        /* BACK BTN */
+        .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: rgba(230,228,222,0.5); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; padding: 6rem 2rem 0; max-width: 1300px; margin: 0 auto; width: 100%; transition: color 0.2s ease; cursor: pointer; }
+        .back-btn:hover { color: var(--clr-white); }
+        .back-btn svg { transition: transform 0.3s var(--ease-out-expo); }
+        .back-btn:hover svg { transform: translateX(-4px); }
+
+        /* HERO */
+        .detail-hero { padding: 3rem 2rem 5rem; max-width: 1300px; margin: 0 auto; }
+        #heroTitle { font-size: clamp(2.8rem, 7vw, 6.5rem); font-weight: 700; letter-spacing: -0.035em; color: var(--clr-white); line-height: 1; margin-bottom: 1.5rem; font-family: var(--ff-sans); }
+        #heroDesc { font-size: clamp(0.95rem, 1.5vw, 1.15rem); color: rgba(230,228,222,0.55); max-width: 620px; line-height: 1.65; margin-bottom: 2.5rem; }
+        .hero-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 2.5rem; }
+        .tag { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; padding: 4px 10px; border: 1px solid rgba(230,228,222,0.2); border-radius: 20px; color: rgba(230,228,222,0.55); font-weight: 500; }
+        .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+        .btn-live { background: var(--clr-white); color: #141414; border: none; padding: 0.7rem 1.8rem; border-radius: 100px; font-weight: 600; font-size: 0.88rem; cursor: pointer; display: none; align-items: center; gap: 0.5rem; transition: transform 0.35s var(--ease-out-expo), background 0.25s ease; font-family: var(--ff-sans); }
+        .btn-live:hover { transform: scale(0.95); background: #cfccc4; }
+        .btn-live .arrow { transition: transform 0.3s var(--ease-out-expo); }
+        .btn-live:hover .arrow { transform: translate(3px,-3px); }
+
+        /* COVER IMAGE */
+        .cover-wrap { width: 100%; max-height: 70vh; overflow: hidden; margin-bottom: 0; }
+        .cover-wrap img { width: 100%; height: 100%; object-fit: cover; display: none; max-height: 70vh; }
+
+        /* META + CONTENT */
+        .detail-body { background: var(--projects-bg); padding: 5rem 2rem 6rem; }
+        .detail-body-inner { max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: 1fr 320px; gap: 6rem; align-items: start; }
+        @media (max-width: 900px) { .detail-body-inner { grid-template-columns: 1fr; gap: 3rem; } }
+
+        .detail-main h2 { font-size: clamp(1.3rem, 2.5vw, 1.8rem); font-weight: 600; color: var(--projects-text-primary); letter-spacing: -0.025em; margin-bottom: 1.2rem; }
+        #longDesc { font-size: 1rem; color: var(--projects-text-secondary); line-height: 1.8; font-weight: 300; }
+
+        .detail-sidebar { position: sticky; top: 100px; }
+        .meta-block { margin-bottom: 2rem; }
+        .meta-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(0,0,0,0.35); font-weight: 600; margin-bottom: 0.4rem; }
+        .meta-value { font-size: 0.92rem; color: var(--projects-text-primary); font-weight: 500; }
+
+        /* GALLERY */
+        .gallery-section { background: var(--projects-bg); padding: 0 2rem 6rem; }
+        .gallery-section-inner { max-width: 1300px; margin: 0 auto; }
+        .gallery-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--projects-text-secondary); font-weight: 500; margin-bottom: 1.5rem; padding-top: 2rem; border-top: 1px solid var(--projects-line); }
+        #gallery { display: none; grid-template-columns: repeat(2, 1fr); gap: 2px; }
+        @media (max-width: 600px) { #gallery { grid-template-columns: 1fr; } }
+        .gallery-img-wrap { overflow: hidden; aspect-ratio: 16/10; background: #d8d4cd; cursor: zoom-in; }
+        .gallery-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s var(--ease-out-expo); }
+        .gallery-img-wrap:hover img { transform: scale(1.04); }
+
+        /* Lightbox */
+        .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+        .lightbox.active { opacity: 1; pointer-events: auto; }
+        .lightbox img { max-width: 90vw; max-height: 85vh; object-fit: contain; border-radius: 4px; }
+        .lightbox-close { position: absolute; top: 1.5rem; right: 2rem; font-size: 2rem; color: rgba(255,255,255,0.6); cursor: pointer; line-height: 1; transition: color 0.2s ease; }
+        .lightbox-close:hover { color: #fff; }
+
+        /* FOOTER - BLACK BACKGROUND */
+        footer { background-color: #000000; border-top-left-radius: 48px; border-top-right-radius: 48px; padding: 4rem 0 0; overflow: hidden; }
+        .container { width: 90%; max-width: 1300px; margin: 0 auto; padding: 0 1rem; }
+        footer h3 { color: #e6e4de; font-size: clamp(2rem, 5vw, 3rem); font-weight: 600; letter-spacing: -0.02em; max-width: 75%; line-height: 1.2; font-family: var(--ff-sans); }
+        .footer--top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2.5rem; margin-bottom: 3rem; }
+        .footer--bottom { border-top: 1px solid rgba(230,228,222,0.25); padding: 2rem 0 1.5rem; color: #e6e4de; }
+        .line { opacity: 0.25; border-bottom: 1px solid #e6e4de; margin: 1.5rem 0; }
+        .footer-big-handle {     -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */width: 100%; background: #000000; padding: 3rem 0 1rem; text-align: center; border-top: 1px solid rgba(230,228,222,0.15); }
+        .footer-big-handle h2 {     -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */font-size: var(--fs-giant); font-weight: 800; letter-spacing: -0.03em; color: #e6e4de; font-family: var(--ff-sans); white-space: nowrap; overflow-x: auto; padding: 0 1rem; line-height: 1.1; text-transform: lowercase; }
+        .pixel-s { font-family: var(--ff-pixel); display: inline-block; font-weight: 300; font-size: 1.14em; transform: scale(1.05); }
+        .copyright-below { background: #000000; text-align: center; padding: 1.5rem 0 2.5rem; font-size: 0.9rem; color: rgba(230,228,222,0.7); }
+        .btn-pill { background: #e6e4de; border: 1.5px solid #e6e4de; padding: 0.8rem 2rem; border-radius: 100px; font-weight: 500; font-family: var(--ff-sans); font-size: 1.05rem; cursor: pointer; color: #000000; display: inline-flex; align-items: center; gap: 0.6rem; transition: transform 0.35s var(--ease-out-expo); }
+        .btn-pill:hover { transform: scale(0.95); background: #cfccc4; border-color: #cfccc4; }
+        .btn-pill .arrow { transition: transform 0.35s var(--ease-out-expo); }
+        .btn-pill:hover .arrow { transform: translateX(5px); }
+        @media (max-width: 640px) { footer h3 { max-width: 100%; } .footer-big-handle h2 { white-space: normal; font-size: clamp(2.8rem, 14vw, 6rem); } }
+    </style>
+</head>
+<body>
+
+<nav class="glass-nav" id="glassNav">
+    <a href="index.html">Home</a>
+    <a href="/p">Projects</a>
+    <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="nav-logo-center">
+    <a href="/g" class="active">Gallery</a>
+    <a href="/c">Contact</a>
+</nav>
+
+  <div class="mobile-header">
+        <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="mobile-logo">
+        <div class="mobile-menu-btn" id="mobileMenuBtn">
+            <span class="material-symbols-rounded">dehaze</span>
+        </div>
+    </div>
+<div class="mobile-dropdown" id="mobileDropdown">
+    <a href="index.html">Home</a>
+    <a href="/p">Projects</a>
+    <a href="/g">Gallery</a>
+    <a href="/c">Contact</a>
+</div>
+<div id="loader">
+    <span class="loader-dot"></span>
+    <span class="loader-dot"></span>
+    <span class="loader-dot"></span>
+</div>
+
+<div id="projectContent">
+    <!-- Back -->
+    <a href="https://yoz.lol/p" class="back-btn">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7H1M1 7L7 1M1 7L7 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        All Projects
+    </a>
+
+    <!-- Hero -->
+    <div class="detail-hero">
+        <h1 id="heroTitle"></h1>
+        <p id="heroDesc"></p>
+        <div class="hero-tags" id="heroTags"></div>
+        <div class="hero-actions">
+            <a href="#" id="liveLink" class="btn-live" target="_blank" rel="noopener">
+                View Live <span class="arrow">↗</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Cover -->
+    <div class="cover-wrap">
+        <img id="heroCover" src="" alt="Project cover">
+    </div>
+
+    <!-- Body -->
+    <div class="detail-body">
+        <div class="detail-body-inner">
+            <div class="detail-main">
+                <h2>About the Project</h2>
+                <div id="longDesc"></div>
+            </div>
+            <div class="detail-sidebar">
+                <div class="meta-block">
+                    <div class="meta-label">Year</div>
+                    <div class="meta-value" id="metaYear">—</div>
+                </div>
+                <div class="meta-block">
+                    <div class="meta-label">Role</div>
+                    <div class="meta-value" id="metaRole">—</div>
+                </div>
+                <div class="meta-block">
+                    <div class="meta-label">Duration</div>
+                    <div class="meta-value" id="metaDuration">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="gallery-section">
+        <div class="gallery-section-inner">
+            <div class="gallery-label">Project Gallery</div>
+            <div id="gallery"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer--top">
+                <h3>HAVE A PROJECT IN MIND? LET'S BRING IT TO LIFE.</h3>
+                <a href="mailto:hello@yoonus.design" class="btn-pill">Get in Touch <span class="arrow">→</span></a>
+            </div>
+            <div class="line"></div>
+            <div class="footer--bottom">
+                <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:1.5rem;margin-bottom:1.2rem;">
+                    <span>Mail</span><span>Insta</span><span>Buy me a coffee</span>
+                </div>
+            </div>
+        </div>
+        <div class="footer-big-handle"><h2>@y0onu<span class="pixel-s">s</span></h2></div>
+        <div class="copyright-below"><span>© 2026 y0onus all rights reserved</span></div>
+    </footer>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+    <div class="lightbox-close" id="lightboxClose">×</div>
+    <img id="lightboxImg" src="" alt="">
+</div>
+
+<script>
+document.querySelectorAll('.gallery-img-wrap').forEach(w => {
+    w.addEventListener('click', () => {
+        const src = w.querySelector('img')?.src;
+        if (src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').classList.add('active'); document.body.style.overflow = 'hidden'; }
+    });
+});
+// Also wire up dynamically added gallery items
+document.getElementById('gallery').addEventListener('click', e => {
+    const img = e.target.closest('.gallery-img-wrap')?.querySelector('img');
+    if (img) { document.getElementById('lightboxImg').src = img.src; document.getElementById('lightbox').classList.add('active'); document.body.style.overflow = 'hidden'; }
+});
+document.getElementById('lightbox').addEventListener('click', e => {
+    if (e.target === e.currentTarget || e.target === document.getElementById('lightboxClose')) {
+        document.getElementById('lightbox').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+document.getElementById('mobileMenuBtn')?.addEventListener('click', e => {
+    e.stopPropagation();
+    document.getElementById('mobileDropdown')?.classList.toggle('active');
+});
+document.addEventListener('click', e => {
+    const dd = document.getElementById('mobileDropdown');
+    if (dd?.classList.contains('active') && !dd.contains(e.target) && e.target !== document.getElementById('mobileMenuBtn'))
+        dd.classList.remove('active');
+});
+</script>
+</body>
+</html>

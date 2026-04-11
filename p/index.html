@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Projects — Yoonus | Visual Alchemist</title>
+    <meta name="description" content="Selected work by Ibrahim Yoonus — Graphic Designer & Photographer from the Maldives.">
+    <link rel="icon" href="yaafav.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Pixelify+Sans&family=Ballet:opsz@16..72&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=dehaze" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXV7Y6lN2rK31En0ziA1K94DCSsiZ9rx0",
+            authDomain: "maxvotex-45850.firebaseapp.com",
+            databaseURL: "https://maxvotex-45850-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "maxvotex-45850",
+            storageBucket: "maxvotex-45850.firebasestorage.app",
+            messagingSenderId: "48808531623",
+            appId: "1:48808531623:web:d7999d95a7b5e3843dad82"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById('projectsGrid');
+            const countEl = document.getElementById('projectCount');
+            const countEl2 = document.getElementById('projectCount2');
+
+            onValue(ref(db, 'projects'), (snapshot) => {
+                const data = snapshot.val();
+                grid.innerHTML = '';
+                if (!data) {
+                    grid.innerHTML = '<p class="no-projects">No projects yet. Check back soon.</p>';
+                    countEl.textContent = '00 Projects';
+                    if(countEl2) countEl2.textContent = '00 Projects';
+                    return;
+                }
+                const projects = Object.entries(data).sort((a,b) => (b[1].order||0) - (a[1].order||0));
+                const projectCountStr = String(projects.length).padStart(2,'0') + ' Projects';
+                countEl.textContent = projectCountStr;
+                if(countEl2) countEl2.textContent = projectCountStr;
+
+                projects.forEach(([id, p], i) => {
+                    const tags = (p.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+                    const card = document.createElement('article');
+                    card.className = 'proj-card card-animate';
+                    card.style.transitionDelay = (i * 0.07) + 's';
+                    card.innerHTML = `
+                        <a href="i.html?id=${id}" class="card-inner">
+                            <div class="card-thumb">
+                                ${p.coverImage ? `<img src="${p.coverImage}" alt="${p.title}" loading="lazy">` : `<div class="card-thumb-placeholder"><span>${p.title?.charAt(0) || '?'}</span></div>`}
+                                <div class="card-overlay">
+                                    <span class="view-label">View Project <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 13L13 1M13 1H4M13 1V10" stroke="currentColor" stroke-width="1.5"/></svg></span>
+                                </div>
+                                ${p.year ? `<span class="card-year">${p.year}</span>` : ''}
+                            </div>
+                            <div class="card-body">
+                                <div class="card-meta">
+                                    <span class="card-num">${String(i+1).padStart(2,'0')}</span>
+                                    <div class="card-tags">
+                                        ${tags.slice(0,3).map(t => `<span class="tag">${t}</span>`).join('')}
+                                    </div>
+                                </div>
+                                <h2 class="card-title">${p.title || 'Untitled'}</h2>
+                                <p class="card-desc">${p.shortDesc || ''}</p>
+                            </div>
+                        </a>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                // Animate in
+                const cards = grid.querySelectorAll('.card-animate');
+                const io = new IntersectionObserver(entries => {
+                    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); io.unobserve(e.target); } });
+                }, { threshold: 0.1 });
+                cards.forEach(c => io.observe(c));
+            });
+        });
+    </script>
+
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --ff-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --ff-pixel: 'Pixelify Sans', monospace;
+            --ff-cursive: 'Ballet', cursive;
+            --clr-black: #141414;
+            --clr-white: #e6e4de;
+            --clr-text: rgba(230, 228, 222, 0.75);
+            --projects-bg: #f5f3ef;
+            --projects-text-primary: #1a1a1a;
+            --projects-text-secondary: #4a4a4a;
+            --projects-border: rgba(0,0,0,0.08);
+            --projects-accent: #141414;
+            --projects-line: rgba(0,0,0,0.1);
+            --fs-giant: clamp(5rem, 16vw, 12rem);
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            
+            /* BLACK FOOTER VARIABLES */
+            --footer-bg: #0a0a0a;
+            --footer-text-primary: #e6e4de;
+            --footer-text-secondary: #a8a6a0;
+            --footer-border: rgba(255,255,255,0.1);
+            --footer-accent: #ffffff;
+        }
+
+        html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+        body { background-color: var(--clr-black); color: var(--clr-text); font-family: var(--ff-sans); font-weight: 300; overflow-x: hidden; }
+        a { text-decoration: none; color: inherit; }
+
+        /* ── NAV ── */
+        .glass-nav {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(255,255,255,0.08); backdrop-filter: blur(22px) saturate(180%);
+            -webkit-backdrop-filter: blur(22px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.18); border-radius: 60px;
+            padding: 0.5rem 2rem; display: flex; align-items: center; justify-content: center;
+            gap: 2.5rem; z-index: 1000;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.15);
+            transition: background 0.4s ease;
+        }
+        .glass-nav a { font-size: 0.92rem; font-weight: 400; color: rgba(240,238,233,0.9); transition: color 0.25s ease; white-space: nowrap; }
+        .glass-nav a:hover, .glass-nav a.active { color: #fff; }
+        .glass-nav .nav-logo-center { height: 40px; width: auto; }
+        @media (max-width: 768px) { .glass-nav { display: none !important; } }
+
+        /* Mobile Header */
+        .mobile-header { position: fixed; top: 0; left: 0; width: 100%; padding: 1rem 1.5rem; display: none; justify-content: space-between; align-items: center; z-index: 1001; pointer-events: none; }
+        .mobile-header .mobile-logo { height: 45px; width: auto; pointer-events: auto; }
+        .mobile-menu-btn { pointer-events: auto; width: 48px; height: 48px; background: rgba(255,255,255,0.1); backdrop-filter: blur(16px); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s var(--ease-out-expo); color: var(--clr-white); }
+        .mobile-menu-btn:hover { background: rgba(255,255,255,0.18); transform: scale(0.95); }
+        .mobile-menu-btn .material-symbols-rounded { font-size: 26px; }
+        @media (max-width: 768px) { .mobile-header { display: flex; } }
+
+        .mobile-dropdown { position: fixed; top: 75px; right: 20px; background: rgba(255,255,255,0.1); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border-radius: 24px; padding: 1rem 0.5rem; display: none; flex-direction: column; gap: 0.4rem; z-index: 1000; border: 1px solid rgba(255,255,255,0.18); min-width: 175px; box-shadow: 0 16px 40px rgba(0,0,0,0.2); transform-origin: top right; opacity: 0; transform: scale(0.92) translateY(-8px); transition: opacity 0.3s var(--ease-out-expo), transform 0.3s var(--ease-out-expo); pointer-events: none; }
+        .mobile-dropdown.active { display: flex; opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+        .mobile-dropdown a { color: rgba(230,228,222,0.9); font-size: 0.98rem; padding: 0.65rem 1.1rem; transition: background 0.2s ease; border-radius: 14px; font-weight: 400; }
+        .mobile-dropdown a:hover { background: rgba(255,255,255,0.12); color: white; }
+
+        /* ── HERO ── (Floating squares removed - no more .floating-rect animations) */
+        .page-hero {
+            min-height: 55vh; display: flex; align-items: flex-end; padding: 8rem 2rem 5rem;
+            position: relative; overflow: hidden;
+        }
+        .hero-inner { max-width: 1300px; width: 100%; margin: 0 auto; }
+        .page-label { font-family: var(--ff-sans); font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(230,228,222,0.45); margin-bottom: 1.5rem; font-weight: 500; }
+        
+        /* UPDATED: Projects heading — no cursive, only pixelated font for the 'S' and modern sans for rest, but 'Projects' uses clean sans and the 's' at the end gets pixel style */
+        .page-title {
+            font-size: clamp(5rem, 14vw, 11rem); font-weight: 700; letter-spacing: -0.04em;
+            color: var(--clr-white); line-height: 0.92; font-family: var(--ff-sans);
+        }
+        /* Remove any italic or cursive from the word "jects" area — we want only the last 'S' pixelated */
+        .page-title .pixel-s-end {
+            font-family: var(--ff-pixel);
+            display: inline-block;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            font-size: 1.05em;
+            transform: scale(1.02);
+            color: var(--clr-white);
+        }
+        /* Ensure no cursive appears anywhere in the Projects heading */
+        .page-title .normal-text {
+            font-family: var(--ff-sans);
+            font-weight: 700;
+        }
+        
+        .hero-meta { margin-top: 2.5rem; display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; }
+        .hero-meta-count { font-size: 0.85rem; color: rgba(230,228,222,0.45); font-weight: 400; }
+        .hero-line { flex: 1; height: 1px; background: rgba(230,228,222,0.1); min-width: 40px; }
+        .year-range { font-size: 0.85rem; color: rgba(230,228,222,0.3); font-weight: 300; letter-spacing: 0.1em; }
+
+        /* Floating rects completely removed — no spawn squares */
+
+        /* ── PROJECTS GRID (ROUNDED CORNERS FOR CARDS & INNER) ── */
+        .projects-section {
+            background: var(--projects-bg); border-top: 1px solid var(--projects-border);
+            padding: 5rem 2rem 8rem;
+        }
+        .projects-grid-wrap { max-width: 1300px; margin: 0 auto; }
+        .grid-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; flex-wrap: wrap; gap: 1rem; }
+        .grid-header-label { font-family: var(--ff-sans); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--projects-text-secondary); font-weight: 500; }
+        #projectCount, #projectCount2 { font-family: var(--ff-sans); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--projects-text-secondary); font-weight: 500; }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem; /* increased gap for better breathing with rounded corners */
+        }
+        @media (max-width: 900px) { .projects-grid { grid-template-columns: repeat(2,1fr); gap: 1.5rem; } }
+        @media (max-width: 560px) { .projects-grid { grid-template-columns: 1fr; gap: 1.5rem; } }
+
+        .proj-card { 
+            opacity: 0; 
+            transform: translateY(36px); 
+            transition: opacity 0.75s var(--ease-out-expo), transform 0.75s var(--ease-out-expo);
+            border-radius: 24px;  /* rounded corners for card container */
+            overflow: hidden;
+            background: transparent;
+        }
+        .proj-card.revealed { opacity: 1; transform: translateY(0); }
+
+        .card-inner { 
+            display: block; 
+            background: #fff; 
+            overflow: hidden; 
+            position: relative; 
+            transition: transform 0.4s var(--ease-out-expo), box-shadow 0.3s ease;
+            border-radius: 24px;  /* fully rounded corners */
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.03);
+        }
+        .card-inner:hover { 
+            transform: translateY(-6px); 
+            box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.12);
+        }
+        .card-inner:hover .card-overlay { opacity: 1; }
+        .card-inner:hover .card-thumb img { transform: scale(1.04); }
+
+        .card-thumb { 
+            position: relative; 
+            aspect-ratio: 4/3; 
+            overflow: hidden; 
+            background: #e0ddd7;
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+        }
+        .card-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s var(--ease-out-expo); }
+        .card-thumb-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #d8d4cd; }
+        .card-thumb-placeholder span { font-size: 4rem; font-weight: 700; color: rgba(0,0,0,0.15); font-family: var(--ff-sans); }
+        .card-overlay { position: absolute; inset: 0; background: rgba(20,20,20,0.55); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; border-radius: 24px; }
+        .view-label { color: #fff; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; display: flex; align-items: center; gap: 0.5rem; }
+        .card-year { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.9); color: var(--projects-text-secondary); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; padding: 3px 8px; border-radius: 40px; z-index: 2; }
+
+        .card-body { padding: 1.4rem 1.6rem 1.8rem; background: #fff; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; }
+        .card-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
+        .card-num { font-family: var(--ff-sans); font-size: 11px; color: rgba(0,0,0,0.3); letter-spacing: 0.1em; font-weight: 500; }
+        .card-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .tag { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; border: 1px solid rgba(0,0,0,0.12); border-radius: 40px; color: var(--projects-text-secondary); font-weight: 500; background: #fff; }
+        .card-title { font-size: clamp(1.05rem, 1.8vw, 1.3rem); font-weight: 600; letter-spacing: -0.02em; color: var(--projects-text-primary); margin-bottom: 0.5rem; line-height: 1.2; }
+        .card-desc { font-size: 0.82rem; color: var(--projects-text-secondary); line-height: 1.5; font-weight: 300; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .no-projects { color: var(--projects-text-secondary); font-size: 0.9rem; padding: 3rem 0; text-align: center; width: 100%; grid-column: 1/-1; }
+
+        /* ── BLACK FOOTER (UPDATED) ── */
+        footer {
+            background-color: var(--footer-bg);
+            border-top-left-radius: 48px;
+            border-top-right-radius: 48px;
+            margin-top: 0;
+            padding: 4rem 0 0;
+            overflow: hidden;
+            color: var(--footer-text-primary);
+            transition: all 0.3s ease;
+        }
+        .container { width: 90%; max-width: 1300px; margin: 0 auto; padding: 0 1rem; }
+        footer h3 { 
+            color: var(--footer-text-primary); 
+            font-size: clamp(2rem, 5vw, 3rem); 
+            font-weight: 600; 
+            letter-spacing: -0.02em; 
+            max-width: 75%; 
+            line-height: 1.2; 
+            font-family: var(--ff-sans);
+        }
+        .footer--top { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            flex-wrap: wrap; 
+            gap: 2.5rem; 
+            margin-bottom: 3rem; 
+        }
+        .footer--bottom { 
+            border-top: 1px solid var(--footer-border); 
+            padding: 2rem 0 1.5rem; 
+            text-align: center; 
+            color: var(--footer-text-secondary); 
+            font-weight: 400; 
+            font-size: 1rem; 
+        }
+        .line { 
+            opacity: 0.35; 
+            border-bottom: 1px solid var(--footer-border); 
+            margin: 1.5rem 0; 
+        }
+        .footer-big-handle { 
+            width: 100%; 
+            background: var(--footer-bg); 
+            padding: 3rem 0 1rem; 
+            margin-top: 2rem; 
+              -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+            text-align: center; 
+            border-top: 1px solid var(--footer-border); 
+        }
+        .footer-big-handle h2 { 
+            font-size: var(--fs-giant); 
+            font-weight: 800; 
+            letter-spacing: -0.03em; 
+            color: var(--footer-text-primary); 
+            font-family: var(--ff-sans); 
+            white-space: nowrap; 
+            width: 100%; 
+            overflow-x: auto; 
+              -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+            padding: 0 1rem; 
+            line-height: 1.1; 
+            text-transform: lowercase;
+        }
+        .pixel-s { 
+            font-family: var(--ff-pixel); 
+            display: inline-block; 
+            font-weight: 300; 
+            letter-spacing: 0; 
+            font-size: 1.14em; 
+            transform: scale(1.05);
+            color: var(--footer-accent);
+        }
+        .copyright-below { 
+            background: var(--footer-bg); 
+            text-align: center; 
+            padding: 1.5rem 0 2.5rem; 
+            font-size: 0.9rem; 
+            color: var(--footer-text-secondary); 
+            font-weight: 400; 
+            border-top: 1px solid var(--footer-border);
+        }
+        .btn-pill { 
+            background: transparent; 
+            border: 1.5px solid var(--footer-text-primary); 
+            padding: 0.8rem 2rem; 
+            border-radius: 100px; 
+            font-weight: 500; 
+            font-family: var(--ff-sans); 
+            font-size: 1.05rem; 
+            cursor: pointer; 
+            transition: all 0.35s var(--ease-out-expo); 
+            color: var(--footer-text-primary); 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 0.6rem; 
+            background: rgba(255,255,255,0.02);
+            backdrop-filter: blur(4px);
+        }
+        .btn-pill:hover { 
+            transform: scale(0.96); 
+            background: rgba(255,255,255,0.12); 
+            border-color: var(--footer-accent);
+            color: var(--footer-accent);
+        }
+        .btn-pill .arrow { 
+            font-size: 1.1rem; 
+            transition: transform 0.35s var(--ease-out-expo); 
+        }
+        .btn-pill:hover .arrow { 
+            transform: translateX(5px); 
+        }
+        
+        /* Footer social/info row styling */
+        .footer-info-row {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1.2rem;
+            font-size: 0.85rem;
+            letter-spacing: 0.02em;
+        }
+        .footer-info-row span {
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            opacity: 0.75;
+        }
+        .footer-info-row span:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+            color: var(--footer-accent);
+        }
+        
+        @media (max-width: 640px) { 
+            footer h3 { max-width: 100%; } 
+            .footer-big-handle h2 { white-space: normal; font-size: clamp(2.8rem, 14vw, 6rem); } 
+        }
+        @media (max-width: 600px) { 
+            .footer--top { flex-direction: column; align-items: flex-start; } 
+        }
+    </style>
+</head>
+<body>
+
+<!-- Glass Nav -->
+<nav class="glass-nav" id="glassNav">
+    <a href="index.html">Home</a>
+    <a href="/p">Projects</a>
+    <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="nav-logo-center">
+    <a href="/g" class="active">Gallery</a>
+    <a href="/c">Contact</a>
+</nav>
+
+  <div class="mobile-header">
+        <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="mobile-logo">
+        <div class="mobile-menu-btn" id="mobileMenuBtn">
+            <span class="material-symbols-rounded">dehaze</span>
+        </div>
+    </div>
+<div class="mobile-dropdown" id="mobileDropdown">
+    <a href="index.html">Home</a>
+    <a href="/p">Projects</a>
+    <a href="/g">Gallery</a>
+    <a href="/c">Contact</a>
+</div>
+
+<!-- HERO (No floating squares script) -->
+<section class="page-hero" id="pageHero">
+    <div class="hero-inner">
+        <div class="page-label reveal-up">Selected Work</div>
+        <!-- Projects heading: no cursive, only pixelated S at the end -->
+        <h1 class="page-title reveal-up" style="transition-delay:0.06s">
+            <span class="normal-text">Projec</span><span class="pixel-s-end">t</span><span class="normal-text">s</span>
+        </h1>
+        <div class="hero-meta reveal-up" style="transition-delay:0.12s">
+            <span class="hero-meta-count" id="projectCount">— Projects</span>
+            <div class="hero-line"></div>
+            <span class="year-range">2021 — 2025</span>
+        </div>
+    </div>
+</section>
+
+<!-- PROJECTS GRID -->
+<section class="projects-section">
+    <div class="projects-grid-wrap">
+        <div class="grid-header">
+            <span class="grid-header-label">All Projects</span>
+            <span id="projectCount2"></span>
+        </div>
+        <div class="projects-grid" id="projectsGrid">
+            <!-- Loaded from Firebase -->
+            <div style="grid-column:1/-1;text-align:center;padding:4rem 0;color:var(--projects-text-secondary);font-size:0.9rem;">Loading projects…</div>
+        </div>
+    </div>
+</section>
+
+<!-- BLACK FOOTER (Enhanced Dark Theme) -->
+<footer id="contact">
+    <div class="container">
+        <div class="footer--top">
+            <h3>HAVE A PROJECT IN MIND? LET'S BRING IT TO LIFE.</h3>
+            <a href="mailto:hello@yoonus.design" class="btn-pill">Get in Touch <span class="arrow">→</span></a>
+        </div>
+        <div class="line"></div>
+        <div class="footer--bottom">
+            <div class="footer-info-row">
+                <span>Mail</span>
+                <span>Insta</span>
+                <span>Buy me a coffee</span>
+            </div>
+        </div>
+    </div>
+    <div class="footer-big-handle"><h2>@y0onu<span class="pixel-s">s</span></h2></div>
+    <div class="copyright-below"><span>© 2026 y0onus all rights reserved</span></div>
+</footer>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+// Reveal animations
+document.querySelectorAll('.reveal-up').forEach(el => {
+    gsap.fromTo(el, { opacity: 0, y: 40 }, {
+        opacity: 1, y: 0, duration: 0.95, ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' }
+    });
+});
+
+// Floating squares animation removed entirely — no rects spawning
+
+// Mobile menu
+const menuBtn = document.getElementById('mobileMenuBtn');
+const dropdown = document.getElementById('mobileDropdown');
+if (menuBtn) {
+    menuBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        dropdown?.classList.toggle('active');
+    });
+}
+document.addEventListener('click', e => {
+    if (dropdown?.classList.contains('active') && !dropdown.contains(e.target) && e.target !== menuBtn)
+        dropdown.classList.remove('active');
+});
+
+// Footer interactive links
+document.querySelectorAll('.footer-info-row span').forEach(span => {
+    span.addEventListener('click', () => {
+        if(span.innerText.includes('Insta')) window.open('https://instagram.com', '_blank');
+        else if(span.innerText.includes('coffee')) window.open('https://buymeacoffee.com', '_blank');
+        else if(span.innerText.includes('Mail')) location.href = 'mailto:hello@yoonus.design';
+        else if(span.innerText.includes('Twitter')) window.open('https://twitter.com', '_blank');
+    });
+});
+</script>
+</body>
+</html>
