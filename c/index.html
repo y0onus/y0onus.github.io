@@ -55,20 +55,41 @@
         @keyframes tiltLogo { 0%,100%{transform:rotate(0)} 50%{transform:rotate(12deg)} }
         @media (max-width: 768px) { .glass-nav { display: none !important; } }
 
-        /* Mobile Header */
-        .mobile-header { position: fixed; top: 0; left: 0; width: 100%; padding: 1rem 1.5rem; display: none; justify-content: space-between; align-items: center; z-index: 1001; pointer-events: none; }
+        /* Mobile Header (from projects page) */
+        .mobile-header { 
+            position: fixed; top: 0; left: 0; width: 100%; padding: 1rem 1.5rem; 
+            display: none; justify-content: space-between; align-items: center; 
+            z-index: 1001; pointer-events: none; 
+        }
         .mobile-header .mobile-logo { height: 45px; pointer-events: auto; animation: tiltLogo 16s ease-in-out infinite; }
-        .mobile-menu-btn { pointer-events: auto; width: 48px; height: 48px; background: rgba(255,255,255,0.1); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s var(--ease-out-expo); color: var(--clr-white); }
+        .mobile-menu-btn { 
+            pointer-events: auto; width: 48px; height: 48px; background: rgba(255,255,255,0.1); 
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; cursor: pointer; 
+            border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s var(--ease-out-expo); color: var(--clr-white); 
+        }
         .mobile-menu-btn:hover { background: rgba(255,255,255,0.18); transform: scale(0.95); }
         .mobile-menu-btn .material-symbols-rounded { font-size: 26px; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 26; }
         @media (max-width: 768px) { .mobile-header { display: flex; } }
-        .mobile-dropdown { position: fixed; top: 75px; right: 20px; background: rgba(30,10,0,0.7); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border-radius: 24px; padding: 1rem 0.5rem; display: none; flex-direction: column; gap: 0.4rem; z-index: 1000; border: 1px solid rgba(255,255,255,0.12); min-width: 175px; box-shadow: 0 16px 40px rgba(0,0,0,0.3); opacity: 0; transform: scale(0.92) translateY(-8px); transition: opacity 0.3s var(--ease-out-expo), transform 0.3s var(--ease-out-expo); pointer-events: none; }
+        
+        .mobile-dropdown { 
+            position: fixed; top: 75px; right: 20px; background: rgba(30,10,0,0.85); 
+            backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%); 
+            border-radius: 24px; padding: 1rem 0.5rem; display: none; flex-direction: column; 
+            gap: 0.4rem; z-index: 1000; border: 1px solid rgba(255,255,255,0.15); 
+            min-width: 175px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
+            opacity: 0; transform: scale(0.92) translateY(-8px); 
+            transition: opacity 0.3s var(--ease-out-expo), transform 0.3s var(--ease-out-expo); 
+            pointer-events: none; 
+        }
         .mobile-dropdown.active { display: flex; opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
-        .mobile-dropdown a { color: rgba(230,228,222,0.9); font-size: 0.98rem; padding: 0.65rem 1.1rem; transition: background 0.2s ease; border-radius: 14px; }
-        .mobile-dropdown a:hover { background: rgba(255,255,255,0.1); color: white; }
+        .mobile-dropdown a { 
+            color: rgba(250,240,225,0.92); font-size: 0.98rem; padding: 0.7rem 1.2rem; 
+            transition: background 0.2s ease; border-radius: 14px; font-weight: 450; 
+        }
+        .mobile-dropdown a:hover { background: rgba(255,255,255,0.12); color: white; }
 
         /* ── PAGE WRAP ── */
-        /* The entire page is one gradient that flows from deep dark top → warm cream → footer cream */
         .page-bg {
             min-height: 100vh;
             background:
@@ -97,6 +118,7 @@
             padding: 10rem 2rem 4rem;
             max-width: 1300px;
             margin: 0 auto;
+            position: relative;
         }
         .hero-label {
             font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
@@ -220,7 +242,6 @@
             box-shadow: 0 0 0 3px rgba(232,136,42,0.12);
         }
 
-        /* Select */
         .select-wrap { position: relative; }
         .select-wrap select { padding-left: 1.1rem; cursor: pointer; }
         .select-arrow {
@@ -231,7 +252,6 @@
         .select-arrow svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
         select option { background: #2a1200; color: #e6e4de; }
 
-        /* Textarea */
         .textarea-wrap { position: relative; }
         textarea {
             border-radius: 20px;
@@ -246,7 +266,6 @@
             pointer-events: none; font-family: var(--ff-sans);
         }
 
-        /* Submit button */
         .submit-btn {
             width: 100%; margin-top: 0.5rem;
             background: var(--clr-white);
@@ -270,7 +289,6 @@
         .submit-btn:hover .arrow { transform: translate(3px,-3px); }
         .submit-btn.loading { opacity: 0.7; pointer-events: none; }
 
-        /* Success / error state */
         .form-feedback {
             margin-top: 1rem; font-size: 0.85rem; text-align: center;
             padding: 0.7rem 1.2rem; border-radius: 40px; display: none;
@@ -278,7 +296,6 @@
         .form-feedback.success { display: block; background: rgba(50,200,80,0.12); border: 1px solid rgba(50,200,80,0.25); color: #80e899; }
         .form-feedback.error   { display: block; background: rgba(220,60,60,0.12); border: 1px solid rgba(220,60,60,0.25); color: #f08080; }
 
-        /* Spacer before footer so gradient flows into it */
         .pre-footer { height: 5rem; }
 
         /* ── FOOTER ── */
@@ -304,9 +321,12 @@
         .btn-pill:hover .arrow { transform: translateX(5px); }
         @media (max-width: 640px) { footer h3 { max-width: 100%; } .footer-big-handle h2 { white-space: normal; font-size: clamp(2.8rem,14vw,6rem); } }
         @media (max-width: 600px) { .footer--top { flex-direction: column; align-items: flex-start; } }
+        
+        /* extra floating rect container from projects style removed, but kept minimal */
     </style>
 </head>
 <body>
+<!-- Desktop glass nav -->
 <nav class="glass-nav" id="glassNav">
     <a href="/">Home</a>
     <a href="/p">Projects</a>
@@ -315,12 +335,15 @@
     <a href="/c">Contact</a>
 </nav>
 
-  <div class="mobile-header">
-        <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="mobile-logo">
-        <div class="mobile-menu-btn" id="mobileMenuBtn">
-            <span class="material-symbols-rounded">dehaze</span>
-        </div>
+<!-- Mobile header (exactly from projects file) -->
+<div class="mobile-header">
+    <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="mobile-logo">
+    <div class="mobile-menu-btn" id="mobileMenuBtn">
+        <span class="material-symbols-rounded">dehaze</span>
     </div>
+</div>
+
+<!-- Mobile dropdown (from projects file) -->
 <div class="mobile-dropdown" id="mobileDropdown">
     <a href="/">Home</a>
     <a href="/p">Projects</a>
@@ -368,7 +391,6 @@
         <!-- Right column: form -->
         <div class="form-card" id="formCard">
             <form id="contactForm" action="https://formspree.io/f/xvzvebge" method="POST">
-
                 <div class="form-row-2">
                     <div class="field">
                         <label class="field-label" for="fname">Full Name</label>
@@ -419,16 +441,14 @@
                     Submit <span class="arrow">↗</span>
                 </button>
                 <div class="form-feedback" id="formFeedback"></div>
-
             </form>
         </div>
-
     </div>
 
     <div class="pre-footer"></div>
 
     <!-- Footer -->
-    <footer id="contact">
+    <footer>
         <div class="container">
             <div class="footer--top">
                 <h3>HAVE A PROJECT IN MIND? LET'S BRING IT TO LIFE.</h3>
@@ -437,7 +457,9 @@
             <div class="f-line"></div>
             <div class="footer--bottom">
                 <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:1.5rem;margin-bottom:1.2rem;">
-                    <span>Mail</span><span>Insta</span><span>Buy me a coffee</span>
+                    <span id="footerMail">Mail</span>
+                    <span id="footerInsta">Insta</span>
+                    <span id="footerCoffee">Buy me a coffee</span>
                 </div>
             </div>
         </div>
@@ -481,7 +503,7 @@ document.getElementById('contactForm').addEventListener('submit', async (e) => {
         });
         if (res.ok) {
             feedback.className = 'form-feedback success';
-            feedback.textContent = '✓ Message sent! I'll get back to you soon.';
+            feedback.textContent = '✓ Message sent! I\'ll get back to you soon.';
             e.target.reset();
             count.textContent = '500/500';
         } else {
@@ -496,9 +518,10 @@ document.getElementById('contactForm').addEventListener('submit', async (e) => {
     btn.innerHTML = 'Submit <span class="arrow">↗</span>';
 });
 
-/* ── Floating rects ── */
+/* ── Floating rects (optional but preserved from original) ── */
 (function() {
     const hero = document.querySelector('.contact-hero');
+    if(!hero) return;
     const palette = ['#fa02d9','#e9fa02','#0213fa','#fa6502','#02fa07','#00ffe5','#8c00ff','#ff8c00','#ff00cc'];
     Array.from({ length: 8 }, () => {
         const el = document.createElement('div');
@@ -522,15 +545,37 @@ document.getElementById('contactForm').addEventListener('submit', async (e) => {
     });
 })();
 
-/* ── Mobile menu ── */
-document.getElementById('mobileMenuBtn')?.addEventListener('click', e => {
-    e.stopPropagation();
-    document.getElementById('mobileDropdown')?.classList.toggle('active');
+/* ── MOBILE MENU: EXACTLY FROM PROJECTS PAGE (robust and matching style) ── */
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const mobileDropdown = document.getElementById('mobileDropdown');
+
+if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (mobileDropdown) {
+            mobileDropdown.classList.toggle('active');
+        }
+    });
+}
+
+document.addEventListener('click', (e) => {
+    if (mobileDropdown && mobileDropdown.classList.contains('active')) {
+        const isClickInsideDropdown = mobileDropdown.contains(e.target);
+        const isClickOnButton = mobileMenuBtn && mobileMenuBtn.contains(e.target);
+        if (!isClickInsideDropdown && !isClickOnButton) {
+            mobileDropdown.classList.remove('active');
+        }
+    }
 });
-document.addEventListener('click', e => {
-    const dd = document.getElementById('mobileDropdown');
-    if (dd?.classList.contains('active') && !dd.contains(e.target) && e.target !== document.getElementById('mobileMenuBtn'))
-        dd.classList.remove('active');
+
+/* ── Footer interactive links (from projects file) ── */
+document.querySelectorAll('#footerMail, #footerInsta, #footerCoffee').forEach(span => {
+    span.addEventListener('click', () => {
+        const text = span.innerText;
+        if(text.includes('Insta')) window.open('https://instagram.com/y0onus', '_blank');
+        else if(text.includes('coffee')) window.open('https://buymeacoffee.com', '_blank');
+        else if(text.includes('Mail')) location.href = 'mailto:hello@yoonus.design';
+    });
 });
 </script>
 </body>
