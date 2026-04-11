@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Contact — Yoonus</title>
+    <meta name="description" content="Get in touch with Ibrahim Yoonus — Graphic Designer & Photographer from the Maldives.">
+    <link rel="icon" href="yaafav.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Pixelify+Sans&family=Ballet:opsz@16..72&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=dehaze" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --ff-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --ff-pixel: 'Pixelify Sans', monospace;
+            --ff-cursive: 'Ballet', cursive;
+            --clr-black: #141414;
+            --clr-white: #e6e4de;
+            --clr-text: rgba(230, 228, 222, 0.75);
+            --clr-accent: #e6e4de;
+            --fs-giant: clamp(5rem, 16vw, 12rem);
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+            /* Sunlight palette */
+            --sun-deep:   #1a0a00;
+            --sun-amber:  #c45a00;
+            --sun-gold:   #e8882a;
+            --sun-peach:  #f2b87a;
+            --sun-cream:  #f7ddb8;
+            --sun-warm:   #faecd6;
+            --footer-bg:  #e6e4de;
+        }
+
+        html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+        body { background: var(--sun-deep); color: var(--clr-white); font-family: var(--ff-sans); font-weight: 300; overflow-x: hidden; min-height: 100vh; }
+        a { text-decoration: none; color: inherit; }
+
+        /* ── NAV ── */
+        .glass-nav {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(255,255,255,0.08); backdrop-filter: blur(22px) saturate(180%);
+            -webkit-backdrop-filter: blur(22px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.18); border-radius: 60px;
+            padding: 0.5rem 2rem; display: flex; align-items: center; gap: 2.5rem;
+            z-index: 1000;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.15);
+            transition: background 0.4s ease;
+        }
+        .glass-nav a { font-size: 0.92rem; font-weight: 400; color: rgba(240,238,233,0.9); transition: color 0.25s ease; white-space: nowrap; }
+        .glass-nav a:hover, .glass-nav a.active { color: #fff; }
+        .glass-nav .nav-logo-center { height: 40px; width: auto; animation: tiltLogo 16s ease-in-out infinite; }
+        @keyframes tiltLogo { 0%,100%{transform:rotate(0)} 50%{transform:rotate(12deg)} }
+        @media (max-width: 768px) { .glass-nav { display: none !important; } }
+
+        /* Mobile Header */
+        .mobile-header { position: fixed; top: 0; left: 0; width: 100%; padding: 1rem 1.5rem; display: none; justify-content: space-between; align-items: center; z-index: 1001; pointer-events: none; }
+        .mobile-header .mobile-logo { height: 45px; pointer-events: auto; animation: tiltLogo 16s ease-in-out infinite; }
+        .mobile-menu-btn { pointer-events: auto; width: 48px; height: 48px; background: rgba(255,255,255,0.1); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s var(--ease-out-expo); color: var(--clr-white); }
+        .mobile-menu-btn:hover { background: rgba(255,255,255,0.18); transform: scale(0.95); }
+        .mobile-menu-btn .material-symbols-rounded { font-size: 26px; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 26; }
+        @media (max-width: 768px) { .mobile-header { display: flex; } }
+        .mobile-dropdown { position: fixed; top: 75px; right: 20px; background: rgba(30,10,0,0.7); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border-radius: 24px; padding: 1rem 0.5rem; display: none; flex-direction: column; gap: 0.4rem; z-index: 1000; border: 1px solid rgba(255,255,255,0.12); min-width: 175px; box-shadow: 0 16px 40px rgba(0,0,0,0.3); opacity: 0; transform: scale(0.92) translateY(-8px); transition: opacity 0.3s var(--ease-out-expo), transform 0.3s var(--ease-out-expo); pointer-events: none; }
+        .mobile-dropdown.active { display: flex; opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+        .mobile-dropdown a { color: rgba(230,228,222,0.9); font-size: 0.98rem; padding: 0.65rem 1.1rem; transition: background 0.2s ease; border-radius: 14px; }
+        .mobile-dropdown a:hover { background: rgba(255,255,255,0.1); color: white; }
+
+        /* ── PAGE WRAP ── */
+        /* The entire page is one gradient that flows from deep dark top → warm cream → footer cream */
+        .page-bg {
+            min-height: 100vh;
+            background:
+                radial-gradient(ellipse 80% 55% at 15% 8%, rgba(196,90,0,0.28) 0%, transparent 65%),
+                radial-gradient(ellipse 60% 40% at 85% 5%, rgba(232,136,42,0.18) 0%, transparent 55%),
+                linear-gradient(
+                    180deg,
+                    #120700 0%,
+                    #1e0d00 8%,
+                    #2a1200 18%,
+                    #4a2200 30%,
+                    #7a3d10 42%,
+                    #b06528 54%,
+                    #d4935a 64%,
+                    #e8bb8c 73%,
+                    #f2d4b0 80%,
+                    #f7e3c8 86%,
+                    #f9edd8 91%,
+                    #faecd6 95%,
+                    #e6e4de 100%
+                );
+        }
+
+        /* ── HERO TEXT ── */
+        .contact-hero {
+            padding: 10rem 2rem 4rem;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        .hero-label {
+            font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase;
+            color: rgba(230,200,160,0.55); font-weight: 500; margin-bottom: 1.4rem;
+        }
+        .hero-title {
+            font-size: clamp(4rem, 11vw, 9rem);
+            line-height: 0.95;
+            letter-spacing: -0.03em;
+            font-weight: 700;
+        }
+        .hero-title .word-get {
+            font-family: var(--ff-pixel);
+            font-weight: 400;
+            color: var(--clr-white);
+            display: block;
+            font-size: 0.82em;
+            letter-spacing: 0.01em;
+        }
+        .hero-title .word-in {
+            font-family: var(--ff-pixel);
+            font-weight: 400;
+            color: rgba(230,220,200,0.9);
+            display: inline;
+            font-size: 0.82em;
+            letter-spacing: 0.01em;
+        }
+        .hero-title .word-touch {
+            font-family: var(--ff-cursive);
+            font-weight: 400;
+            color: var(--clr-white);
+            display: block;
+            font-size: 1.05em;
+            letter-spacing: -0.02em;
+            opacity: 0.88;
+        }
+
+        /* ── CONTACT GRID ── */
+        .contact-grid {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 2rem 2rem 0;
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 5rem;
+            align-items: start;
+        }
+        @media (max-width: 860px) {
+            .contact-grid { grid-template-columns: 1fr; gap: 3rem; }
+            .contact-hero { padding: 9rem 2rem 3rem; }
+        }
+
+        /* Left info */
+        .contact-info { display: flex; flex-direction: column; gap: 2.5rem; padding-top: 0.5rem; }
+        .info-block {}
+        .info-label {
+            font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+            color: rgba(230,200,150,0.5); font-weight: 600; margin-bottom: 0.5rem;
+        }
+        .info-value { font-size: 0.95rem; color: rgba(230,220,200,0.85); font-weight: 400; line-height: 1.6; }
+        .info-value a:hover { color: var(--clr-white); }
+        .info-divider { height: 1px; background: rgba(230,200,150,0.12); }
+
+        /* ── FORM CARD ── */
+        .form-card {
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(28px) saturate(150%);
+            -webkit-backdrop-filter: blur(28px) saturate(150%);
+            border: 1px solid rgba(255,255,255,0.13);
+            border-radius: 28px;
+            padding: 2.4rem 2.2rem;
+            box-shadow:
+                0 8px 40px rgba(0,0,0,0.25),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        @media (max-width: 500px) { .form-row-2 { grid-template-columns: 1fr; } }
+
+        .field { margin-bottom: 1.1rem; }
+        .field-label {
+            font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+            color: rgba(230,210,180,0.55); font-weight: 600; display: block;
+            margin-bottom: 0.45rem; font-family: var(--ff-sans);
+        }
+
+        .input-wrap {
+            position: relative; display: flex; align-items: center;
+        }
+        .input-icon {
+            position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+            color: rgba(230,200,150,0.35); pointer-events: none;
+            display: flex; align-items: center;
+        }
+        .input-icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+        input[type="text"],
+        input[type="email"],
+        select,
+        textarea {
+            width: 100%;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 50px;
+            padding: 0.85rem 1.1rem 0.85rem 2.8rem;
+            font-size: 0.88rem; font-family: var(--ff-sans); font-weight: 400;
+            color: rgba(230,220,200,0.9);
+            outline: none;
+            transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+            -webkit-appearance: none; appearance: none;
+        }
+        input[type="text"]::placeholder,
+        input[type="email"]::placeholder,
+        textarea::placeholder { color: rgba(230,200,150,0.28); }
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        select:focus,
+        textarea:focus {
+            border-color: rgba(232,136,42,0.6);
+            background: rgba(255,255,255,0.1);
+            box-shadow: 0 0 0 3px rgba(232,136,42,0.12);
+        }
+
+        /* Select */
+        .select-wrap { position: relative; }
+        .select-wrap select { padding-left: 1.1rem; cursor: pointer; }
+        .select-arrow {
+            position: absolute; right: 1.2rem; top: 50%; transform: translateY(-50%);
+            pointer-events: none; color: rgba(230,200,150,0.45);
+            display: flex; align-items: center;
+        }
+        .select-arrow svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+        select option { background: #2a1200; color: #e6e4de; }
+
+        /* Textarea */
+        .textarea-wrap { position: relative; }
+        textarea {
+            border-radius: 20px;
+            padding: 1rem 1.1rem;
+            resize: none;
+            min-height: 130px;
+            line-height: 1.6;
+        }
+        .char-count {
+            position: absolute; bottom: 0.75rem; right: 1rem;
+            font-size: 0.72rem; color: rgba(230,200,150,0.3);
+            pointer-events: none; font-family: var(--ff-sans);
+        }
+
+        /* Submit button */
+        .submit-btn {
+            width: 100%; margin-top: 0.5rem;
+            background: var(--clr-white);
+            color: var(--clr-black);
+            border: none; padding: 1.05rem 2rem;
+            border-radius: 50px;
+            font-size: 1rem; font-weight: 600;
+            font-family: var(--ff-sans);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+            transition: transform 0.35s var(--ease-out-expo), background 0.25s ease, box-shadow 0.35s ease;
+            box-shadow: 0 4px 20px rgba(230,200,150,0.15);
+            letter-spacing: -0.01em;
+        }
+        .submit-btn:hover {
+            transform: scale(0.97);
+            background: #f5f3ef;
+            box-shadow: 0 8px 32px rgba(232,136,42,0.22);
+        }
+        .submit-btn .arrow { transition: transform 0.35s var(--ease-out-expo); font-size: 1.1rem; }
+        .submit-btn:hover .arrow { transform: translate(3px,-3px); }
+        .submit-btn.loading { opacity: 0.7; pointer-events: none; }
+
+        /* Success / error state */
+        .form-feedback {
+            margin-top: 1rem; font-size: 0.85rem; text-align: center;
+            padding: 0.7rem 1.2rem; border-radius: 40px; display: none;
+        }
+        .form-feedback.success { display: block; background: rgba(50,200,80,0.12); border: 1px solid rgba(50,200,80,0.25); color: #80e899; }
+        .form-feedback.error   { display: block; background: rgba(220,60,60,0.12); border: 1px solid rgba(220,60,60,0.25); color: #f08080; }
+
+        /* Spacer before footer so gradient flows into it */
+        .pre-footer { height: 5rem; }
+
+        /* ── FOOTER ── */
+        footer {
+            background-color: var(--clr-accent);
+            border-top-left-radius: 48px;
+            border-top-right-radius: 48px;
+            padding: 4rem 0 0;
+            overflow: hidden;
+        }
+        .container { width: 90%; max-width: 1300px; margin: 0 auto; padding: 0 1rem; }
+        footer h3 { color: #141414; font-size: clamp(2rem, 5vw, 3rem); font-weight: 600; letter-spacing: -0.02em; max-width: 75%; line-height: 1.2; font-family: var(--ff-sans); }
+        .footer--top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2.5rem; margin-bottom: 3rem; }
+        .footer--bottom { border-top: 1px solid rgba(0,0,0,0.15); padding: 2rem 0 1.5rem; color: #141414; font-weight: 400; font-size: 1rem; }
+        .f-line { opacity: 0.25; border-bottom: 1px solid #141414; margin: 1.5rem 0; }
+        .footer-big-handle { width: 100%; background: var(--clr-accent); padding: 3rem 0 1rem; text-align: center; border-top: 1px solid rgba(0,0,0,0.1); }
+        .footer-big-handle h2 { font-size: var(--fs-giant); font-weight: 800; letter-spacing: -0.03em; color: #141414; font-family: var(--ff-sans); white-space: nowrap; overflow-x: auto; padding: 0 1rem; line-height: 1.1; text-transform: lowercase; }
+        .pixel-s { font-family: var(--ff-pixel); display: inline-block; font-weight: 300; font-size: 1.14em; transform: scale(1.05); }
+        .copyright-below { background: var(--clr-accent); text-align: center; padding: 1.5rem 0 2.5rem; font-size: 0.9rem; color: #141414; }
+        .btn-pill { background: var(--clr-accent); border: 1.5px solid #141414; padding: 0.8rem 2rem; border-radius: 100px; font-weight: 500; font-family: var(--ff-sans); font-size: 1.05rem; cursor: pointer; color: #141414; display: inline-flex; align-items: center; gap: 0.6rem; transition: transform 0.35s var(--ease-out-expo), background 0.25s ease; }
+        .btn-pill:hover { transform: scale(0.95); background: #cfccc4; }
+        .btn-pill .arrow { transition: transform 0.35s var(--ease-out-expo); }
+        .btn-pill:hover .arrow { transform: translateX(5px); }
+        @media (max-width: 640px) { footer h3 { max-width: 100%; } .footer-big-handle h2 { white-space: normal; font-size: clamp(2.8rem,14vw,6rem); } }
+        @media (max-width: 600px) { .footer--top { flex-direction: column; align-items: flex-start; } }
+    </style>
+</head>
+<body>
+<nav class="glass-nav" id="glassNav">
+    <a href="/">Home</a>
+    <a href="/p">Projects</a>
+    <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="nav-logo-center">
+    <a href="/g" class="active">Gallery</a>
+    <a href="/c">Contact</a>
+</nav>
+
+  <div class="mobile-header">
+        <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="mobile-logo">
+        <div class="mobile-menu-btn" id="mobileMenuBtn">
+            <span class="material-symbols-rounded">dehaze</span>
+        </div>
+    </div>
+<div class="mobile-dropdown" id="mobileDropdown">
+    <a href="/">Home</a>
+    <a href="/p">Projects</a>
+    <a href="/g">Gallery</a>
+    <a href="/c">Contact</a>
+</div>
+
+<div class="page-bg">
+
+    <!-- Hero heading -->
+    <div class="contact-hero">
+        <div class="hero-label" id="heroLabel">Let's talk</div>
+        <h1 class="hero-title" id="heroTitle">
+            <span class="word-get">Get <span class="word-in">in</span></span>
+            <span class="word-touch">Touch</span>
+        </h1>
+    </div>
+
+    <!-- Grid: info + form -->
+    <div class="contact-grid">
+
+        <!-- Left column -->
+        <div class="contact-info" id="contactInfo">
+            <div class="info-block">
+                <div class="info-label">Email Support</div>
+                <div class="info-value"><a href="mailto:hello@yoonus.design">hello@yoonus.design</a></div>
+            </div>
+            <div class="info-divider"></div>
+            <div class="info-block">
+                <div class="info-label">Instagram</div>
+                <div class="info-value"><a href="https://instagram.com/y0onus" target="_blank" rel="noopener">@y0onus</a></div>
+            </div>
+            <div class="info-divider"></div>
+            <div class="info-block">
+                <div class="info-label">Response Time</div>
+                <div class="info-value">Usually within 24 hours.<br>Open to freelance &amp; collabs.</div>
+            </div>
+            <div class="info-divider"></div>
+            <div class="info-block">
+                <div class="info-label">Based In</div>
+                <div class="info-value">Maldives</div>
+            </div>
+        </div>
+
+        <!-- Right column: form -->
+        <div class="form-card" id="formCard">
+            <form id="contactForm" action="https://formspree.io/f/xvzvebge" method="POST">
+
+                <div class="form-row-2">
+                    <div class="field">
+                        <label class="field-label" for="fname">Full Name</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                            </span>
+                            <input type="text" id="fname" name="name" placeholder="Ibrahim Yoonus" required autocomplete="name">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="femail">Email</label>
+                        <div class="input-wrap">
+                            <span class="input-icon">
+                                <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8l10 6 10-6"/></svg>
+                            </span>
+                            <input type="email" id="femail" name="email" placeholder="you@example.com" required autocomplete="email">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="fsubject">Subject</label>
+                    <div class="select-wrap">
+                        <select id="fsubject" name="subject">
+                            <option value="">Select a subject…</option>
+                            <option>Graphic Design Project</option>
+                            <option>Photography Session</option>
+                            <option>Web Development</option>
+                            <option>Collaboration</option>
+                            <option>General Enquiry</option>
+                        </select>
+                        <span class="select-arrow">
+                            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="fmessage">Message</label>
+                    <div class="textarea-wrap">
+                        <textarea id="fmessage" name="message" placeholder="Write your message…" maxlength="500" required></textarea>
+                        <span class="char-count" id="charCount">500/500</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    Submit <span class="arrow">↗</span>
+                </button>
+                <div class="form-feedback" id="formFeedback"></div>
+
+            </form>
+        </div>
+
+    </div>
+
+    <div class="pre-footer"></div>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer--top">
+                <h3>HAVE A PROJECT IN MIND? LET'S BRING IT TO LIFE.</h3>
+                <a href="mailto:hello@yoonus.design" class="btn-pill">Get in Touch <span class="arrow">→</span></a>
+            </div>
+            <div class="f-line"></div>
+            <div class="footer--bottom">
+                <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:1.5rem;margin-bottom:1.2rem;">
+                    <span>Mail</span><span>Insta</span><span>Buy me a coffee</span>
+                </div>
+            </div>
+        </div>
+        <div class="footer-big-handle"><h2>@y0onu<span class="pixel-s">s</span></h2></div>
+        <div class="copyright-below"><span>© 2026 y0onus all rights reserved</span></div>
+    </footer>
+
+</div><!-- /page-bg -->
+
+<script>
+/* ── Entrance animations ── */
+gsap.from('#heroLabel',   { opacity: 0, y: 20, duration: 0.9, ease: 'power3.out', delay: 0.1 });
+gsap.from('.word-get',    { opacity: 0, y: 60, duration: 1.1, ease: 'power3.out', delay: 0.18 });
+gsap.from('.word-touch',  { opacity: 0, y: 60, duration: 1.1, ease: 'power3.out', delay: 0.28 });
+gsap.from('#contactInfo', { opacity: 0, x: -40, duration: 1,  ease: 'power3.out', delay: 0.42 });
+gsap.from('#formCard',    { opacity: 0, y: 50,  duration: 1,  ease: 'power3.out', delay: 0.35 });
+
+/* ── Char counter ── */
+const msg   = document.getElementById('fmessage');
+const count = document.getElementById('charCount');
+msg.addEventListener('input', () => {
+    const left = 500 - msg.value.length;
+    count.textContent = left + '/500';
+    count.style.color = left < 50 ? 'rgba(220,120,80,0.7)' : 'rgba(230,200,150,0.3)';
+});
+
+/* ── Form submit via Formspree (AJAX) ── */
+document.getElementById('contactForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn      = document.getElementById('submitBtn');
+    const feedback = document.getElementById('formFeedback');
+    btn.classList.add('loading');
+    btn.textContent = 'Sending…';
+    feedback.className = 'form-feedback';
+
+    try {
+        const res = await fetch(e.target.action, {
+            method: 'POST',
+            body: new FormData(e.target),
+            headers: { 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+            feedback.className = 'form-feedback success';
+            feedback.textContent = '✓ Message sent! I'll get back to you soon.';
+            e.target.reset();
+            count.textContent = '500/500';
+        } else {
+            throw new Error('Server error');
+        }
+    } catch {
+        feedback.className = 'form-feedback error';
+        feedback.textContent = '✕ Something went wrong — please try emailing me directly.';
+    }
+
+    btn.classList.remove('loading');
+    btn.innerHTML = 'Submit <span class="arrow">↗</span>';
+});
+
+/* ── Floating rects ── */
+(function() {
+    const hero = document.querySelector('.contact-hero');
+    const palette = ['#fa02d9','#e9fa02','#0213fa','#fa6502','#02fa07','#00ffe5','#8c00ff','#ff8c00','#ff00cc'];
+    Array.from({ length: 8 }, () => {
+        const el = document.createElement('div');
+        el.style.cssText = `position:absolute;width:8px;height:18px;border-radius:3px;opacity:0;pointer-events:none;z-index:1;left:${10+Math.random()*80}%;top:${10+Math.random()*80}%;background:${palette[Math.floor(Math.random()*palette.length)]}`;
+        hero.style.position = 'relative';
+        hero.appendChild(el);
+        (async function loop() {
+            while (true) {
+                el.style.transition = 'opacity 0.55s cubic-bezier(0.16,1,0.3,1),filter 0.55s ease';
+                el.style.filter = 'blur(12px) drop-shadow(0 0 4px currentColor)';
+                el.style.opacity = '0.65';
+                await new Promise(r => setTimeout(r, 1400 + Math.random()*1200));
+                el.style.transition = 'opacity 0.5s ease-in,filter 0.5s ease-in';
+                el.style.opacity = '0';
+                await new Promise(r => setTimeout(r, 500));
+                el.style.left = (10+Math.random()*80)+'%';
+                el.style.top  = (10+Math.random()*80)+'%';
+                await new Promise(r => setTimeout(r, 900+Math.random()*400));
+            }
+        })();
+    });
+})();
+
+/* ── Mobile menu ── */
+document.getElementById('mobileMenuBtn')?.addEventListener('click', e => {
+    e.stopPropagation();
+    document.getElementById('mobileDropdown')?.classList.toggle('active');
+});
+document.addEventListener('click', e => {
+    const dd = document.getElementById('mobileDropdown');
+    if (dd?.classList.contains('active') && !dd.contains(e.target) && e.target !== document.getElementById('mobileMenuBtn'))
+        dd.classList.remove('active');
+});
+</script>
+</body>
+</html>
