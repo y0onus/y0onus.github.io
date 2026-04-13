@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RaazuaaChess</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff; --surface: #f5f5f5; --border: #e5e5e5;
+    --border-strong: #c8c8c8; --text: #111111; --text-2: #555555;
+    --text-3: #999999; --radius: 12px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.07);
+    --jeff: #c9a84c;
+  }
+  [data-theme="dark"] {
+    --bg: #111111; --surface: #1e1e1e; --border: #2e2e2e;
+    --border-strong: #444444; --text: #f0f0f0; --text-2: #aaaaaa;
+    --text-3: #666666;
+    --shadow: 0 1px 4px rgba(0,0,0,0.3), 0 12px 40px rgba(0,0,0,0.4);
+  }
+
+  body {
+    background: var(--bg); font-family: 'Inter', sans-serif; color: var(--text);
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; padding: 24px 24px 48px;
+    animation: fadeUp 0.4s ease both; transition: background 0.25s, color 0.25s;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;} }
+
+  /* Theme toggle */
+  .theme-btn {
+    position: fixed; top: 16px; right: 16px; z-index: 100;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 9px; padding: 8px 12px; cursor: pointer;
+    font-size: 1rem; color: var(--text-2); transition: all 0.18s;
+  }
+  .theme-btn:hover { border-color: var(--border-strong); color: var(--text); }
+
+  /* Logo */
+  .logo { text-align: center; margin: 48px 0 36px; }
+  .logo-icon { font-size: 3rem; display: block; margin-bottom: 12px; animation: float 4s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-7px) rotate(2deg);} }
+  .logo-title { font-family:'DM Serif Display',serif; font-size:clamp(1.9rem,5vw,2.5rem); letter-spacing:-0.025em; color:var(--text); line-height:1; }
+  .logo-sub { margin-top:7px; font-size:0.72rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--text-3); font-weight:500; }
+
+  /* Two-column layout */
+  .main-grid {
+    display: grid; grid-template-columns: 400px 400px; gap: 20px;
+    width: 100%; max-width: 840px;
+  }
+  @media(max-width:860px) { .main-grid { grid-template-columns: 1fr; } }
+
+  /* Card */
+  .card {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 18px;
+    padding: 28px; box-shadow: var(--shadow); transition: background 0.25s, border-color 0.25s;
+  }
+  .card-heading { font-size:0.68rem; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-3); margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+  .card-heading-icon { font-size:1rem; }
+
+  .msg { font-size:0.82rem; padding:10px 14px; border-radius:9px; margin-bottom:16px; display:none; font-weight:500; }
+  .msg.error { display:block; background:#fff0f0; color:#b91c1c; border:1px solid #fecaca; }
+  .msg.info  { display:block; background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
+  [data-theme="dark"] .msg.error { background:#2d1010; color:#f87171; border-color:#7f1d1d; }
+  [data-theme="dark"] .msg.info  { background:#0d2d1a; color:#6ee7b7; border-color:#065f46; }
+
+  .field { margin-bottom:18px; }
+  .field-lbl { display:block; font-size:0.74rem; font-weight:600; color:var(--text-2); margin-bottom:7px; }
+  .input {
+    width:100%; border:1.5px solid var(--border); border-radius:var(--radius);
+    padding:12px 15px; font-family:'Inter',sans-serif; font-size:0.93rem;
+    color:var(--text); background:var(--bg); outline:none; transition:border-color 0.18s, box-shadow 0.18s;
+  }
+  .input:focus { border-color:#111; box-shadow:0 0 0 3px rgba(17,17,17,0.07); }
+  [data-theme="dark"] .input:focus { border-color:#ccc; box-shadow:0 0 0 3px rgba(255,255,255,0.07); }
+  .input::placeholder { color:var(--text-3); }
+
+  /* Public/Private toggle */
+  .visibility-row {
+    display: flex; gap: 8px; margin-bottom: 16px;
+  }
+  .vis-btn {
+    flex: 1; padding: 9px 14px; border-radius: 9px;
+    border: 1.5px solid var(--border); background: var(--bg);
+    color: var(--text-2); font-family:'Inter',sans-serif; font-size:0.8rem;
+    font-weight: 600; cursor: pointer; transition: all 0.16s; text-align:center;
+  }
+  .vis-btn.active { border-color: #111; background: var(--surface); color: var(--text); }
+  [data-theme="dark"] .vis-btn.active { border-color: #ddd; }
+
+  .divider { display:flex; align-items:center; gap:12px; margin:6px 0 14px; }
+  .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+  .divider span { font-size:0.7rem; color:var(--text-3); font-weight:500; }
+
+  .btn {
+    width:100%; padding:13px 18px; border-radius:var(--radius); border:none;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:0.88rem;
+    cursor:pointer; transition:all 0.16s; display:flex; align-items:center;
+    justify-content:center; gap:8px; margin-bottom:9px; letter-spacing:-0.01em;
+  }
+  .btn:active { transform:scale(0.98); }
+  .btn-dark   { background:#111; color:#fff; }
+  .btn-dark:hover { background:#2a2a2a; }
+  [data-theme="dark"] .btn-dark   { background:#f0f0f0; color:#111; }
+  [data-theme="dark"] .btn-dark:hover { background:#d0d0d0; }
+  .btn-outline { background:transparent; color:var(--text); border:1.5px solid var(--border-strong); }
+  .btn-outline:hover { border-color:#111; background:var(--surface); }
+  .btn-muted   { background:var(--surface); color:var(--text-2); border:1px solid var(--border); }
+  .btn-muted:hover { background:var(--border); color:var(--text); }
+
+  .spinner { width:15px; height:15px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.55s linear infinite; display:none; }
+  .btn-muted .spinner,.btn-outline .spinner { border:2px solid rgba(0,0,0,0.12); border-top-color:#555; }
+  @keyframes spin { to{transform:rotate(360deg);} }
+
+  .join-section { display:none; }
+  .join-section.open { display:block; animation:slideDown 0.2s ease; }
+  @keyframes slideDown { from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;} }
+  .join-row { display:flex; gap:8px; }
+  .join-row .input { flex:1; text-transform:uppercase; letter-spacing:0.12em; font-weight:700; }
+  .join-go { padding:12px 16px; background:#111; color:#fff; border:none; border-radius:var(--radius); font-family:'Inter',sans-serif; font-weight:700; font-size:0.88rem; cursor:pointer; transition:background 0.16s; white-space:nowrap; }
+  .join-go:hover { background:#333; }
+  [data-theme="dark"] .join-go { background:#f0f0f0; color:#111; }
+
+  /* Lobby */
+  .lobby-scroll { max-height: 340px; overflow-y: auto; display:flex; flex-direction:column; gap:10px; }
+  .lobby-scroll::-webkit-scrollbar { width:3px; }
+  .lobby-scroll::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:2px; }
+
+  .lobby-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px; background:var(--surface); border:1px solid var(--border);
+    border-radius:11px; gap:12px; transition:border-color 0.18s;
+    animation: lobbyIn 0.25s ease both;
+  }
+  @keyframes lobbyIn { from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;} }
+  .lobby-item:hover { border-color:var(--border-strong); }
+
+  .lobby-left { display:flex; align-items:center; gap:10px; min-width:0; }
+  .lobby-avatar { font-size:1.4rem; flex-shrink:0; }
+  .lobby-name { font-weight:600; font-size:0.88rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lobby-name.jeff-name { color: var(--jeff); }
+  .lobby-sub  { font-size:0.72rem; color:var(--text-3); margin-top:2px; }
+  .lobby-waiting { display:inline-block; width:7px; height:7px; background:#22c55e; border-radius:50%; margin-right:4px; animation:blink 1.4s ease infinite; }
+  @keyframes blink { 0%,100%{opacity:1;}50%{opacity:0.3;} }
+
+  .lobby-join-btn {
+    padding:7px 14px; background:#111; color:#fff; border:none;
+    border-radius:8px; font-family:'Inter',sans-serif; font-size:0.78rem;
+    font-weight:700; cursor:pointer; transition:all 0.15s; flex-shrink:0;
+    white-space:nowrap;
+  }
+  .lobby-join-btn:hover { background:#333; transform:scale(1.03); }
+  [data-theme="dark"] .lobby-join-btn { background:#f0f0f0; color:#111; }
+  .lobby-empty { text-align:center; padding:32px 0; color:var(--text-3); font-size:0.85rem; }
+  .lobby-empty-icon { font-size:2rem; display:block; margin-bottom:8px; opacity:0.4; }
+
+  /* Stats */
+  .stats { display:flex; width:100%; max-width:840px; border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-top:20px; animation:fadeUp 0.45s ease 0.15s both; transition:border-color 0.25s; }
+  .stat { flex:1; padding:14px 10px; text-align:center; border-right:1px solid var(--border); transition:background 0.18s; }
+  .stat:last-child { border-right:none; }
+  .stat:hover { background:var(--surface); }
+  .stat-val { font-family:'DM Serif Display',serif; font-size:1.4rem; line-height:1; color:var(--text); }
+  .stat-lbl { font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-3); margin-top:4px; font-weight:500; }
+
+  .footer { margin-top:16px; font-size:0.68rem; color:var(--text-3); text-align:center; animation:fadeUp 0.45s ease 0.3s both; }
+
+  @media(max-width:440px) {
+    body { padding:16px 16px 48px; }
+    .logo { margin:32px 0 28px; }
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+
+<div class="logo">
+  <span class="logo-icon">♟</span>
+  <div class="logo-title">Raazuaa</div>
+  <div class="logo-sub">BETA</div>
+</div>
+
+<div class="main-grid">
+  <!-- Left: Create / Join -->
+  <div class="card">
+    <div class="card-heading"><span class="card-heading-icon"></span> Play</div>
+    <div id="msgBox" class="msg"></div>
+
+    <div class="field">
+      <label class="field-lbl" for="username">Your name</label>
+      <input type="text" id="username" class="input" placeholder="Enter a username…" maxlength="20" autocomplete="off">
+    </div>
+
+    <!-- Public/Private toggle -->
+    <div class="field">
+      <label class="field-lbl">Game visibility</label>
+      <div class="visibility-row">
+        <button class="vis-btn active" id="visPublic"  onclick="setVis('public')">Public</button>
+        <button class="vis-btn"        id="visPrivate" onclick="setVis('private')">Private</button>
+      </div>
+    </div>
+
+    <button class="btn btn-dark" onclick="createGame()">
+      <span id="createText">Create game</span>
+      <div class="spinner" id="createSpinner"></div>
+    </button>
+
+    <div class="divider"><span>or</span></div>
+
+    <button class="btn btn-outline" onclick="toggleJoin()">Join with code</button>
+
+    <div class="join-section" id="joinSection">
+      <div style="margin-bottom:10px">
+        <label class="field-lbl" for="joinCode">Game code</label>
+        <div class="join-row">
+          <input type="text" id="joinCode" class="input" placeholder="ABC123" maxlength="6" autocomplete="off">
+          <button class="join-go" onclick="joinGame()">
+            <span id="joinText">Join</span>
+            <div class="spinner" id="joinSpinner"></div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-muted" style="margin-top:2px" onclick="goToAI()">Play vs AI</button>
+  </div>
+
+  <!-- Right: Lobby -->
+  <div class="card">
+    <div class="card-heading"><span class="card-heading-icon"><img src="knightr.svg" style="width:18px;height:18px;vertical-align:middle" onerror="this.replaceWith(document.createTextNode('♞'))"></span> Public Lobby</div>
+    <div class="lobby-scroll" id="lobbyList">
+      <div class="lobby-empty">
+        <span class="lobby-empty-icon">♞</span>
+        No open games right now.<br>Create one above!
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-val" id="statGames">—</div><div class="stat-lbl">Games</div></div>
+  <div class="stat"><div class="stat-val" id="statActive">—</div><div class="stat-lbl">Active</div></div>
+  <div class="stat"><div class="stat-val" id="statAI">—</div><div class="stat-lbl">AI Games</div></div>
+</div>
+
+<div class="footer">Waiting rooms expire in 5 min · Games delete 3 min after finishing</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+const db = getDatabase(initializeApp({
+  apiKey:"AIzaSyDx73KM8T_sK5DM5ymjhA5fzc5HVizjOvY",
+  authDomain:"raazuaachess.firebaseapp.com",
+  databaseURL:"https://raazuaachess-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"raazuaachess",
+  storageBucket:"raazuaachess.firebasestorage.app",
+  messagingSenderId:"26623169384",
+  appId:"1:26623169384:web:d4f550ad080f524443fcdd",
+  measurementId:"G-K9WY1DG16D"
+}));
+
+// ── Theme ────────────────────────────────────────────────────
+const saved = localStorage.getItem('chess_theme') || 'light';
+document.documentElement.setAttribute('data-theme', saved);
+document.getElementById('themeBtn').textContent = saved === 'dark' ? '☀️' : '🌙';
+
+window.toggleTheme = function() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('chess_theme', next);
+  document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+};
+
+// ── Visibility toggle ────────────────────────────────────────
+let gameVisibility = 'public';
+window.setVis = function(v) {
+  gameVisibility = v;
+  document.getElementById('visPublic').classList.toggle('active', v === 'public');
+  document.getElementById('visPrivate').classList.toggle('active', v === 'private');
+};
+
+// ── Helpers ──────────────────────────────────────────────────
+function showMsg(txt, type='error') {
+  const el = document.getElementById('msgBox');
+  el.textContent = txt; el.className = 'msg '+type;
+  setTimeout(() => el.className = 'msg', 4000);
+}
+function setLoad(tid, sid, on) {
+  document.getElementById(tid).style.display = on ? 'none' : '';
+  document.getElementById(sid).style.display = on ? 'inline-block' : 'none';
+}
+function genCode() {
+  return Array.from({length:6}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
+}
+function isJeff(name) { return name && name.trim().toLowerCase() === 'jeff'; }
+
+window.toggleJoin = () => document.getElementById('joinSection').classList.toggle('open');
+
+// ── Create game ──────────────────────────────────────────────
+window.createGame = async function() {
+  const name = document.getElementById('username').value.trim();
+  if (!name) { showMsg('Please enter a username'); return; }
+  setLoad('createText','createSpinner',true);
+  try {
+    const code = genCode();
+    await set(ref(db, `games/${code}`), {
+      code, status:'waiting', createdAt:Date.now(),
+      playerRed:{name}, playerBlack:null, currentTurn:'red', board:null,
+      visibility: gameVisibility
+    });
+    setTimeout(async () => {
+      try {
+        const s = await get(ref(db, `games/${code}`));
+        if (s.exists() && s.val().status === 'waiting') await set(ref(db, `games/${code}`), null);
+      } catch(e){}
+    }, 300000);
+    sessionStorage.setItem('chess_username', name);
+    window.location.href = `game.html?code=${code}&player=red`;
+  } catch(e) { showMsg('Could not create game. Try again.'); setLoad('createText','createSpinner',false); }
+};
+
+// ── Join game ────────────────────────────────────────────────
+window.joinGame = async function() {
+  const name = document.getElementById('username').value.trim();
+  const code = document.getElementById('joinCode').value.trim().toUpperCase();
+  if (!name) { showMsg('Please enter a username'); return; }
+  if (code.length !== 6) { showMsg('Enter a valid 6-character code'); return; }
+  await doJoin(name, code);
+};
+
+async function doJoin(name, code) {
+  setLoad('joinText','joinSpinner',true);
+  try {
+    const s = await get(ref(db, `games/${code}`));
+    if (!s.exists()) { showMsg('Game not found'); setLoad('joinText','joinSpinner',false); return; }
+    const g = s.val();
+    if (g.status !== 'waiting') { showMsg('Game not available'); setLoad('joinText','joinSpinner',false); return; }
+    if (g.playerBlack) { showMsg('Game is already full'); setLoad('joinText','joinSpinner',false); return; }
+    await set(ref(db, `games/${code}/playerBlack`), {name});
+    await set(ref(db, `games/${code}/status`), 'active');
+    sessionStorage.setItem('chess_username', name);
+    window.location.href = `game.html?code=${code}&player=black`;
+  } catch(e) { showMsg('Could not join. Try again.'); setLoad('joinText','joinSpinner',false); }
+}
+
+window.goToAI = function() {
+  const name = document.getElementById('username').value.trim();
+  if (!name) { showMsg('Please enter a username'); return; }
+  sessionStorage.setItem('chess_username', name);
+  window.location.href = 'ai.html';
+};
+
+// ── Lobby join helper (called from dynamic buttons) ──────────
+window.lobbyJoin = function(code) {
+  const name = document.getElementById('username').value.trim();
+  if (!name) { showMsg('Enter your name first to join a lobby game'); return; }
+  sessionStorage.setItem('chess_username', name);
+  // Repurpose joinGame flow
+  document.getElementById('joinCode').value = code;
+  doJoin(name, code);
+};
+
+// ── Lobby listener ────────────────────────────────────────────
+onValue(ref(db, 'games'), snap => {
+  const data = snap.val() || {};
+  const all  = Object.values(data);
+
+  // Stats
+  document.getElementById('statGames').textContent  = all.length;
+  document.getElementById('statActive').textContent = all.filter(g => g.status === 'active').length;
+
+  // Lobby: public + waiting only
+  const open = all.filter(g => g.status === 'waiting' && g.visibility === 'public');
+  const list = document.getElementById('lobbyList');
+
+  if (open.length === 0) {
+    list.innerHTML = `<div class="lobby-empty"><span class="lobby-empty-icon">♞</span>No open games right now.<br>Create one above!</div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  open.forEach(g => {
+    const rName = g.playerRed?.name || 'Unknown';
+    const jeffUser = isJeff(rName);
+    const ago = g.createdAt ? Math.floor((Date.now() - g.createdAt) / 1000) : 0;
+    const agoStr = ago < 60 ? `${ago}s ago` : `${Math.floor(ago/60)}m ago`;
+
+    const item = document.createElement('div');
+    item.className = 'lobby-item';
+    item.innerHTML = `
+      <div class="lobby-left">
+        <div class="lobby-avatar">♟</div>
+        <div>
+          <div class="lobby-name${jeffUser?' jeff-name':''}">${jeffUser?'👑 ':''}${rName}${jeffUser?' ♔':''}</div>
+          <div class="lobby-sub"><span class="lobby-waiting"></span>Waiting · ${agoStr}</div>
+        </div>
+      </div>
+      <button class="lobby-join-btn" onclick="lobbyJoin('${g.code}')">Join</button>
+    `;
+    list.appendChild(item);
+  });
+});
+
+onValue(ref(db, 'ai_data/stats'), snap => {
+  document.getElementById('statAI').textContent = snap.exists() ? (snap.val().totalGames || 0) : 0;
+});
+</script>
+</body>
+</html>

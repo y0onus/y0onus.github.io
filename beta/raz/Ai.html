@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RaazuaaChess — vs AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#ffffff; --surface:#f5f5f5; --border:#e5e5e5; --border-strong:#c8c8c8;
+    --text:#111111; --text-2:#555555; --text-3:#999999;
+    --light-sq:#d4b896; --dark-sq:#8b6343; --jeff:#c9a84c;
+  }
+  [data-theme="dark"] {
+    --bg:#111111; --surface:#1e1e1e; --border:#2e2e2e; --border-strong:#444444;
+    --text:#f0f0f0; --text-2:#aaaaaa; --text-3:#666666;
+  }
+
+  body { background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); min-height:100vh; overflow-x:hidden; transition:background 0.25s,color 0.25s; }
+
+  .header { display:flex; align-items:center; justify-content:space-between; padding:13px 20px; background:var(--bg); border-bottom:1px solid var(--border); gap:10px; position:sticky; top:0; z-index:10; transition:background 0.25s,border-color 0.25s; }
+  .h-logo { font-family:'DM Serif Display',serif; font-size:1.1rem; color:var(--text); }
+  .h-right { display:flex; align-items:center; gap:8px; }
+  .ai-pill { display:flex; align-items:center; gap:7px; border:1px solid var(--border); border-radius:8px; padding:5px 12px; font-size:0.76rem; color:var(--text-2); font-weight:500; }
+  .ai-dot  { width:7px; height:7px; border-radius:50%; background:var(--text); animation:pulse 2s ease infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;}50%{opacity:0.3;} }
+  .btn-sm  { padding:6px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text-2); font-family:'Inter',sans-serif; font-size:0.76rem; font-weight:600; cursor:pointer; transition:all 0.15s; }
+  .btn-sm:hover { border-color:var(--border-strong); color:var(--text); }
+  .theme-btn { padding:6px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); cursor:pointer; font-size:0.9rem; transition:all 0.15s; }
+  .theme-btn:hover { border-color:var(--border-strong); }
+
+  .layout { display:grid; grid-template-columns:195px 1fr 215px; gap:18px; padding:18px; max-width:1050px; margin:0 auto; align-items:start; }
+  .panel { display:flex; flex-direction:column; gap:12px; }
+  .box { background:var(--bg); border:1px solid var(--border); border-radius:14px; padding:15px; transition:border-color 0.25s,box-shadow 0.25s,background 0.25s; }
+  .box.active-turn { border-color:var(--text); box-shadow:0 0 0 3px rgba(17,17,17,0.06); }
+  [data-theme="dark"] .box.active-turn { box-shadow:0 0 0 3px rgba(255,255,255,0.06); }
+  .box.in-check { border-color:#b91c1c!important; animation:checkP 1s ease infinite; }
+  @keyframes checkP { 0%,100%{box-shadow:0 0 0 3px rgba(185,28,28,0.1);}50%{box-shadow:0 0 0 7px rgba(185,28,28,0.2);} }
+
+  .p-name { font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:7px; }
+  .p-name.jeff-name { color:var(--jeff); }
+  .color-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .dot-r { background:#c0392b; }
+  .dot-b { background:#444; border:1.5px solid #888; }
+  [data-theme="dark"] .dot-b { background:#aaa; }
+  .p-status { font-size:0.68rem; color:var(--text-3); margin-top:3px; font-weight:500; }
+  .p-status.active { color:var(--text); font-weight:600; }
+  .cap-row { display:flex; flex-wrap:wrap; gap:2px; margin-top:7px; min-height:16px; }
+  .cap-piece { width:16px; height:16px; opacity:0.6; }
+  .section-lbl { font-size:0.6rem; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-3); margin-bottom:9px; }
+  .move-list { display:grid; grid-template-columns:1fr 1fr; gap:1px 5px; font-size:0.73rem; color:var(--text-2); font-family:'DM Serif Display',serif; max-height:175px; overflow-y:auto; }
+  .mi { padding:2px 4px; border-radius:3px; }
+  .mi.r { color:var(--text); }
+  .mi.b { color:var(--text-2); }
+
+  .board-wrap-outer { display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .turn-bar { padding:9px 22px; border:1px solid var(--border); border-radius:9px; font-size:0.8rem; font-weight:600; color:var(--text-2); transition:all 0.25s; text-align:center; min-width:170px; width:fit-content; }
+  .turn-bar.my-turn  { border-color:var(--text); color:var(--text); background:var(--surface); }
+  .turn-bar.ai-turn  { color:var(--text-3); }
+  .board-outer { border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1),0 16px 48px rgba(0,0,0,0.14); }
+  .board { display:grid; grid-template-columns:repeat(8,1fr); width:min(500px,calc(100vw - 32px)); height:min(500px,calc(100vw - 32px)); user-select:none; }
+
+  .cell { position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer; aspect-ratio:1; transition:filter 0.12s; }
+  .cell.light { background:var(--light-sq); }
+  .cell.dark  { background:var(--dark-sq); }
+  .cell.selected    { background:rgba(17,17,17,0.25)!important; }
+  .cell.last-move   { background:rgba(17,17,17,0.15)!important; }
+  .cell.ai-last     { background:rgba(17,17,17,0.1)!important; }
+  .cell.in-check-sq { background:rgba(185,28,28,0.55)!important; }
+  .cell:hover:not(.selected) { filter:brightness(1.09); }
+  .cell.valid-move::after { content:''; position:absolute; width:32%; height:32%; background:rgba(0,0,0,0.22); border-radius:50%; pointer-events:none; z-index:2; }
+  .cell.valid-cap::after  { content:''; position:absolute; inset:3px; border:4px solid rgba(0,0,0,0.22); border-radius:50%; pointer-events:none; z-index:2; }
+  .piece { width:84%; height:84%; object-fit:contain; position:relative; z-index:1; pointer-events:none; user-select:none; -webkit-user-drag:none; transition:transform 0.12s; }
+  .cell.selected .piece { transform:scale(1.07); }
+  .coord { position:absolute; font-size:0.55rem; font-weight:700; font-family:'Inter',sans-serif; opacity:0.45; pointer-events:none; line-height:1; }
+  .coord-rank { bottom:2px; right:3px; }
+  .coord-file { top:2px; left:3px; }
+
+  /* Think bar */
+  .think-bar { display:none; align-items:center; gap:10px; padding:9px 18px; border:1px solid var(--border); border-radius:9px; font-size:0.78rem; color:var(--text-2); font-weight:500; min-width:170px; justify-content:center; }
+  .think-bar.on { display:flex; }
+  .think-dots { display:flex; gap:4px; }
+  .think-dots span { width:6px; height:6px; background:var(--border-strong); border-radius:50%; animation:thinkD 1s ease infinite; }
+  .think-dots span:nth-child(2){animation-delay:0.2s;} .think-dots span:nth-child(3){animation-delay:0.4s;}
+  @keyframes thinkD { 0%,80%,100%{opacity:0.3;transform:scale(0.8);}40%{opacity:1;transform:scale(1.2);} }
+
+  /* Right panel */
+  .diff-btns { display:flex; flex-direction:column; gap:6px; }
+  .diff-btn { padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--bg); color:var(--text-2); font-family:'Inter',sans-serif; font-size:0.77rem; font-weight:600; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:7px; }
+  .diff-btn:hover { border-color:var(--border-strong); color:var(--text); background:var(--surface); }
+  .diff-btn.on { border-color:var(--text); color:var(--text); background:var(--surface); }
+  .stat-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid var(--border); font-size:0.78rem; }
+  .stat-row:last-child { border:none; }
+  .stat-lbl { color:var(--text-3); }
+  .stat-val { font-family:'DM Serif Display',serif; font-size:0.98rem; color:var(--text); }
+
+  /* Result banner */
+  .result-banner { display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:60; width:calc(100% - 36px); max-width:440px; background:var(--bg); border:1px solid var(--border); border-radius:16px; padding:20px 24px; box-shadow:0 4px 24px rgba(0,0,0,0.12),0 24px 64px rgba(0,0,0,0.1); flex-direction:column; align-items:center; gap:7px; text-align:center; }
+  .result-banner.show { display:flex; animation:bannerUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
+  @keyframes bannerUp { from{opacity:0;transform:translateX(-50%) translateY(40px) scale(0.94);}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1);} }
+  .banner-icon { font-size:2.3rem; }
+  .banner-icon.gasp { animation:gasp 0.55s cubic-bezier(0.34,1.56,0.64,1) both; }
+  @keyframes gasp { 0%{transform:scale(0) rotate(-10deg);}60%{transform:scale(1.3) rotate(5deg);}80%{transform:scale(0.9);}100%{transform:scale(1);} }
+  .banner-title { font-family:'DM Serif Display',serif; font-size:1.25rem; color:var(--text); }
+  .banner-sub   { font-size:0.8rem; color:var(--text-2); }
+  .banner-btns  { display:flex; gap:8px; margin-top:4px; flex-wrap:wrap; justify-content:center; }
+  .b-btn { padding:9px 18px; border-radius:9px; font-family:'Inter',sans-serif; font-weight:600; font-size:0.83rem; cursor:pointer; transition:all 0.16s; border:none; }
+  .b-btn-dark { background:var(--text); color:var(--bg); }
+  .b-btn-dark:hover { opacity:0.82; }
+  .b-btn-out  { background:var(--surface); color:var(--text); border:1px solid var(--border); }
+  .b-btn-out:hover { border-color:var(--text); }
+
+  /* Promo */
+  .promo-overlay { position:fixed; inset:0; background:rgba(255,255,255,0.9); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; z-index:70; }
+  [data-theme="dark"] .promo-overlay { background:rgba(0,0,0,0.85); }
+  .promo-card { background:var(--bg); border:1px solid var(--border); border-radius:16px; padding:26px; text-align:center; box-shadow:0 4px 24px rgba(0,0,0,0.12); animation:cardIn 0.25s ease; }
+  @keyframes cardIn { from{opacity:0;transform:scale(0.94) translateY(12px);}to{opacity:1;transform:none;} }
+  .promo-lbl { font-size:0.7rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-3); margin-bottom:14px; }
+  .promo-pieces { display:flex; gap:10px; justify-content:center; }
+  .promo-piece { width:60px; height:60px; background:var(--surface); border:1.5px solid var(--border); border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; }
+  .promo-piece:hover { border-color:var(--text); transform:scale(1.06); }
+  .promo-piece img { width:80%; height:80%; object-fit:contain; }
+
+  @media(max-width:900px) { .layout{grid-template-columns:1fr;} .left-panel,.right-panel{display:none;} }
+  @media(max-width:560px)  { .header{padding:9px 13px;} .layout{padding:11px;} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="h-logo">♟ RaazuaaChess</div>
+  <div class="h-right">
+    <div class="ai-pill"><div class="ai-dot"></div>vs AI</div>
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    <button class="btn-sm" onclick="window.location.href='index.html'">← Menu</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="panel left-panel">
+    <div class="box" id="cardPlayer">
+      <div class="p-name" id="pNamePlayer"><span class="color-dot dot-r"></span><span id="playerName">You</span></div>
+      <div class="p-status" id="playerStatus">Red pieces</div>
+      <div class="cap-row" id="capByPlayer"></div>
+    </div>
+    <div class="box">
+      <div class="section-lbl">Moves</div>
+      <div class="move-list" id="moveList"></div>
+    </div>
+    <div class="box" id="cardAI">
+      <div class="p-name"><span class="color-dot dot-b"></span>AI Engine</div>
+      <div class="p-status" id="aiStatus">Black pieces</div>
+      <div class="cap-row" id="capByAI"></div>
+    </div>
+  </div>
+
+  <div class="board-wrap-outer">
+    <div class="turn-bar my-turn" id="turnBar">⚔ Your turn</div>
+    <div class="board-outer"><div class="board" id="board"></div></div>
+     <div class="think-bar" id="thinkBar"><div class="think-dots"><span></span><span></span><span></span></div>AI is thinking…</div>
+  </div>
+
+  <div class="panel right-panel">
+    <div class="box">
+      <div class="section-lbl">Difficulty</div>
+      <div class="diff-btns">
+        <button class="diff-btn" data-d="1" onclick="setDiff(1)">🟢 Beginner</button>
+        <button class="diff-btn on" data-d="2" onclick="setDiff(2)">🟡 Intermediate</button>
+        <button class="diff-btn" data-d="3" onclick="setDiff(3)">🟠 Advanced</button>
+        <button class="diff-btn" data-d="4" onclick="setDiff(4)">🔴 Master</button>
+      </div>
+    </div>
+    <div class="box">
+      <div class="section-lbl">AI Stats</div>
+      <div class="stat-row"><span class="stat-lbl">Total games</span><span class="stat-val" id="sTot">—</span></div>
+      <div class="stat-row"><span class="stat-lbl">AI wins</span><span class="stat-val" id="sAI">—</span></div>
+      <div class="stat-row"><span class="stat-lbl">Player wins</span><span class="stat-val" id="sPl">—</span></div>
+      <div class="stat-row"><span class="stat-lbl">Positions</span><span class="stat-val" id="sPos">—</span></div>
+    </div>
+    <div class="box">
+      <div class="section-lbl">House Rules</div>
+      <div style="font-size:0.75rem;color:var(--text-2);line-height:1.6;">
+        ♟ Pawns move <strong>1 step only</strong><br>
+        🚫 Castling disabled<br>
+        ♟ En passant disabled
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="result-banner" id="resultBanner">
+  <span class="banner-icon" id="bannerIcon">🏆</span>
+  <div class="banner-title" id="bannerTitle">Game over</div>
+  <div class="banner-sub"  id="bannerSub"></div>
+  <div class="banner-btns">
+    <button class="b-btn b-btn-dark" onclick="newGame()">Play again</button>
+    <button class="b-btn b-btn-out"  onclick="window.location.href='index.html'">Menu</button>
+  </div>
+</div>
+
+<div class="promo-overlay" id="promoOverlay" style="display:none">
+  <div class="promo-card">
+    <div class="promo-lbl">Promote pawn</div>
+    <div class="promo-pieces" id="promoPieces"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+const db = getDatabase(initializeApp({
+  apiKey:"AIzaSyDx73KM8T_sK5DM5ymjhA5fzc5HVizjOvY",
+  authDomain:"raazuaachess.firebaseapp.com",
+  databaseURL:"https://raazuaachess-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"raazuaachess",
+  storageBucket:"raazuaachess.firebasestorage.app",
+  messagingSenderId:"26623169384",
+  appId:"1:26623169384:web:d4f550ad080f524443fcdd",
+  measurementId:"G-K9WY1DG16D"
+}));
+
+/* ── Theme ──────────────────────────────────────────────────── */
+const savedTheme = localStorage.getItem('chess_theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+window.toggleTheme = function() {
+  const cur=document.documentElement.getAttribute('data-theme');
+  const next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('chess_theme',next);
+  document.getElementById('themeBtn').textContent=next==='dark'?'☀️':'🌙';
+};
+
+/* ── Session ────────────────────────────────────────────────── */
+const MY_NAME = sessionStorage.getItem('chess_username') || 'Player';
+
+// Jeff styling
+const isJeff = n => n && n.trim().toLowerCase() === 'jeff';
+if (isJeff(MY_NAME)) {
+  const el = document.getElementById('pNamePlayer');
+  el.classList.add('jeff-name');
+  const span = document.getElementById('playerName');
+  span.textContent = '👑 ' + MY_NAME + ' ♔';
+} else {
+  document.getElementById('playerName').textContent = MY_NAME;
+}
+
+/* ── Constants ──────────────────────────────────────────────── */
+const IMGS={
+  'r-r':'rookr.svg','n-r':'knightr.svg','b-r':'bisr.svg','q-r':'queenr.svg','k-r':'kingr.svg','p-r':'pawnr.svg',
+  'r-b':'rookb.svg','n-b':'knightb.svg','b-b':'bisb.svg','q-b':'queenb.svg','k-b':'kingb.svg','p-b':'pawnb.svg',
+};
+const FILES=['a','b','c','d','e','f','g','h'];
+const PV={p:100,n:320,b:330,r:500,q:900,k:20000};
+const PST={
+  p:[[0,0,0,0,0,0,0,0],[50,50,50,50,50,50,50,50],[10,10,20,30,30,20,10,10],[5,5,10,25,25,10,5,5],[0,0,0,20,20,0,0,0],[5,-5,-10,0,0,-10,-5,5],[5,10,10,-20,-20,10,10,5],[0,0,0,0,0,0,0,0]],
+  n:[[-50,-40,-30,-30,-30,-30,-40,-50],[-40,-20,0,0,0,0,-20,-40],[-30,0,10,15,15,10,0,-30],[-30,5,15,20,20,15,5,-30],[-30,0,15,20,20,15,0,-30],[-30,5,10,15,15,10,5,-30],[-40,-20,0,5,5,0,-20,-40],[-50,-40,-30,-30,-30,-30,-40,-50]],
+  b:[[-20,-10,-10,-10,-10,-10,-10,-20],[-10,0,0,0,0,0,0,-10],[-10,0,5,10,10,5,0,-10],[-10,5,5,10,10,5,5,-10],[-10,0,10,10,10,10,0,-10],[-10,10,10,10,10,10,10,-10],[-10,5,0,0,0,0,5,-10],[-20,-10,-10,-10,-10,-10,-10,-20]],
+  r:[[0,0,0,0,0,0,0,0],[5,10,10,10,10,10,10,5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[0,0,0,5,5,0,0,0]],
+  q:[[-20,-10,-10,-5,-5,-10,-10,-20],[-10,0,0,0,0,0,0,-10],[-10,0,5,5,5,5,0,-10],[-5,0,5,5,5,5,0,-5],[0,0,5,5,5,5,0,-5],[-10,5,5,5,5,5,0,-10],[-10,0,5,0,0,0,0,-10],[-20,-10,-10,-5,-5,-10,-10,-20]],
+  k:[[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],[-20,-30,-30,-40,-40,-30,-30,-20],[-10,-20,-20,-20,-20,-20,-20,-10],[20,20,0,0,0,0,20,20],[20,30,10,0,0,10,30,20]],
+};
+
+/* ── State ──────────────────────────────────────────────────── */
+let board,selected,validMoves,turn,gameActive,lastMove,EP;
+let moveHistory,capByPlayer,capByAI,pendingPro,aiDepth;
+let gamePositions=[],gameTaken=[],learnedPos={};
+
+function resetState(){
+  board=makeInit();selected=null;validMoves=[];turn='r';gameActive=true;
+  lastMove=null;EP=null;moveHistory=[];capByPlayer=[];capByAI=[];
+  gamePositions=[];gameTaken=[];pendingPro=null;
+  document.getElementById('resultBanner').classList.remove('show');
+}
+aiDepth=2;
+
+/* ── Board helpers ──────────────────────────────────────────── */
+const bKey=(r,f)=>`r${r}c${f}`;
+const bGet=(b,r,f)=>b[bKey(r,f)]||null;
+const bSet=(b,r,f,v)=>{b[bKey(r,f)]=v;};
+const cloneB=b=>{const n={};for(const k in b)n[k]=b[k]?{...b[k]}:null;return n;};
+const opp=c=>c==='r'?'b':'r';
+const inB=(r,f)=>r>=0&&r<8&&f>=0&&f<8;
+
+function makeInit(){
+  const BACK=['r','n','b','q','k','b','n','r'],obj={};
+  for(let r=0;r<8;r++)for(let f=0;f<8;f++){
+    let p=null;
+    if(r===0)p={t:BACK[f],c:'b'};else if(r===1)p={t:'p',c:'b'};
+    else if(r===6)p={t:'p',c:'r'};else if(r===7)p={t:BACK[f],c:'r'};
+    obj[bKey(r,f)]=p;
+  }
+  return obj;
+}
+
+function findKing(b,c){for(let r=0;r<8;r++)for(let f=0;f<8;f++){const p=bGet(b,r,f);if(p&&p.t==='k'&&p.c===c)return{r,f};}return null;}
+
+/* ── Raw moves: pawn 1 step only, no castling ───────────────── */
+function raw(b,r,f,ep){
+  const p=bGet(b,r,f);if(!p)return[];
+  const{t,c}=p,dir=c==='r'?-1:1,moves=[];
+  if(t==='p'){
+    const nr=r+dir;
+    if(inB(nr,f)&&!bGet(b,nr,f))moves.push([nr,f]);
+    for(const df of[-1,1]){const nf=f+df,tgt=inB(nr,nf)?bGet(b,nr,nf):null;if(tgt&&tgt.c!==c)moves.push([nr,nf]);if(ep&&nr===ep.r&&nf===ep.f)moves.push([nr,nf]);}
+  }else if(t==='n'){
+    for(const[dr,df]of[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]){const[nr,nf]=[r+dr,f+df];const t2=inB(nr,nf)?bGet(b,nr,nf):null;if(inB(nr,nf)&&(!t2||t2.c!==c))moves.push([nr,nf]);}
+  }else{
+    const dirs=t==='b'?[[-1,-1],[-1,1],[1,-1],[1,1]]:t==='r'?[[-1,0],[1,0],[0,-1],[0,1]]:t==='q'?[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]:[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+    const slide=t!=='k';
+    for(const[dr,df]of dirs){let[nr,nf]=[r+dr,f+df];while(inB(nr,nf)){const bl=bGet(b,nr,nf);if(bl){if(bl.c!==c)moves.push([nr,nf]);break;}moves.push([nr,nf]);if(!slide)break;nr+=dr;nf+=df;}}
+  }
+  return moves;
+}
+
+function isAttacked(b,r,f,by){for(let br=0;br<8;br++)for(let bf=0;bf<8;bf++){const p=bGet(b,br,bf);if(!p||p.c!==by)continue;if(raw(b,br,bf,null).some(([mr,mf])=>mr===r&&mf===f))return true;}return false;}
+
+function legal(b,r,f,ep){
+  const p=bGet(b,r,f);if(!p)return[];const res=[];
+  for(const[nr,nf]of raw(b,r,f,ep)){const nb=cloneB(b);if(p.t==='p'&&ep&&nr===ep.r&&nf===ep.f)bSet(nb,r,nf,null);bSet(nb,nr,nf,bGet(nb,r,f));bSet(nb,r,f,null);const kg=findKing(nb,p.c);if(kg&&!isAttacked(nb,kg.r,kg.f,opp(p.c)))res.push([nr,nf]);}
+  return res;
+}
+
+function anyLegal(b,c,ep){for(let r=0;r<8;r++)for(let f=0;f<8;f++)if(bGet(b,r,f)?.c===c&&legal(b,r,f,ep).length>0)return true;return false;}
+
+/* ── AI eval ────────────────────────────────────────────────── */
+function bKeyStr(b){return Object.keys(b).sort().map(k=>b[k]?b[k].t+b[k].c:'.').join('');}
+
+function evaluate(b){
+  let s=0;const k=bKeyStr(b);if(learnedPos[k])s+=learnedPos[k]*4;
+  for(let r=0;r<8;r++)for(let f=0;f<8;f++){const p=bGet(b,r,f);if(!p)continue;const tr=p.c==='b'?r:7-r;const tab=PST[p.t]?PST[p.t][tr][f]:0;const v=PV[p.t]+tab;s+=p.c==='b'?v:-v;}
+  return s;
+}
+
+function allMoves(b,c,ep){const m=[];for(let r=0;r<8;r++)for(let f=0;f<8;f++)if(bGet(b,r,f)?.c===c)for(const[nr,nf]of legal(b,r,f,ep))m.push({fr:r,ff:f,tr:nr,tf:nf});return m;}
+
+function applyMv(b,mv,ep){
+  const nb=cloneB(b);const p=bGet(nb,mv.fr,mv.ff);
+  if(p.t==='p'&&ep&&mv.tr===ep.r&&mv.tf===ep.f)bSet(nb,mv.fr,mv.tf,null);
+  if(p.t==='p'&&(mv.tr===0||mv.tr===7))bSet(nb,mv.tr,mv.tf,{t:'q',c:p.c});
+  else bSet(nb,mv.tr,mv.tf,{...p});
+  bSet(nb,mv.fr,mv.ff,null);
+  return nb;
+}
+
+function minimax(b,depth,alpha,beta,isMax,ep){
+  if(!depth)return evaluate(b);
+  const c=isMax?'b':'r',moves=allMoves(b,c,ep);
+  if(!moves.length){const kp=findKing(b,c);if(kp&&isAttacked(b,kp.r,kp.f,opp(c)))return isMax?-99999:99999;return 0;}
+  moves.sort((a,b2)=>(bGet(b,b2.tr,b2.tf)?PV[bGet(b,b2.tr,b2.tf).t]:0)-(bGet(b,a.tr,a.tf)?PV[bGet(b,a.tr,a.tf).t]:0));
+  if(isMax){let best=-Infinity;for(const mv of moves){const nb=applyMv(b,mv,ep);best=Math.max(best,minimax(nb,depth-1,alpha,beta,false,null));alpha=Math.max(alpha,best);if(beta<=alpha)break;}return best;}
+  else{let best=Infinity;for(const mv of moves){const nb=applyMv(b,mv,ep);best=Math.min(best,minimax(nb,depth-1,alpha,beta,true,null));beta=Math.min(beta,best);if(beta<=alpha)break;}return best;}
+}
+
+function bestMove(b,depth,ep){
+  const moves=allMoves(b,'b',ep);if(!moves.length)return null;
+  moves.sort(()=>Math.random()-0.5);
+  let best=-Infinity,bm=moves[0];
+  for(const mv of moves){const nb=applyMv(b,mv,ep);let s=minimax(nb,depth-1,-Infinity,Infinity,false,null);const k=bKeyStr(nb);if(learnedPos[k])s+=learnedPos[k]*2;if(s>best){best=s;bm=mv;}}
+  return bm;
+}
+
+/* ── Firebase AI learning ───────────────────────────────────── */
+const aiRef=ref(db,'ai_data');
+onValue(aiRef,snap=>{
+  if(!snap.exists())return;const d=snap.val();learnedPos=d.positions||{};const st=d.stats||{};
+  document.getElementById('sTot').textContent=st.totalGames||0;
+  document.getElementById('sAI').textContent=st.aiWins||0;
+  document.getElementById('sPl').textContent=st.playerWins||0;
+  document.getElementById('sPos').textContent=Object.keys(learnedPos).length;
+});
+
+async function saveResult(winner){
+  try{const snap=await get(aiRef);const d=snap.exists()?snap.val():{stats:{totalGames:0,aiWins:0,playerWins:0},positions:{}};
+  d.stats.totalGames=(d.stats.totalGames||0)+1;if(winner==='b')d.stats.aiWins=(d.stats.aiWins||0)+1;else if(winner==='r')d.stats.playerWins=(d.stats.playerWins||0)+1;
+  const score=winner==='b'?1:winner==='r'?-1:0;d.positions=d.positions||{};
+  gamePositions.forEach(k=>{d.positions[k]=(d.positions[k]||0)+score;d.positions[k]=Math.max(-10,Math.min(10,d.positions[k]));});
+  gameTaken.forEach(({key,t,good})=>{const bonus=PV[t]/100*(good?0.5:-0.5);d.positions[key]=(d.positions[key]||0)+bonus;});
+  await set(aiRef,d);}catch(e){console.warn('AI save failed',e);}
+}
+
+/* ── Render ──────────────────────────────────────────────────── */
+function renderBoard(){
+  const el=document.getElementById('board');el.innerHTML='';
+  const kg=findKing(board,turn),inChk=kg&&isAttacked(board,kg.r,kg.f,opp(turn));
+  for(let ri=0;ri<8;ri++)for(let fi=0;fi<8;fi++){
+    const r=ri,f=fi,p=bGet(board,r,f),isLight=(r+f)%2===0;
+    const div=document.createElement('div');div.className=`cell ${isLight?'light':'dark'}`;
+    if(lastMove&&((lastMove.fr===r&&lastMove.ff===f)||(lastMove.tr===r&&lastMove.tf===f)))div.classList.add(turn==='r'?'ai-last':'last-move');
+    if(selected&&selected[0]===r&&selected[1]===f)div.classList.add('selected');
+    if(validMoves.some(([vr,vf])=>vr===r&&vf===f))div.classList.add(p&&p.c!=='r'?'valid-cap':'valid-move');
+    if(inChk&&kg.r===r&&kg.f===f)div.classList.add('in-check-sq');
+    if(fi===0){const s=document.createElement('span');s.className='coord coord-rank';s.textContent=8-ri;div.appendChild(s);}
+    if(ri===7){const s=document.createElement('span');s.className='coord coord-file';s.textContent=FILES[fi];div.appendChild(s);}
+    if(p){const img=document.createElement('img');img.src=IMGS[`${p.t}-${p.c}`];img.className='piece';div.appendChild(img);}
+    if(gameActive)div.addEventListener('click',()=>handleClick(r,f));
+    el.appendChild(div);
+  }
+}
+
+function handleClick(r,f){
+  if(!gameActive||turn!=='r')return;const p=bGet(board,r,f);
+  if(selected){if(validMoves.some(([vr,vf])=>vr===r&&vf===f)){playerMove(selected[0],selected[1],r,f);return;}if(p&&p.c==='r'){selected=[r,f];validMoves=legal(board,r,f,EP);renderBoard();return;}selected=null;validMoves=[];renderBoard();return;}
+  if(p&&p.c==='r'){selected=[r,f];validMoves=legal(board,r,f,EP);renderBoard();}
+}
+
+function playerMove(fr,ff,tr,tf){
+  const p=bGet(board,fr,ff),cap=bGet(board,tr,tf);
+  if(p.t==='p'&&((p.c==='r'&&tr===0)||(p.c==='b'&&tr===7))){pendingPro={fr,ff,tr,tf,piece:p,cap,by:'r'};showPromo('r');return;}
+  execMove(fr,ff,tr,tf,p,cap,null,'r');
+}
+
+function execMove(fr,ff,tr,tf,piece,cap,promo,mover){
+  const nb=cloneB(board);
+  if(piece.t==='p'&&EP&&tr===EP.r&&tf===EP.f){const ec=bGet(nb,fr,tf);bSet(nb,fr,tf,null);if(ec){(mover==='r'?capByPlayer:capByAI).push(ec);gameTaken.push({key:bKeyStr(board),t:ec.t,good:mover==='b'});}}
+  if(cap){(mover==='r'?capByPlayer:capByAI).push(cap);gameTaken.push({key:bKeyStr(board),t:cap.t,good:mover==='b'});}
+  bSet(nb,tr,tf,promo?{t:promo,c:piece.c}:{...piece});bSet(nb,fr,ff,null);
+  board=nb;turn=opp(piece.c);EP=null;lastMove={fr,ff,tr,tf};
+  const note=(piece.t==='p'?'':piece.t.toUpperCase())+(cap?'x':'')+FILES[tf]+(8-tr);
+  moveHistory.push({note,by:mover});gamePositions.push(bKeyStr(board));
+  selected=null;validMoves=[];
+
+  const nextC=turn,nkg=findKing(board,nextC),inChkNext=nkg&&isAttacked(board,nkg.r,nkg.f,opp(nextC));
+  if(inChkNext&&!anyLegal(board,nextC,null)){renderBoard();updateUI();saveResult(opp(nextC));setTimeout(()=>showResult(opp(nextC)==='r'?'🏆':'🤖',opp(nextC)==='r'?'You win!':'AI wins!',opp(nextC)==='r'?'Checkmate! Well played.':'The AI checkmated you.'),450);gameActive=false;return;}
+  if(!inChkNext&&!anyLegal(board,nextC,null)){renderBoard();updateUI();saveResult('draw');setTimeout(()=>showResult('🤝','Stalemate — draw!',"No legal moves."),450);gameActive=false;return;}
+
+  renderBoard();updateUI();
+  if(turn==='b'&&gameActive){document.getElementById('thinkBar').classList.add('on');document.getElementById('turnBar').className='turn-bar ai-turn';document.getElementById('turnBar').textContent='🤖 AI thinking…';setTimeout(doAI,200+Math.random()*600);}
+}
+
+function doAI(){
+  if(!gameActive)return;document.getElementById('thinkBar').classList.remove('on');
+  const mv=bestMove(board,aiDepth,EP);if(!mv){showResult('🤝','Stalemate!','AI has no moves.');gameActive=false;return;}
+  const p=bGet(board,mv.fr,mv.ff),cap=bGet(board,mv.tr,mv.tf),promo=p.t==='p'&&mv.tr===7?'q':null;
+  execMove(mv.fr,mv.ff,mv.tr,mv.tf,p,cap,promo,'b');
+}
+
+function showPromo(c){
+  const ct=document.getElementById('promoPieces');ct.innerHTML='';
+  ['q','r','n','b'].forEach(pt=>{const d=document.createElement('div');d.className='promo-piece';const img=document.createElement('img');img.src=IMGS[`${pt}-${c}`];d.appendChild(img);d.onclick=()=>{document.getElementById('promoOverlay').style.display='none';const{fr,ff,tr,tf,piece,cap,by}=pendingPro;pendingPro=null;execMove(fr,ff,tr,tf,piece,cap,pt,by);};ct.appendChild(d);});
+  document.getElementById('promoOverlay').style.display='flex';
+}
+
+function showResult(icon,title,sub){
+  const b=document.getElementById('resultBanner'),ico=document.getElementById('bannerIcon');
+  ico.textContent=icon;ico.className='banner-icon gasp';
+  document.getElementById('bannerTitle').textContent=title;document.getElementById('bannerSub').textContent=sub;
+  b.classList.add('show');
+}
+
+function updateUI(){
+  const bar=document.getElementById('turnBar');if(!gameActive)return;
+  bar.textContent=turn==='r'?'⚔ Your turn':'🤖 AI thinking…';bar.className=`turn-bar ${turn==='r'?'my-turn':'ai-turn'}`;
+  document.getElementById('cardPlayer').className='box'+(turn==='r'?' active-turn':'');
+  document.getElementById('cardAI').className='box'+(turn==='b'?' active-turn':'');
+  document.getElementById('playerStatus').textContent=turn==='r'?'Your turn':'Red pieces';
+  document.getElementById('playerStatus').className=`p-status${turn==='r'?' active':''}`;
+  document.getElementById('aiStatus').textContent=turn==='b'?'Thinking…':'Black pieces';
+  document.getElementById('aiStatus').className=`p-status${turn==='b'?' active':''}`;
+  const ml=document.getElementById('moveList');ml.innerHTML='';
+  moveHistory.forEach((m,i)=>{const d=document.createElement('div');d.className=`mi ${m.by==='r'?'r':'b'}`;d.textContent=`${Math.floor(i/2)+1}${i%2===0?'.':'..'}${m.note}`;ml.appendChild(d);});
+  ml.scrollTop=ml.scrollHeight;
+  const rcp=document.getElementById('capByPlayer');rcp.innerHTML='';capByPlayer.forEach(p=>{const img=document.createElement('img');img.src=IMGS[`${p.t}-${p.c}`];img.className='cap-piece';rcp.appendChild(img);});
+  const rcai=document.getElementById('capByAI');rcai.innerHTML='';capByAI.forEach(p=>{const img=document.createElement('img');img.src=IMGS[`${p.t}-${p.c}`];img.className='cap-piece';rcai.appendChild(img);});
+}
+
+window.setDiff=d=>{aiDepth=d;document.querySelectorAll('.diff-btn').forEach(b=>b.classList.toggle('on',parseInt(b.dataset.d)===d));};
+window.newGame=()=>{resetState();renderBoard();updateUI();};
+
+resetState();renderBoard();updateUI();
+</script>
+</body>
+</html>
