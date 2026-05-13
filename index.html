@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/locomotive-scroll@3.5.4/dist/locomotive-scroll.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <style>
         *, *::before, *::after {
@@ -28,7 +29,7 @@
             --ff-cursive: 'Ballet', cursive;
             --ff-mono: 'Inter', monospace;
 
-            --clr-black: #141414;
+            --clr-black: #000000;
             --clr-white: #e6e4de;
             --clr-accent: #e6e4de;
             --clr-text: rgba(230, 228, 222, 0.75);
@@ -53,7 +54,6 @@
 
             --line: rgba(230, 228, 222, 0.15);
 
-            /* Smooth animation curve */
             --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
             --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
         }
@@ -65,11 +65,38 @@
         }
 
         body {
-            background-color: var(--clr-black);
+            background-color: #000;
             color: var(--clr-text);
             font-family: var(--ff-sans);
             font-weight: 300;
             overflow-x: hidden;
+        }
+
+        /* ── Shared hero+about gradient wrapper ── */
+        .hero-about-wrap {
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
+
+        /* ── GRADIENT CANVAS spans entire wrapper ── */
+        #gradientCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            will-change: opacity;
+        }
+        /* fade bottom edge into black before projects */
+        .hero-about-wrap::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 160px;
+            background: linear-gradient(to bottom, transparent, #000);
+            z-index: 1;
+            pointer-events: none;
         }
 
         /* TYPOGRAPHY */
@@ -151,17 +178,16 @@
 
         a { text-decoration: none; color: inherit; }
 
-        /* ── GLASS NAV (pure glass, no dark fill) ── */
+        /* ── GLASS NAV ── */
         .glass-nav {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            /* Pure glass — no dark background */
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(22px) saturate(180%);
-            -webkit-backdrop-filter: blur(22px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(22, 22, 26, 0.82);
+            backdrop-filter: blur(22px) saturate(160%);
+            -webkit-backdrop-filter: blur(22px) saturate(160%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 60px;
             padding: 0.5rem 2rem;
             display: flex;
@@ -169,16 +195,13 @@
             justify-content: center;
             gap: 2.5rem;
             z-index: 1000;
-            box-shadow:
-                0 4px 24px rgba(0, 0, 0, 0.12),
-                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
             transition: background 0.4s ease, box-shadow 0.4s ease;
             will-change: transform;
         }
-        /* Slight tint when over light sections */
         .glass-nav.over-light {
-            background: rgba(20, 20, 20, 0.18);
-            border-color: rgba(255, 255, 255, 0.12);
+            background: rgba(22, 22, 26, 0.92);
+            border-color: rgba(255, 255, 255, 0.06);
         }
         .glass-nav a {
             font-size: 0.92rem;
@@ -224,19 +247,19 @@
         .mobile-menu-btn {
             pointer-events: auto;
             width: 48px; height: 48px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(16px) saturate(180%);
-            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            background: rgba(22, 22, 26, 0.85);
+            backdrop-filter: blur(16px) saturate(160%);
+            -webkit-backdrop-filter: blur(16px) saturate(160%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             transition: all 0.3s var(--ease-out-expo);
             color: var(--clr-white);
         }
-        .mobile-menu-btn:hover { background: rgba(255, 255, 255, 0.18); transform: scale(0.95); }
+        .mobile-menu-btn:hover { background: rgba(35, 35, 40, 0.95); transform: scale(0.95); }
         .mobile-menu-btn .material-symbols-rounded {
             font-size: 26px;
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 26;
@@ -247,18 +270,18 @@
         .mobile-dropdown {
             position: fixed;
             top: 75px; right: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            background: rgba(22, 22, 26, 0.92);
+            backdrop-filter: blur(24px) saturate(160%);
+            -webkit-backdrop-filter: blur(24px) saturate(160%);
             border-radius: 24px;
             padding: 1rem 0.5rem;
             display: none;
             flex-direction: column;
             gap: 0.4rem;
             z-index: 1000;
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.07);
             min-width: 175px;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
             transform-origin: top right;
             opacity: 0;
             transform: scale(0.92) translateY(-8px);
@@ -298,7 +321,8 @@
             scroll-snap-align: start;
             padding: 2rem 0;
             position: relative;
-            overflow: hidden;
+            z-index: 2;
+            background: transparent;
         }
         .section_detail {
             max-width: 900px;
@@ -306,21 +330,17 @@
             z-index: 2;
         }
 
-        /* Floating rects */
-        .floating-rect {
-            position: absolute;
-            width: 8px; height: 18px;
-            border-radius: 3px;
-            opacity: 0;
-            z-index: 1;
-            pointer-events: none;
-            will-change: opacity, left, top;
-        }
-
         /* ABOUT */
         .section_2 {
             scroll-snap-align: start;
             padding: 4rem 0;
+            background: transparent;
+            position: relative;
+            z-index: 2;
+        }
+        .about-inner {
+            position: relative;
+            z-index: 2;
         }
         .section_2 .flex-about {
             display: flex;
@@ -400,7 +420,6 @@
             padding: 0 1rem;
         }
 
-        /* Project cards — hardware-accelerated fade+slide */
         .project-item {
             display: grid;
             grid-template-columns: 80px 1fr 200px 120px;
@@ -496,7 +515,7 @@
             .project-tech, .project-link { display: none; }
         }
 
-        /* GALLERY / BENTO */
+        /* GALLERY */
         .section_3 {
             padding: 6rem 0;
             scroll-snap-align: start;
@@ -550,9 +569,7 @@
             background-size: cover;
             background-position: center;
             background-color: #2a2a2a;
-            transition:
-                transform 0.5s var(--ease-out-expo),
-                filter 0.6s var(--ease-out-expo);
+            transition: transform 0.5s var(--ease-out-expo), filter 0.6s var(--ease-out-expo);
             filter: blur(10px);
             overflow: hidden;
             cursor: pointer;
@@ -598,9 +615,7 @@
         .lightbox-img-container {
             transform: scale(0.88);
             opacity: 0;
-            transition:
-                transform 0.45s var(--ease-out-expo),
-                opacity 0.4s ease;
+            transition: transform 0.45s var(--ease-out-expo), opacity 0.4s ease;
         }
         .lightbox.active .lightbox-img-container {
             transform: scale(1);
@@ -698,14 +713,12 @@
         }
         @media (max-width: 600px) { .footer--top { flex-direction: column; align-items: flex-start; } }
 
-        /* Reveal classes (initial state) */
+        /* Reveal classes */
         .reveal-up    { opacity: 0; transform: translateY(40px); will-change: opacity, transform; }
         .reveal-left  { opacity: 0; transform: translateX(-40px); will-change: opacity, transform; }
         .reveal-right { opacity: 0; transform: translateX(40px); will-change: opacity, transform; }
 
-        @media (min-width: 769px) {
-            [data-scroll-container] { padding-top: 90px; }
-        }
+ 
     </style>
 </head>
 <body>
@@ -718,12 +731,12 @@
     <a href="/c">Contact</a>
 </nav>
 
-  <div class="mobile-header">
-        <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="mobile-logo">
-        <div class="mobile-menu-btn" id="mobileMenuBtn">
-            <span class="material-symbols-rounded">dehaze</span>
-        </div>
+<div class="mobile-header">
+    <img src="https://github.com/JeffIsEpik/Jeffisepik.github.io/blob/main/yaaball.png?raw=true" alt="logo" class="mobile-logo">
+    <div class="mobile-menu-btn" id="mobileMenuBtn">
+        <span class="material-symbols-rounded">dehaze</span>
     </div>
+</div>
 <div class="mobile-dropdown" id="mobileDropdown">
     <a href="/">Home</a>
     <a href="/p">Projects</a>
@@ -732,28 +745,33 @@
 </div>
 
     <main>
-        <!-- HERO -->
-        <section class="section_1" id="home" data-scroll-section>
-            <div class="section_detail container">
-                <div class="reveal-up">
-                    <h1 class="main-headline">I'm Yoonus a <span class="design-font">Graphics</span> Designer</h1>
-                    <h1 class="main-headline" style="margin-top:0.2rem;">and <span class="fun-font">Photographer</span></h1>
-                </div>
-                <p class="reveal-up" style="transition-delay:0.12s;margin-top:1.5rem;">Hello, I'm Ibrahim Yoonus, a creative professional from the Maldives, passionate about turning ideas into compelling visuals</p>
-            </div>
-        </section>
+        <!-- HERO + ABOUT share one gradient canvas -->
+        <div class="hero-about-wrap">
+            <canvas id="gradientCanvas"></canvas>
 
-        <!-- ABOUT -->
-        <section class="section_2 container" id="about" data-scroll-section>
-            <h1 class="reveal-left">About me</h1>
-            <div class="flex-about">
-                <h3 class="section_2--left reveal-left" style="transition-delay:0.07s;">Striking visuals, real moments, and stories told through my lens. Let's capture something unique.</h3>
-                <div class="section_2--right reveal-right">
-                    <p>As a designer and photographer, I blend bold visuals, layered compositions, and creative strategy to bring ideas to life. From graphic design to web development to capturing striking moments through my lens, I create unique identities that stand out—combining art, code, and storytelling to make a lasting impact.</p>
-                    <button class="btn" onclick="window.open('https://instagram.com/y0onus/','_blank')">Instagram ↗</button>
+            <section class="section_1" id="home" data-scroll-section>
+                <div class="section_detail container">
+                    <div class="reveal-up">
+                        <h1 class="main-headline">I'm Yoonus a <span class="design-font">Graphics</span> Designer</h1>
+                        <h1 class="main-headline" style="margin-top:0.2rem;">and <span class="fun-font">Photographer</span></h1>
+                    </div>
+                    <p class="reveal-up" style="transition-delay:0.12s;margin-top:1.5rem;">Hello, I'm Ibrahim Yoonus, a creative professional from the Maldives, passionate about turning ideas into compelling visuals</p>
                 </div>
-            </div>
-        </section>
+            </section>
+
+            <section class="section_2" id="about" data-scroll-section>
+                <div class="container about-inner">
+                    <h1 class="reveal-left">About me</h1>
+                    <div class="flex-about">
+                        <h3 class="section_2--left reveal-left" style="transition-delay:0.07s;">Striking visuals, real moments, and stories told through my lens. Let's capture something unique.</h3>
+                        <div class="section_2--right reveal-right">
+                            <p>As a designer and photographer, I blend bold visuals, layered compositions, and creative strategy to bring ideas to life. From graphic design to web development to capturing striking moments through my lens, I create unique identities that stand out—combining art, code, and storytelling to make a lasting impact.</p>
+                            <button class="btn" onclick="window.open('https://instagram.com/y0onus/','_blank')">Instagram ↗</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
 
         <!-- PROJECTS -->
         <section id="projects" data-scroll-section>
@@ -853,60 +871,211 @@
 </div>
 
 <script>
-/* ── Floating rectangles (hero) ── */
+/* ════════════════════════════════════════════════
+   INTERACTIVE GRADIENT — hero only, fades on scroll
+   ════════════════════════════════════════════════ */
 (function () {
-    const section = document.querySelector('.section_1');
-    if (!section) return;
-    const palette = ['#fa02d9','#e9fa02','#0213fa','#fa0202','#02fa07','#00ffe5','#ffffff','#8c00ff','#ff8c00','#ff00cc','#00ffcc','#ff3366','#33ff66','#ffcc00','#6600ff','#ff6600'];
-    const active = new Set();
+    const canvas = document.getElementById('gradientCanvas');
+    const heroSection = document.getElementById('home');
+    const wrapper = canvas ? canvas.parentElement : null;
+    if (!canvas || typeof THREE === 'undefined') return;
 
-    function uniqueColor() {
-        const pool = palette.filter(c => !active.has(c));
-        return (pool.length ? pool : palette)[Math.floor(Math.random() * (pool.length || palette.length))];
-    }
-    function randPos() {
-        return {
-            left: Math.min(88, Math.max(12, 50 + (Math.random() - 0.5) * 64)) + '%',
-            top:  Math.min(78, Math.max(12, 45 + (Math.random() - 0.5) * 56)) + '%'
-        };
+    /* ── Renderer ── */
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    /* ── Touch texture ── */
+    const TOUCH_SIZE = 64;
+    const touchCanvas = document.createElement('canvas');
+    touchCanvas.width = touchCanvas.height = TOUCH_SIZE;
+    const tCtx = touchCanvas.getContext('2d');
+    const touchTex = new THREE.Texture(touchCanvas);
+    let touchTrail = [];
+    let lastTouch = null;
+
+    function updateTouchTex() {
+        tCtx.fillStyle = 'black';
+        tCtx.fillRect(0, 0, TOUCH_SIZE, TOUCH_SIZE);
+        const maxAge = 60;
+        for (let i = touchTrail.length - 1; i >= 0; i--) {
+            const p = touchTrail[i];
+            const age = p.age / maxAge;
+            let intensity = age < 0.3
+                ? Math.sin((age / 0.3) * Math.PI / 2)
+                : 1 - ((age - 0.3) / 0.7);
+            intensity *= p.force;
+            const radius = 0.22 * TOUCH_SIZE;
+            const color = `${((p.vx + 1) / 2) * 255},${((p.vy + 1) / 2) * 255},${intensity * 255}`;
+            const offset = TOUCH_SIZE * 5;
+            tCtx.shadowOffsetX = offset;
+            tCtx.shadowOffsetY = offset;
+            tCtx.shadowBlur = radius;
+            tCtx.shadowColor = `rgba(${color},${0.2 * intensity})`;
+            tCtx.beginPath();
+            tCtx.fillStyle = 'rgba(255,0,0,1)';
+            tCtx.arc(p.x * TOUCH_SIZE - offset, (1 - p.y) * TOUCH_SIZE - offset, radius, 0, Math.PI * 2);
+            tCtx.fill();
+            p.age++;
+            if (p.age > maxAge) touchTrail.splice(i, 1);
+        }
+        touchTex.needsUpdate = true;
     }
 
-    const rects = Array.from({ length: 10 }, () => {
-        const el = document.createElement('div');
-        el.className = 'floating-rect';
-        const pos = randPos();
-        el.style.cssText = `left:${pos.left};top:${pos.top};width:15px;height:30px;`;
-        const color = uniqueColor(); active.add(color);
-        el.style.backgroundColor = color;
-        section.appendChild(el);
-        return { el, color };
+    function addTouch(x, y) {
+        const nx = x / innerWidth;
+        const ny = 1 - y / innerHeight;
+        let vx = 0, vy = 0, force = 0;
+        if (lastTouch) {
+            const dx = nx - lastTouch.x, dy = ny - lastTouch.y;
+            if (dx === 0 && dy === 0) return;
+            const d = Math.sqrt(dx * dx + dy * dy);
+            vx = dx / d; vy = dy / d;
+            force = Math.min((dx * dx + dy * dy) * 20000, 2.0);
+        }
+        lastTouch = { x: nx, y: ny };
+        touchTrail.push({ x: nx, y: ny, age: 0, force, vx, vy });
+    }
+
+    /* ── Uniforms ── */
+    const uniforms = {
+        uTime:         { value: 0 },
+        uResolution:   { value: new THREE.Vector2(1, 1) },
+        uTouchTex:     { value: touchTex },
+        uMouse:        { value: new THREE.Vector2(0.5, 0.5) },
+    };
+
+    /* ── Shader ── */
+    const material = new THREE.ShaderMaterial({
+        uniforms,
+        vertexShader: `
+            varying vec2 vUv;
+            void main() { vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }
+        `,
+        fragmentShader: `
+            precision mediump float;
+            uniform float uTime;
+            uniform vec2  uResolution;
+            uniform sampler2D uTouchTex;
+            varying vec2 vUv;
+
+            #define PI 3.14159265359
+
+            /* ---- palette: vivid colors + lots of black ---- */
+            /* 6 accent hues cycling through the gradient centers */
+            vec3 palette[6];
+            void setPalette() {
+                palette[0] = vec3(0.95, 0.20, 0.80);  /* hot pink    */
+                palette[1] = vec3(0.05, 0.75, 1.00);  /* cyan        */
+                palette[2] = vec3(1.00, 0.55, 0.05);  /* orange      */
+                palette[3] = vec3(0.35, 0.15, 1.00);  /* violet      */
+                palette[4] = vec3(0.05, 0.95, 0.55);  /* mint green  */
+                palette[5] = vec3(1.00, 0.90, 0.05);  /* yellow      */
+            }
+
+            vec3 getGrad(vec2 uv, float t) {
+                setPalette();
+                float speed = 0.28;
+                /* 6 animated centers */
+                vec2 c[6];
+                c[0] = vec2(0.5 + sin(t * speed * 0.7) * 0.42, 0.5 + cos(t * speed * 0.55) * 0.42);
+                c[1] = vec2(0.5 + cos(t * speed * 0.5) * 0.50, 0.5 + sin(t * speed * 0.60) * 0.50);
+                c[2] = vec2(0.5 + sin(t * speed * 0.6) * 0.38, 0.5 + cos(t * speed * 0.45) * 0.48);
+                c[3] = vec2(0.5 + cos(t * speed * 0.4) * 0.44, 0.5 + sin(t * speed * 0.70) * 0.36);
+                c[4] = vec2(0.5 + sin(t * speed * 0.8) * 0.32, 0.5 + cos(t * speed * 0.62) * 0.42);
+                c[5] = vec2(0.5 + cos(t * speed * 0.65)* 0.46, 0.5 + sin(t * speed * 0.48) * 0.40);
+
+                float R = 0.38; /* bloom radius — tighter = more black between blobs */
+                vec3 col = vec3(0.0);
+                for (int i = 0; i < 6; i++) {
+                    float d = length(uv - c[i]);
+                    float inf = 1.0 - smoothstep(0.0, R, d);
+                    inf = pow(inf, 2.2); /* sharper falloff → more black */
+                    /* pulsing brightness */
+                    float pulse = 0.6 + 0.4 * sin(t * speed * (0.4 + float(i) * 0.07));
+                    col += palette[i] * inf * pulse;
+                }
+                /* clamp & keep dark: only brighten where blobs overlap */
+                col = clamp(col, 0.0, 1.0);
+                /* gamma lift for vibrancy, then crush blacks */
+                col = pow(col, vec3(0.85));
+                /* heavy black bias — anything below 0.18 snaps to near-black */
+                float lum = dot(col, vec3(0.299, 0.587, 0.114));
+                float blackMask = smoothstep(0.0, 0.22, lum);
+                col = mix(vec3(0.0, 0.0, 0.0), col, blackMask);
+                return col;
+            }
+
+            void main() {
+                vec2 uv = vUv;
+
+                /* touch distortion */
+                vec4 touch = texture2D(uTouchTex, uv);
+                float vx = -(touch.r * 2.0 - 1.0);
+                float vy = -(touch.g * 2.0 - 1.0);
+                float tInt = touch.b;
+                uv.x += vx * 0.55 * tInt;
+                uv.y += vy * 0.55 * tInt;
+
+                /* gentle ripple from touch */
+                float dist = length(uv - 0.5);
+                float ripple = sin(dist * 18.0 - uTime * 2.8) * 0.025 * tInt;
+                uv += vec2(ripple);
+
+                vec3 color = getGrad(uv, uTime);
+
+                /* minimal grain — reduced to 0.018 */
+                float grain = fract(sin(dot(uv * uResolution, vec2(12.9898, 78.233)) + uTime) * 43758.5453);
+                color += (grain * 2.0 - 1.0) * 0.018;
+
+                /* subtle hue shimmer */
+                float s = uTime * 0.18;
+                color.r += sin(s)          * 0.018;
+                color.g += cos(s * 1.3)    * 0.015;
+                color.b += sin(s * 1.1)    * 0.018;
+
+                color = clamp(color, 0.0, 1.0);
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `
     });
 
-    async function animate(r) {
-        const { el } = r;
-        while (true) {
-            el.style.transition = 'opacity 0.55s cubic-bezier(0.16,1,0.3,1), filter 0.55s ease';
-            el.style.filter = 'blur(15px) drop-shadow(0 0 4px currentColor)';
-            el.style.opacity = '0.8';
-            await new Promise(res => setTimeout(res, 1400 + Math.random() * 1200));
+    const geo = new THREE.PlaneBufferGeometry(2, 2);
+    scene.add(new THREE.Mesh(geo, material));
 
-            el.style.transition = 'opacity 0.5s ease-in, filter 0.5s ease-in';
-            el.style.opacity = '0';
-            await new Promise(res => setTimeout(res, 500));
-
-            const pos = randPos();
-            el.style.transition = 'left 0.9s cubic-bezier(0.16,1,0.3,1), top 0.9s cubic-bezier(0.16,1,0.3,1)';
-            el.style.left = pos.left; el.style.top = pos.top;
-            active.delete(r.color);
-            r.color = uniqueColor(); active.add(r.color);
-            el.style.backgroundColor = r.color;
-            await new Promise(res => setTimeout(res, 950 + Math.random() * 400));
-        }
+    /* ── Resize — size to wrapper (hero+about) ── */
+    function resize() {
+        const w = wrapper ? wrapper.clientWidth : innerWidth;
+        const h = wrapper ? wrapper.clientHeight : innerHeight;
+        renderer.setSize(w, h);
+        uniforms.uResolution.value.set(w, h);
     }
-    rects.forEach(animate);
+    resize();
+    window.addEventListener('resize', resize);
+
+    /* ── Mouse / Touch ── */
+    heroSection.addEventListener('mousemove', e => addTouch(e.clientX, e.clientY));
+    heroSection.addEventListener('touchmove', e => {
+        const t = e.touches[0];
+        addTouch(t.clientX, t.clientY);
+    }, { passive: true });
+
+    /* ── Animation loop ── */
+    const clock = new THREE.Clock();
+    function tick() {
+        uniforms.uTime.value += Math.min(clock.getDelta(), 0.05);
+        updateTouchTex();
+        renderer.render(scene, camera);
+        requestAnimationFrame(tick);
+    }
+    tick();
 })();
 
-/* ── Locomotive + GSAP ── */
+/* ════════════════════════════════════════════════
+   Locomotive + GSAP + scroll reveals
+   ════════════════════════════════════════════════ */
 (function () {
     const isDesktop = window.innerWidth > 768;
     const scroller  = document.querySelector('[data-scroll-container]');
@@ -916,7 +1085,12 @@
 
     if (isDesktop) {
         loco = new LocomotiveScroll({ el: scroller, smooth: true, multiplier: 0.88, lerp: 0.08, offset: [-90, 0] });
-        loco.on('scroll', ScrollTrigger.update);
+        loco.on('scroll', (args) => {
+            ScrollTrigger.update();
+            /* Broadcast scroll Y for gradient fade */
+            window._locoScrollY = args.scroll.y;
+            document.dispatchEvent(new CustomEvent('locoScroll', { detail: args.scroll.y }));
+        });
         ScrollTrigger.scrollerProxy('[data-scroll-container]', {
             scrollTop(v) {
                 if (arguments.length) { loco.scrollTo(v, 0, 0); return; }
@@ -929,7 +1103,7 @@
         ScrollTrigger.addEventListener('refresh', () => loco.update());
     }
 
-    /* Reveal animations (non-project) */
+    /* Reveal animations */
     document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right').forEach(el => {
         if (el.closest('#projects')) return;
         const x = el.classList.contains('reveal-left') ? -40 : el.classList.contains('reveal-right') ? 40 : 0;
@@ -949,7 +1123,7 @@
 
     if (isDesktop) ScrollTrigger.refresh();
 
-    /* Project cards — staggered IntersectionObserver */
+    /* Project cards */
     const cards = document.querySelectorAll('.project-item.card-animate');
     if (cards.length) {
         const io = new IntersectionObserver(entries => {
@@ -958,7 +1132,7 @@
         cards.forEach(c => io.observe(c));
     }
 
-    /* Nav tint: switch to slight dark tint when over the light projects section */
+    /* Nav tint */
     const nav = document.getElementById('glassNav');
     const projectsSection = document.getElementById('projects');
     if (nav && projectsSection) {
@@ -967,22 +1141,6 @@
         }, { threshold: 0.1 });
         navObserver.observe(projectsSection);
     }
-
-    /* Scroll-to helpers */
-    function scrollTo(el) {
-        if (loco && isDesktop) loco.scrollTo(el, { offset: -90, duration: 900 });
-        else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    const idMap = { section_1:'home', section_2:'about', section_3:'gallery', footer:'contact' };
-    document.querySelectorAll('[data-scroll-to]').forEach(link => {
-        link.addEventListener('click', e => {
-            e.preventDefault();
-            const key = link.getAttribute('data-scroll-to');
-            const target = document.getElementById(key) || document.getElementById(idMap[key]) || document.querySelector('.' + key) || document.querySelector('footer');
-            if (target) scrollTo(target);
-            document.getElementById('mobileDropdown')?.classList.remove('active');
-        });
-    });
 
     /* Mobile menu */
     const menuBtn  = document.getElementById('mobileMenuBtn');
@@ -994,15 +1152,15 @@
     });
 })();
 
-/* ── Bento blur reveal + lightbox ── */
+/* ════════════════════════════════════════════════
+   Bento reveal + lightbox
+   ════════════════════════════════════════════════ */
 (function () {
-    /* Bento reveal */
     const bentoIO = new IntersectionObserver(entries => {
         entries.forEach(e => e.target.classList.toggle('in-view', e.isIntersecting));
     }, { threshold: 0.25, rootMargin: '60px 0px 60px 0px' });
     document.querySelectorAll('.bento-box').forEach(b => bentoIO.observe(b));
 
-    /* Gallery header */
     const hdr = document.getElementById('galleryHeader');
     if (hdr) {
         const hIO = new IntersectionObserver(entries => {
@@ -1011,10 +1169,9 @@
         hIO.observe(hdr);
     }
 
-    /* Lightbox */
-    const lightbox  = document.getElementById('lightbox');
-    const lbImg     = document.getElementById('lightboxImg');
-    const lbClose   = document.getElementById('lightboxClose');
+    const lightbox = document.getElementById('lightbox');
+    const lbImg    = document.getElementById('lightboxImg');
+    const lbClose  = document.getElementById('lightboxClose');
 
     function open(src) {
         if (!src || src === '#') return;
