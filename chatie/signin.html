@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Walkie-Chatie — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--black:#000;--dark:#0a0a0a;--dark2:#111;--dark3:#1a1a1a;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.13);--text:#fff;--text2:#999;--text3:#555;--r:5px}
+html,body{height:100%;background:var(--black);font-family:'Share Tech Mono',monospace;color:var(--text);overflow-x:hidden}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px)}
+.page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;position:relative;z-index:1}
+.logo{font-family:'EB Garamond',serif;font-size:clamp(28px,6vw,42px);font-weight:400;letter-spacing:1px;color:#fff;margin-bottom:6px;text-align:center}
+.logo-sub{font-size:9px;letter-spacing:3px;color:var(--text3);text-transform:uppercase;margin-bottom:36px;text-align:center}
+.card{width:100%;max-width:400px;background:var(--dark2);border:1px solid var(--border2);border-radius:var(--r);padding:28px 28px 24px}
+.card-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:24px;text-align:center}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:7px}
+.field input{width:100%;height:48px;background:var(--dark3);border:1px solid var(--border2);border-radius:var(--r);font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--text);padding:0 16px;outline:none;transition:border-color .2s}
+.field input::placeholder{color:var(--text3)}
+.field input:focus{border-color:rgba(255,255,255,0.4)}
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--text3);font-size:9px;letter-spacing:1px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.google-btn{width:100%;height:48px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:border-color .2s,color .2s;text-transform:uppercase;margin-bottom:16px}
+.google-btn:hover{border-color:rgba(255,255,255,0.3);color:var(--text)}
+.primary-btn{width:100%;height:50px;background:#fff;color:#000;border:none;border-radius:var(--r);font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:opacity .2s,transform .15s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px}
+.primary-btn:hover{opacity:.88;transform:translateY(-1px)}
+.primary-btn:active{transform:scale(.97)}
+.primary-btn:disabled{opacity:.4;pointer-events:none}
+.primary-btn .material-icons-round{font-size:18px}
+.foot{margin-top:18px;text-align:center;font-size:10px;color:var(--text3);letter-spacing:.5px}
+.foot a{color:var(--text2);text-decoration:none;border-bottom:1px solid var(--border2)}
+.foot a:hover{color:var(--text)}
+.err-msg{font-size:9px;color:#ff453a;letter-spacing:.5px;margin-top:5px;min-height:14px;display:none}
+.err-msg.show{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="page">
+  <div class="logo">Walkie-Chatie</div>
+  <div class="logo-sub">Open Frequency Network</div>
+
+  <div class="card">
+    <div class="card-title">Sign In</div>
+
+    <button class="google-btn" onclick="googleAuth()">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.79-.07-1.54-.19-2.27h-11.3v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/><path fill="#34A853" d="M12.255 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96h-3.98v3.09C3.515 21.3 7.565 24 12.255 24z"/><path fill="#FBBC05" d="M5.525 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62h-3.98a11.86 11.86 0 0 0 0 10.76l3.98-3.09z"/><path fill="#EA4335" d="M12.255 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C18.205 1.19 15.495 0 12.255 0c-4.69 0-8.74 2.7-10.71 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="divider">or</div>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="si-email" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="si-pass" placeholder="Password" autocomplete="current-password">
+    </div>
+    <div class="err-msg" id="si-err"></div>
+
+    <button class="primary-btn" id="si-btn" onclick="signIn()">
+      <span class="material-icons-round">cell_tower</span>
+      Tune In
+    </button>
+
+    <div class="foot">
+      No account? <a href="signup.html">Sign up</a><br><br>
+      <a href="index.html" style="color:var(--text3);border-color:transparent">Enter as Anonymous instead</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const FB={apiKey:"AIzaSyDW0UpHNzP_JaOsDH_6ZFlA3wHg26M8Y4s",authDomain:"locationchatbase.firebaseapp.com",databaseURL:"https://locationchatbase-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"locationchatbase",storageBucket:"locationchatbase.firebasestorage.app",messagingSenderId:"645678725889",appId:"1:645678725889:web:2a36a0aebc1d1dcb6af900"};
+firebase.initializeApp(FB);
+const auth=firebase.auth();
+const db=firebase.database();
+
+function showErr(m){const e=document.getElementById('si-err');e.textContent=m;e.classList.add('show')}
+function clearErr(){const e=document.getElementById('si-err');e.textContent='';e.classList.remove('show')}
+
+async function signIn(){
+  clearErr();
+  const email=document.getElementById('si-email').value.trim();
+  const pass=document.getElementById('si-pass').value;
+  if(!email||!pass){showErr('Email and password required');return}
+  const btn=document.getElementById('si-btn');
+  btn.disabled=true;btn.innerHTML='<span class="material-icons-round" style="animation:spin .8s linear infinite">refresh</span> Signing in...';
+  try{
+    const cred=await auth.signInWithEmailAndPassword(email,pass);
+    const uid=cred.user.uid;
+    const snap=await db.ref('userProfiles/'+uid).once('value');
+    const profile=snap.val()||{};
+    sessionStorage.setItem('wc_uid',uid);
+    sessionStorage.setItem('wc_username',profile.username||cred.user.displayName||'User'+uid.slice(0,5));
+    sessionStorage.setItem('wc_pfp',profile.pfp||cred.user.photoURL||'');
+    sessionStorage.setItem('wc_anon','false');
+    window.location.href='index.html';
+  }catch(e){
+    showErr(e.message.replace('Firebase: ','').replace(/\(auth.*\)/,'').trim());
+    btn.disabled=false;btn.innerHTML='<span class="material-icons-round">cell_tower</span> Tune In';
+  }
+}
+
+async function googleAuth(){
+  const provider=new firebase.auth.GoogleAuthProvider();
+  try{
+    const res=await auth.signInWithPopup(provider);
+    const uid=res.user.uid;
+    const isNew=res.additionalUserInfo.isNewUser;
+    const username=res.user.displayName||'User'+uid.slice(0,5);
+    const pfp=res.user.photoURL||'';
+    if(isNew){await db.ref('userProfiles/'+uid).set({username,email:res.user.email||'',pfp,createdAt:Date.now(),isAnonymous:false})}
+    else{const s=await db.ref('userProfiles/'+uid).once('value');const p=s.val()||{};if(p.username)Object.assign({username:p.username})}
+    const snap=await db.ref('userProfiles/'+uid).once('value');
+    const profile=snap.val()||{};
+    sessionStorage.setItem('wc_uid',uid);
+    sessionStorage.setItem('wc_username',profile.username||username);
+    sessionStorage.setItem('wc_pfp',profile.pfp||pfp);
+    sessionStorage.setItem('wc_anon','false');
+    window.location.href='index.html';
+  }catch(e){showErr('Google sign-in failed: '+e.message)}
+}
+</script>
+</body>
+</html>
