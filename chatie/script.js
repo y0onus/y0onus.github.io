@@ -9,8 +9,6 @@ function refreshAvatar(){
   myAvatarShirt=myShirtIdx;
   sessionStorage.setItem('wc_head',myHeadIdx);
   sessionStorage.setItem('wc_shirt',myShirtIdx);
-  var lbl=document.getElementById('avatar-current-label');
-  if(lbl)lbl.textContent=HEAD_COLORS[myHeadIdx].label+' skin · '+SHIRT_COLORS[myShirtIdx].label+' shirt';
 }
 
 function cycleHead(dir){
@@ -74,38 +72,75 @@ function avatarSVG(headIdx, shirtIdx, size, animated){
   if(animated===undefined)animated=false;
   var h=HEAD_COLORS[headIdx]||HEAD_COLORS[0];
   var s=SHIRT_COLORS[shirtIdx]||SHIRT_COLORS[0];
-  // ViewBox 80x170. All coords absolute — no group transforms.
-  // Head:  circle cx=40 cy=30 r=22  (bottom edge y=52)
-  // Shirt: rect x=20 y=54 w=40 h=48 (top touches head, bottom y=102)
-  // Arms:  from (20,65)→(6,92) and (60,65)→(74,92)
-  // Legs:  from (30,102)→(26,148) and (50,102)→(54,148)
-  // Feet:  (26,148)→(16,148)  and  (54,148)→(64,148)
   var W=size, H=Math.round(size*170/80);
-  var shirtCls = animated ? ' class="av-shirt-bob"' : '';
-  var headCls  = animated ? ' class="av-head-flip"' : '';
+
+  // Breathing: shirt scales up/down subtly via SMIL
+  var breathe = animated
+    ? '<animateTransform attributeName="transform" type="scale"'
+      +' values="1 1;1.035 1.025;1 1" additive="sum"'
+      +' dur="4s" repeatCount="indefinite"'
+      +' calcMode="spline" keyTimes="0;0.5;1"'
+      +' keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>'
+    : '';
+
+  // Eye blink: ry shrinks to near 0 for a frame
+  var blink1 = animated
+    ? '<animate attributeName="ry" dur="4.5s" repeatCount="indefinite"'
+      +' values="3;3;0.15;3;3" keyTimes="0;0.87;0.90;0.93;1"/>'
+    : '';
+  var blink2 = animated
+    ? '<animate attributeName="ry" dur="4.5s" repeatCount="indefinite"'
+      +' begin="0.06s" values="3;3;0.15;3;3" keyTimes="0;0.87;0.90;0.93;1"/>'
+    : '';
+
+  // Eye shift left-right every ~9 seconds
+  var shift1 = animated
+    ? '<animate attributeName="cx" dur="9s" repeatCount="indefinite"'
+      +' values="33;33;30;30;33;36;36;33"'
+      +' keyTimes="0;0.20;0.28;0.45;0.50;0.72;0.85;1"'
+      +' calcMode="spline"'
+      +' keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>'
+    : '';
+  var shift2 = animated
+    ? '<animate attributeName="cx" dur="9s" repeatCount="indefinite"'
+      +' values="47;47;44;44;47;50;50;47"'
+      +' keyTimes="0;0.20;0.28;0.45;0.50;0.72;0.85;1"'
+      +' calcMode="spline"'
+      +' keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>'
+    : '';
+
+  // shirt transform-origin at its centre (40,78)
+  var shirtAttrs = animated ? ' style="transform-origin:40px 78px"' : '';
+
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 170" width="'+W+'" height="'+H+'">'
-    // ── arms & legs — drawn first (behind shirt & head) ──
+    // legs & arms — static, behind everything
     +'<g stroke="#222" stroke-width="4.5" stroke-linecap="round" fill="none">'
-    +'<line x1="20" y1="65" x2="6"  y2="92"/>'   // left arm
-    +'<line x1="60" y1="65" x2="74" y2="92"/>'   // right arm
-    +'<line x1="30" y1="102" x2="26" y2="148"/>' // left leg
-    +'<line x1="26" y1="148" x2="16" y2="148"/>' // left foot
-    +'<line x1="50" y1="102" x2="54" y2="148"/>' // right leg
-    +'<line x1="54" y1="148" x2="64" y2="148"/>' // right foot
+    +'<line x1="20" y1="65" x2="6"  y2="92"/>'
+    +'<line x1="60" y1="65" x2="74" y2="92"/>'
+    +'<line x1="30" y1="102" x2="26" y2="148"/>'
+    +'<line x1="26" y1="148" x2="16" y2="148"/>'
+    +'<line x1="50" y1="102" x2="54" y2="148"/>'
+    +'<line x1="54" y1="148" x2="64" y2="148"/>'
     +'</g>'
-    // ── shirt — drawn second (over arms, under head) ──
-    +'<rect'+shirtCls+' x="20" y="54" width="40" height="48" rx="5"'
-    +' fill="'+s.fill+'" stroke="'+s.stroke+'" stroke-width="2.5"/>'
-    // ── head — drawn last (on top of everything) ──
-    +'<circle'+headCls+' cx="40" cy="30" r="22"'
-    +' fill="'+h.fill+'" stroke="'+h.stroke+'" stroke-width="2.5"/>'
-    +'<circle cx="33" cy="34" r="3" fill="#111"/>'  // left eye
-    +'<circle cx="47" cy="34" r="3" fill="#111"/>'  // right eye
+    // shirt with breathing
+    +'<rect'+shirtAttrs+' x="20" y="54" width="40" height="48" rx="5"'
+    +' fill="'+s.fill+'" stroke="'+s.stroke+'" stroke-width="2.5">'+breathe+'</rect>'
+    // head
+    +'<circle cx="40" cy="30" r="22" fill="'+h.fill+'" stroke="'+h.stroke+'" stroke-width="2.5"/>'
+    // eyes — ellipse for blink on ry
+    +'<ellipse cx="33" cy="34" rx="3" ry="3" fill="#111">'+blink1+shift1+'</ellipse>'
+    +'<ellipse cx="47" cy="34" rx="3" ry="3" fill="#111">'+blink2+shift2+'</ellipse>'
     +'</svg>';
 }
-
 function avatarSVGForMap(headIdx, shirtIdx){
-  return avatarSVG(headIdx, shirtIdx, 54, false);
+  // Return animated SVG string — SMIL works in <img> src blob URLs
+  return avatarSVG(headIdx, shirtIdx, 54, true);
+}
+
+function avatarBlobURL(headIdx, shirtIdx){
+  var svgStr=avatarSVGForMap(headIdx, shirtIdx);
+  var blob=new Blob([svgStr],{type:'image/svg+xml'});
+  return URL.createObjectURL(blob);
 }
 
 function renderAvatarPreview(){
@@ -352,11 +387,11 @@ async function initMap(){
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(map);
   placeMyMarker();saveLocation(c.lat,c.lng);tuneIntoRoom();
 }
-function makeMyMarkerIcon(){
-  var hi=myAvatarHead||0, si=myAvatarShirt||0;
+function drawAvatarCanvas(hi,si,W){
+  var H=Math.round(W*170/80);
+  if(W<8)return null;
   var hc=HEAD_COLORS[hi]||HEAD_COLORS[0];
   var sc=SHIRT_COLORS[si]||SHIRT_COLORS[0];
-  var W=54,H=115;
   var canvas=document.createElement('canvas');
   canvas.width=W;canvas.height=H;
   var ctx=canvas.getContext('2d');
@@ -377,17 +412,38 @@ function makeMyMarkerIcon(){
   ctx.closePath();ctx.fill();ctx.stroke();
   ctx.fillStyle=hc.fill;ctx.strokeStyle=hc.stroke;ctx.lineWidth=2.5;
   ctx.beginPath();ctx.arc(40,30,22,0,Math.PI*2);ctx.fill();ctx.stroke();
-  // yellow ring to distinguish self
-  ctx.strokeStyle='#FFD600';ctx.lineWidth=3;
-  ctx.beginPath();ctx.arc(40,30,25,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle='#FFD600';ctx.lineWidth=3;ctx.beginPath();ctx.arc(40,30,25,0,Math.PI*2);ctx.stroke();
   ctx.fillStyle='#111';
   ctx.beginPath();ctx.arc(33,34,3,0,Math.PI*2);ctx.fill();
   ctx.beginPath();ctx.arc(47,34,3,0,Math.PI*2);ctx.fill();
   ctx.restore();
-  return L.divIcon({
-    html:'<img src="'+canvas.toDataURL()+'" width="'+W+'" height="'+H+'" style="display:block">',
-    className:'',iconSize:[W,H],iconAnchor:[W/2,H]
-  });
+  return canvas.toDataURL();
+}
+// Cache blob URLs to avoid creating new ones every zoom tick
+var _myMarkerBlobURL=null, _myMarkerBlobKey='';
+function makeMyMarkerIcon(){
+  var hi=myAvatarHead||0,si=myAvatarShirt||0;
+  var W=avatarSizeForZoom();
+  var H=Math.round(W*170/80);
+  if(W<8)return L.divIcon({html:'',className:'',iconSize:[1,1],iconAnchor:[0,0]});
+  var key=hi+'_'+si;
+  if(!_myMarkerBlobURL||_myMarkerBlobKey!==key){
+    if(_myMarkerBlobURL)URL.revokeObjectURL(_myMarkerBlobURL);
+    _myMarkerBlobURL=avatarBlobURL(hi,si);
+    _myMarkerBlobKey=key;
+  }
+  // Yellow ring overlay to distinguish self — drawn as canvas overlay
+  var ringCanvas=document.createElement('canvas');
+  ringCanvas.width=W;ringCanvas.height=H;
+  var ctx=ringCanvas.getContext('2d');
+  ctx.strokeStyle='#FFD600';ctx.lineWidth=Math.max(2,W*0.06);
+  ctx.beginPath();ctx.arc(W/2,W*0.375,W*0.32,0,Math.PI*2);ctx.stroke();
+  var ringDataURL=ringCanvas.toDataURL();
+  var html='<div style="position:relative;width:'+W+'px;height:'+H+'px">'
+    +'<img src="'+_myMarkerBlobURL+'" width="'+W+'" height="'+H+'" style="display:block;position:absolute;top:0;left:0">'
+    +'<img src="'+ringDataURL+'" width="'+W+'" height="'+H+'" style="display:block;position:absolute;top:0;left:0">'
+    +'</div>';
+  return L.divIcon({html:html,className:'',iconSize:[W,H],iconAnchor:[W/2,H]});
 }
 function placeMyMarker(){
   if(!myLocation||!map)return;
@@ -448,109 +504,107 @@ function drawHeatmap(){
     return              {r:220,g:20, b:40};     // crimson
   }
 
-  // Pass 1 — large soft glow, high opacity
-  Object.values(clusters).forEach(cl=>{
-    const pt=map.latLngToContainerPoint([cl.lat,cl.lng]);
-    const tc=tierColor(cl.count);
-    const r=Math.min(50+cl.count*2.2, 150);
-    const coreAlpha=Math.min(0.65+cl.count*0.005, 0.88);
-    const edgeAlpha=Math.min(0.30+cl.count*0.003, 0.55);
-    const g=ctx.createRadialGradient(pt.x,pt.y,0,pt.x,pt.y,r);
-    g.addColorStop(0,   `rgba(${tc.r},${tc.g},${tc.b},${coreAlpha.toFixed(2)})`);
-    g.addColorStop(0.4, `rgba(${tc.r},${tc.g},${tc.b},${edgeAlpha.toFixed(2)})`);
-    g.addColorStop(1,   `rgba(${tc.r},${tc.g},${tc.b},0)`);
+  // Pass 1 — large glow blob
+  Object.values(clusters).forEach(function(cl){
+    var pt=map.latLngToContainerPoint([cl.lat,cl.lng]);
+    var tc=tierColor(cl.count);
+    // Bigger base radius + faster growth
+    var r=Math.min(80+cl.count*3.5, 240);
+    var coreAlpha=Math.min(0.78+cl.count*0.004, 0.94);
+    var edgeAlpha=Math.min(0.42+cl.count*0.004, 0.68);
+    var g=ctx.createRadialGradient(pt.x,pt.y,0,pt.x,pt.y,r);
+    g.addColorStop(0,   'rgba('+tc.r+','+tc.g+','+tc.b+','+coreAlpha.toFixed(2)+')');
+    g.addColorStop(0.35,'rgba('+tc.r+','+tc.g+','+tc.b+','+edgeAlpha.toFixed(2)+')');
+    g.addColorStop(1,   'rgba('+tc.r+','+tc.g+','+tc.b+',0)');
     ctx.beginPath();ctx.arc(pt.x,pt.y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
   });
 
-  // Pass 2 — bright solid core dot (visible even for single user)
-  Object.values(clusters).forEach(cl=>{
-    const pt=map.latLngToContainerPoint([cl.lat,cl.lng]);
-    const tc=tierColor(cl.count);
-    const r2=Math.min(6+cl.count*0.8, 32);
-    const g2=ctx.createRadialGradient(pt.x,pt.y,0,pt.x,pt.y,r2);
-    g2.addColorStop(0,  `rgba(${tc.r},${tc.g},${tc.b},0.95)`);
-    g2.addColorStop(0.5,`rgba(${tc.r},${tc.g},${tc.b},0.7)`);
-    g2.addColorStop(1,  `rgba(${tc.r},${tc.g},${tc.b},0)`);
+  // Pass 2 — solid bright core (always visible, even 1 user)
+  Object.values(clusters).forEach(function(cl){
+    var pt=map.latLngToContainerPoint([cl.lat,cl.lng]);
+    var tc=tierColor(cl.count);
+    var r2=Math.min(12+cl.count*1.2, 50);
+    var g2=ctx.createRadialGradient(pt.x,pt.y,0,pt.x,pt.y,r2);
+    g2.addColorStop(0,  'rgba('+tc.r+','+tc.g+','+tc.b+',1)');
+    g2.addColorStop(0.5,'rgba('+tc.r+','+tc.g+','+tc.b+',0.82)');
+    g2.addColorStop(1,  'rgba('+tc.r+','+tc.g+','+tc.b+',0)');
     ctx.beginPath();ctx.arc(pt.x,pt.y,r2,0,Math.PI*2);ctx.fillStyle=g2;ctx.fill();
   });
 }
 
+// Cache blob URLs per user to avoid leaking
+var _markerBlobURLs={};
 function makeAvatarMarkerIcon(u){
   var hi=parseInt(u.avatarHead)||0;
   var si=parseInt(u.avatarShirt)||0;
-  var hc=HEAD_COLORS[hi]||HEAD_COLORS[0];
-  var sc=SHIRT_COLORS[si]||SHIRT_COLORS[0];
-  // Draw avatar directly onto a canvas — 100% reliable in Leaflet
-  var W=54, H=115;
-  var canvas=document.createElement('canvas');
-  canvas.width=W; canvas.height=H;
-  var ctx=canvas.getContext('2d');
-  // Scale: viewBox 80x170 -> W x H
-  var sx=W/80, sy=H/170;
-  ctx.save();ctx.scale(sx,sy);
-  ctx.lineCap='round';
-  // ── arms & legs ──
-  ctx.strokeStyle='#222'; ctx.lineWidth=4.5; ctx.fillStyle='none';
-  function line(x1,y1,x2,y2){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
-  line(20,65,6,92);   // left arm
-  line(60,65,74,92);  // right arm
-  line(30,102,26,148);// left leg
-  line(26,148,16,148);// left foot
-  line(50,102,54,148);// right leg
-  line(54,148,64,148);// right foot
-  // ── shirt ──
-  ctx.fillStyle=sc.fill; ctx.strokeStyle=sc.stroke; ctx.lineWidth=2.5;
-  ctx.beginPath();
-  var r=5,x=20,y=54,w=40,h=48;
-  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
-  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
-  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
-  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
-  ctx.closePath();ctx.fill();ctx.stroke();
-  // ── head ──
-  ctx.fillStyle=hc.fill; ctx.strokeStyle=hc.stroke; ctx.lineWidth=2.5;
-  ctx.beginPath();ctx.arc(40,30,22,0,Math.PI*2);ctx.fill();ctx.stroke();
-  // eyes
-  ctx.fillStyle='#111';
-  ctx.beginPath();ctx.arc(33,34,3,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(47,34,3,0,Math.PI*2);ctx.fill();
-  ctx.restore();
-  var dataURL=canvas.toDataURL();
-  return L.divIcon({
-    html:'<img src="'+dataURL+'" width="'+W+'" height="'+H+'" style="display:block">',
-    className:'',
-    iconSize:[W,H],
-    iconAnchor:[W/2,H]
-  });
+  var W=avatarSizeForZoom();
+  var H=Math.round(W*170/80);
+  if(W<8)return L.divIcon({html:'',className:'',iconSize:[1,1],iconAnchor:[0,0]});
+  var uid=u.uid||(''+hi+si);
+  var key=hi+'_'+si;
+  if(!_markerBlobURLs[uid]||_markerBlobURLs[uid].key!==key){
+    if(_markerBlobURLs[uid])URL.revokeObjectURL(_markerBlobURLs[uid].url);
+    _markerBlobURLs[uid]={url:avatarBlobURL(hi,si),key:key};
+  }
+  var blobURL=_markerBlobURLs[uid].url;
+  var html='<img src="'+blobURL+'" width="'+W+'" height="'+H+'" style="display:block">';
+  return L.divIcon({html:html,className:'',iconSize:[W,H],iconAnchor:[W/2,H]});
 }
-
 let userMarkers={};
 
+// Returns avatar pixel size based on current map zoom level
+function avatarSizeForZoom(){
+  if(!map)return 32;
+  var z=map.getZoom();
+  if(z>=18)return 40;
+  if(z>=17)return 32;
+  if(z>=16)return 26;
+  if(z>=15)return 20;
+  if(z>=14)return 14;
+  return 0; // hide below zoom 14
+}
+
+function refreshUserMarkers(){
+  var currentBandId=BANDS[selectedBand].id;
+  // Only show users on SAME frequency
+  var visible=Object.entries(allUsersData).filter(function(e){
+    var id=e[0],u=e[1];
+    return id!==myUID && u.online && u.lat && u.band===currentBandId;
+  });
+  var visibleIds=visible.map(function(e){return e[0];});
+  // Remove markers for users not visible
+  Object.keys(userMarkers).forEach(function(id){
+    if(!visibleIds.includes(id)){userMarkers[id].remove();delete userMarkers[id];}
+  });
+  // Add/update visible markers
+  visible.forEach(function(e){
+    var id=e[0],u=e[1];
+    var icon=makeAvatarMarkerIcon(u);
+    if(userMarkers[id]){
+      userMarkers[id].setLatLng([u.lat,u.lng]);
+      userMarkers[id].setIcon(icon);
+    } else {
+      var m=L.marker([u.lat,u.lng],{icon:icon,zIndexOffset:500}).addTo(map);
+      userMarkers[id]=m;
+    }
+  });
+  // Refresh own marker size too
+  if(myMarker)myMarker.setIcon(makeMyMarkerIcon());
+}
+
 function listenAllUsers(){
-  db.ref('users').on('value',snap=>{
+  db.ref('users').on('value',function(snap){
     allUsersData=snap.val()||{};
-    // Update/create markers for other users
-    const online=Object.entries(allUsersData).filter(([id,u])=>id!==myUID&&u.online&&u.lat);
-    const onlineIds=online.map(([id])=>id);
-    // Remove stale
-    Object.keys(userMarkers).forEach(id=>{
-      if(!onlineIds.includes(id)){userMarkers[id].remove();delete userMarkers[id];}
-    });
-    // Add/update
-    online.forEach(([id,u])=>{
-      if(userMarkers[id]){
-        userMarkers[id].setLatLng([u.lat,u.lng]);
-        userMarkers[id].setIcon(makeAvatarMarkerIcon(u));
-      } else {
-        const m=L.marker([u.lat,u.lng],{icon:makeAvatarMarkerIcon(u),zIndexOffset:500}).addTo(map);
-        // No tooltip with name — just the avatar
-        userMarkers[id]=m;
-      }
-    });
+    refreshUserMarkers();
     drawHeatmap();
     updateNearbyCount();
   });
-  map.on('move zoom moveend zoomend',drawHeatmap);
+  // Redraw heatmap AND resize avatar markers on zoom/move
+  map.on('zoomend',function(){
+    refreshUserMarkers();
+    drawHeatmap();
+  });
+  map.on('moveend',drawHeatmap);
 }
 
 function updateNearbyCount(){
@@ -567,7 +621,12 @@ function updateNearbyCount(){
 // ═══════════════════════════════════════
 // ROOMS & MESSAGES
 // ═══════════════════════════════════════
-function tuneIntoRoom(){const b=BANDS[selectedBand];joinRoom('band_'+b.id)}
+function tuneIntoRoom(){
+  var b=BANDS[selectedBand];
+  joinRoom('band_'+b.id);
+  // Refresh markers so only same-band users visible
+  if(map&&Object.keys(allUsersData).length)refreshUserMarkers();
+}
 function joinRoom(roomId){
   if(currentRoomId===roomId)return;
   Object.values(activeRoomListeners).forEach(off=>off());activeRoomListeners={};
@@ -1003,30 +1062,62 @@ function forceClearPinModal(){
 }
 
 // ── PIN MARKERS on map ── always red pin, emoji on face ──
+function pinSizeForZoom(){
+  if(!map)return{w:46,h:58,icon:14,hidden:false};
+  var z=map.getZoom();
+  if(z>=18)return{w:46,h:58,icon:14,hidden:false};
+  if(z>=17)return{w:38,h:48,icon:12,hidden:false};
+  if(z>=16)return{w:30,h:38,icon:10,hidden:false};
+  if(z>=15)return{w:22,h:28,icon:0, hidden:false};
+  if(z>=14)return{w:14,h:18,icon:0, hidden:false};
+  return{w:0,h:0,icon:0,hidden:true};
+}
+
 function makePinIcon(pt,iconName){
-  // iconName is a material icon string e.g. 'groups', 'celebration'
   if(!iconName||iconName==='📍')iconName=PIN_TYPES[pt]?.icon||'push_pin';
-  // Realistic red pin SVG
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="46" height="58" viewBox="0 0 46 58">
-    <defs>
-      <radialGradient id="pg" cx="38%" cy="28%" r="65%">
-        <stop offset="0%" stop-color="#ff6b6b"/>
-        <stop offset="100%" stop-color="#c0000a"/>
-      </radialGradient>
-      <filter id="ps2" x="-30%" y="-10%" width="180%" height="160%">
-        <feDropShadow dx="0" dy="4" stdDeviation="3.5" flood-color="rgba(0,0,0,.5)"/>
-      </filter>
-    </defs>
-    <path d="M23 1C13.06 1 5 9.06 5 19c0 13.5 18 37 18 37s18-23.5 18-37C41 9.06 32.94 1 23 1z" fill="url(#pg)" filter="url(#ps2)"/>
-    <circle cx="23" cy="19" r="9.5" fill="rgba(0,0,0,.22)"/>
-    <circle cx="23" cy="19" r="8" fill="rgba(255,255,255,.9)"/>
-    <ellipse cx="18" cy="14" rx="3" ry="2" fill="rgba(255,255,255,.45)" transform="rotate(-25,18,14)"/>
-  </svg>`;
-  const html=`<div style="position:relative;width:46px;height:58px">
-    ${svg}
-    <span class="material-icons-round" style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:14px;line-height:1;color:#c0000a">${iconName}</span>
-  </div>`;
-  return L.divIcon({html,className:'',iconSize:[46,58],iconAnchor:[23,54],popupAnchor:[0,-54]});
+  var sz=pinSizeForZoom();
+  if(sz.hidden)return L.divIcon({html:'',className:'',iconSize:[1,1],iconAnchor:[0,0]});
+  var W=sz.w,H=sz.h;
+  // Draw pin on canvas — no SVG encoding needed
+  var canvas=document.createElement('canvas');
+  canvas.width=W;canvas.height=H;
+  var ctx=canvas.getContext('2d');
+  var cx=W/2;
+  // pin body path scaled to canvas size (original: 46x58, pin tip at y=55)
+  var sx=W/46,sy=H/58;
+  ctx.save();ctx.scale(sx,sy);
+  // shadow
+  ctx.shadowColor='rgba(0,0,0,.5)';ctx.shadowBlur=6;ctx.shadowOffsetY=3;
+  // pin shape
+  var grad=ctx.createRadialGradient(17,9,1,23,19,22);
+  grad.addColorStop(0,'#ff7070');grad.addColorStop(1,'#c0000a');
+  ctx.beginPath();
+  ctx.moveTo(23,1);
+  ctx.bezierCurveTo(13,1,5,9,5,19);
+  ctx.bezierCurveTo(5,32,23,56,23,56);
+  ctx.bezierCurveTo(23,56,41,32,41,19);
+  ctx.bezierCurveTo(41,9,33,1,23,1);
+  ctx.closePath();
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.shadowColor='transparent';
+  // inner white circle
+  ctx.fillStyle='rgba(255,255,255,.92)';
+  ctx.beginPath();ctx.arc(23,19,8,0,Math.PI*2);ctx.fill();
+  // highlight glint
+  ctx.fillStyle='rgba(255,255,255,.5)';
+  ctx.beginPath();ctx.ellipse(18,14,3,2,-0.44,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+  var dataURL=canvas.toDataURL();
+  // icon text overlay — only when large enough
+  var iconHtml='';
+  if(sz.icon>0){
+    iconHtml='<span class="material-icons-round" style="position:absolute;top:'
+      +Math.round(H*0.14)+'px;left:50%;transform:translateX(-50%);font-size:'+sz.icon+'px;line-height:1;color:#c0000a;pointer-events:none">'+iconName+'</span>';
+  }
+  var html='<div style="position:relative;width:'+W+'px;height:'+H+'px">'
+    +'<img src="'+dataURL+'" width="'+W+'" height="'+H+'" style="display:block">'
+    +iconHtml+'</div>';
+  return L.divIcon({html:html,className:'',iconSize:[W,H],iconAnchor:[W/2,H-2],popupAnchor:[0,-(H-2)]});
 }
 
 function fmtDateTime(dt){if(!dt)return null;try{return new Date(dt).toLocaleString([],{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}catch{return dt}}
@@ -1065,22 +1156,35 @@ async function deletePin(pinId){
   showToast('Pin removed');
 }
 
+function refreshPinMarkers(){
+  var pins=window._pinData||{};
+  Object.entries(pins).forEach(function(e){
+    var pid=e[0],pin=e[1];
+    if(pinMarkers[pid]){
+      pinMarkers[pid].setIcon(makePinIcon(pin.type,pin.emoji||PIN_TYPES[pin.type]?.icon||'push_pin'));
+    }
+  });
+}
+
 function listenPins(){
-  db.ref('pins').on('value',snap=>{
-    // Remove old markers
-    Object.values(pinMarkers).forEach(m=>m.remove());
-    for(const k in pinMarkers)delete pinMarkers[k];
+  db.ref('pins').on('value',function(snap){
+    Object.values(pinMarkers).forEach(function(m){m.remove();});
+    for(var k in pinMarkers)delete pinMarkers[k];
     window._pinData={};
-    const pins=snap.val()||{};
-    Object.entries(pins).forEach(([pid,pin])=>{
+    var pins=snap.val()||{};
+    Object.entries(pins).forEach(function(e){
+      var pid=e[0],pin=e[1];
       window._pinData[pid]=pin;
-      const m=L.marker([pin.lat,pin.lng],{icon:makePinIcon(pin.type,pin.emoji||PIN_TYPES[pin.type]?.icon||'push_pin'),zIndexOffset:800}).addTo(map);
-      const popupHtml=buildPinPopup(pin,pid);
+      var icon=makePinIcon(pin.type,pin.emoji||PIN_TYPES[pin.type]?.icon||'push_pin');
+      var m=L.marker([pin.lat,pin.lng],{icon:icon,zIndexOffset:800}).addTo(map);
+      var popupHtml=buildPinPopup(pin,pid);
       m.bindPopup(popupHtml,{maxWidth:260,minWidth:220,className:''});
-      m.on('popupopen',()=>{window._popupRef=m});
+      m.on('popupopen',function(){window._popupRef=m;});
       pinMarkers[pid]=m;
     });
   });
+  // Resize pins on zoom
+  map.on('zoomend',refreshPinMarkers);
 }
 
 // ═══════════════════════════════════════
