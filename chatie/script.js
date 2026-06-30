@@ -3,21 +3,137 @@
 // ═══════════════════════════════════════
 // buildSwatches removed — using arrow-only UI
 
-function refreshAvatar(){
-  renderAvatarPreview();
-  myAvatarHead=myHeadIdx;
-  myAvatarShirt=myShirtIdx;
-  sessionStorage.setItem('wc_head',myHeadIdx);
-  sessionStorage.setItem('wc_shirt',myShirtIdx);
-}
+// ── Avatar change state ──
+var _headChanging=false, _shirtChanging=false;
 
 function cycleHead(dir){
   myHeadIdx=(myHeadIdx+dir+HEAD_COLORS.length)%HEAD_COLORS.length;
-  refreshAvatar();
+  myAvatarHead=myHeadIdx;
+  sessionStorage.setItem('wc_head',myHeadIdx);
+  animateHeadChange(dir);
 }
 function cycleShirt(dir){
   myShirtIdx=(myShirtIdx+dir+SHIRT_COLORS.length)%SHIRT_COLORS.length;
-  refreshAvatar();
+  myAvatarShirt=myShirtIdx;
+  sessionStorage.setItem('wc_shirt',myShirtIdx);
+  animateShirtChange(dir);
+}
+
+// Animate ONLY the head layer sliding + eyes opening
+function animateHeadChange(dir){
+  var headEl=document.getElementById('av-head-layer');
+  if(!headEl)return;
+  _headChanging=true;
+  var outX = dir>0 ? '-70%' : '70%';
+  var inX  = dir>0 ?  '70%' : '-70%';
+
+  headEl.style.transition='transform 0.16s cubic-bezier(0.4,0,1,1), opacity 0.16s';
+  headEl.style.transform='translateX('+outX+')';
+  headEl.style.opacity='0';
+
+  setTimeout(function(){
+    // swap to closed-eyes version while off-screen
+    headEl.innerHTML=headOnlySVG(myHeadIdx,true);
+    headEl.style.transition='none';
+    headEl.style.transform='translateX('+inX+')';
+    headEl.style.opacity='0.4';
+    void headEl.offsetWidth;
+    headEl.style.transition='transform 0.2s cubic-bezier(0,0,0.2,1), opacity 0.15s';
+    headEl.style.transform='translateX(0)';
+    headEl.style.opacity='1';
+
+    setTimeout(function(){
+      // eyes pop open
+      headEl.innerHTML=headOnlySVG(myHeadIdx,false);
+      var eyes=headEl.querySelectorAll('ellipse');
+      eyes.forEach(function(eye){
+        eye.style.transformBox='fill-box';
+        eye.style.transformOrigin='center';
+        eye.style.transition='none';
+        eye.style.transform='scaleY(0.1)';
+        void eye.offsetWidth;
+        eye.style.transition='transform 0.22s cubic-bezier(0.34,1.5,0.64,1)';
+        eye.style.transform='scaleY(1)';
+      });
+      setTimeout(function(){
+        // restore full looping animation (blink/shift)
+        headEl.innerHTML=headOnlySVG(myHeadIdx,false,true);
+        _headChanging=false;
+      },260);
+    },200);
+  },160);
+}
+
+// Animate ONLY the shirt/body layer sliding
+function animateShirtChange(dir){
+  var bodyEl=document.getElementById('av-body-layer');
+  if(!bodyEl)return;
+  _shirtChanging=true;
+  var outX = dir>0 ? '-70%' : '70%';
+  var inX  = dir>0 ?  '70%' : '-70%';
+
+  bodyEl.style.transition='transform 0.16s cubic-bezier(0.4,0,1,1), opacity 0.16s';
+  bodyEl.style.transform='translateX('+outX+')';
+  bodyEl.style.opacity='0';
+
+  setTimeout(function(){
+    bodyEl.innerHTML=bodyOnlySVG(myShirtIdx,false);
+    bodyEl.style.transition='none';
+    bodyEl.style.transform='translateX('+inX+')';
+    bodyEl.style.opacity='0.4';
+    void bodyEl.offsetWidth;
+    bodyEl.style.transition='transform 0.2s cubic-bezier(0,0,0.2,1), opacity 0.15s';
+    bodyEl.style.transform='translateX(0)';
+    bodyEl.style.opacity='1';
+
+    setTimeout(function(){
+      bodyEl.innerHTML=bodyOnlySVG(myShirtIdx,true); // resume breathing loop
+      _shirtChanging=false;
+    },220);
+  },160);
+}
+
+// ── Split SVG builders: head-only and body-only, sized to fit the SAME 100x130 viewBox ──
+function headOnlySVG(headIdx, eyesClosed, animated){
+  var h=HEAD_COLORS[headIdx]||HEAD_COLORS[0];
+  var blink1='', blink2='', shift1='', shift2='';
+  if(animated){
+    blink1='<animate attributeName="ry" dur="4.5s" repeatCount="indefinite" values="3.5;3.5;0.2;3.5;3.5" keyTimes="0;0.87;0.90;0.93;1"/>';
+    blink2='<animate attributeName="ry" dur="4.5s" repeatCount="indefinite" begin="0.06s" values="3.5;3.5;0.2;3.5;3.5" keyTimes="0;0.87;0.90;0.93;1"/>';
+    shift1='<animate attributeName="cx" dur="9s" repeatCount="indefinite" values="38;38;34;34;38;42;42;38" keyTimes="0;0.20;0.28;0.45;0.50;0.72;0.85;1" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>';
+    shift2='<animate attributeName="cx" dur="9s" repeatCount="indefinite" values="62;62;58;58;62;66;66;62" keyTimes="0;0.20;0.28;0.45;0.50;0.72;0.85;1" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>';
+  }
+  var eyesSvg;
+  if(eyesClosed){
+    eyesSvg='<line x1="34" y1="50" x2="42" y2="50" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>'
+           +'<line x1="58" y1="50" x2="66" y2="50" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>';
+  } else {
+    eyesSvg='<ellipse cx="38" cy="50" rx="3.5" ry="3.5" fill="#111">'+blink1+shift1+'</ellipse>'
+           +'<ellipse cx="62" cy="50" rx="3.5" ry="3.5" fill="#111">'+blink2+shift2+'</ellipse>';
+  }
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130" width="100%" height="100%" style="display:block">'
+    +'<circle cx="50" cy="46" r="38" fill="'+h.fill+'" stroke="'+h.stroke+'" stroke-width="3.5"/>'
+    +eyesSvg
+    +'</svg>';
+}
+
+function bodyOnlySVG(shirtIdx, animated){
+  var s=SHIRT_COLORS[shirtIdx]||SHIRT_COLORS[0];
+  var bp='M33,75 L67,75 L83,115 Q83,124 74,124 L26,124 Q17,124 17,115 Z';
+  var breathe = animated
+    ? '<animateTransform attributeName="transform" type="translate" values="0 0;0 -3;0 0" additive="sum" dur="4s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>'
+    : '';
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130" width="100%" height="100%" style="display:block">'
+    +'<path d="'+bp+'" fill="'+s.fill+'" stroke="'+s.stroke+'" stroke-width="3" stroke-linejoin="round">'+breathe+'</path>'
+    +'</svg>';
+}
+
+function renderAvatarPreview(){
+  var el=document.getElementById('avatar-preview');
+  if(!el)return;
+  el.innerHTML=
+    '<div id="av-body-layer" style="position:absolute;inset:0">'+bodyOnlySVG(myShirtIdx,true)+'</div>'
+    +'<div id="av-head-layer" style="position:absolute;inset:0">'+headOnlySVG(myHeadIdx,false,true)+'</div>';
 }
 
 // ═══════════════════════════════════════
@@ -72,68 +188,63 @@ function avatarSVG(headIdx, shirtIdx, size, animated){
   if(animated===undefined)animated=false;
   var h=HEAD_COLORS[headIdx]||HEAD_COLORS[0];
   var s=SHIRT_COLORS[shirtIdx]||SHIRT_COLORS[0];
-  var W=size, H=Math.round(size*170/80);
+  // ViewBox 100x130: head r=38 centred at (50,42), body trapezoid below
+  var W=size, H=Math.round(size*130/100);
 
-  // Breathing: shirt scales up/down subtly via SMIL
+  // ── Breathing: body translates up/down ──
   var breathe = animated
-    ? '<animateTransform attributeName="transform" type="scale"'
-      +' values="1 1;1.035 1.025;1 1" additive="sum"'
+    ? '<animateTransform attributeName="transform" type="translate"'
+      +' values="0 0;0 -3;0 0" additive="sum"'
       +' dur="4s" repeatCount="indefinite"'
       +' calcMode="spline" keyTimes="0;0.5;1"'
       +' keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>'
     : '';
 
-  // Eye blink: ry shrinks to near 0 for a frame
+  // ── Eye blink ──
   var blink1 = animated
     ? '<animate attributeName="ry" dur="4.5s" repeatCount="indefinite"'
-      +' values="3;3;0.15;3;3" keyTimes="0;0.87;0.90;0.93;1"/>'
+      +' values="3.5;3.5;0.2;3.5;3.5" keyTimes="0;0.87;0.90;0.93;1"/>'
     : '';
   var blink2 = animated
     ? '<animate attributeName="ry" dur="4.5s" repeatCount="indefinite"'
-      +' begin="0.06s" values="3;3;0.15;3;3" keyTimes="0;0.87;0.90;0.93;1"/>'
+      +' begin="0.06s" values="3.5;3.5;0.2;3.5;3.5" keyTimes="0;0.87;0.90;0.93;1"/>'
     : '';
 
-  // Eye shift left-right every ~9 seconds
+  // ── Eye shift left/right ──
   var shift1 = animated
     ? '<animate attributeName="cx" dur="9s" repeatCount="indefinite"'
-      +' values="33;33;30;30;33;36;36;33"'
+      +' values="38;38;34;34;38;42;42;38"'
       +' keyTimes="0;0.20;0.28;0.45;0.50;0.72;0.85;1"'
       +' calcMode="spline"'
       +' keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>'
     : '';
   var shift2 = animated
     ? '<animate attributeName="cx" dur="9s" repeatCount="indefinite"'
-      +' values="47;47;44;44;47;50;50;47"'
+      +' values="62;62;58;58;62;66;66;62"'
       +' keyTimes="0;0.20;0.28;0.45;0.50;0.72;0.85;1"'
       +' calcMode="spline"'
       +' keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>'
     : '';
 
-  // shirt transform-origin at its centre (40,78)
-  var shirtAttrs = animated ? ' style="transform-origin:40px 78px"' : '';
+  // Body trapezoid path: narrow top, wider bottom, rounded corners
+  // top edge: x=33..67 at y=75  (sits below head which ends ~y=80)
+  // bottom edge: x=18..82 at y=124, rounded corners r=9
+  var bp = 'M33,75 L67,75 L83,115 Q83,124 74,124 L26,124 Q17,124 17,115 Z';
 
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 170" width="'+W+'" height="'+H+'">'
-    // legs & arms — static, behind everything
-    +'<g stroke="#222" stroke-width="4.5" stroke-linecap="round" fill="none">'
-    +'<line x1="20" y1="65" x2="6"  y2="92"/>'
-    +'<line x1="60" y1="65" x2="74" y2="92"/>'
-    +'<line x1="30" y1="102" x2="26" y2="148"/>'
-    +'<line x1="26" y1="148" x2="16" y2="148"/>'
-    +'<line x1="50" y1="102" x2="54" y2="148"/>'
-    +'<line x1="54" y1="148" x2="64" y2="148"/>'
-    +'</g>'
-    // shirt with breathing
-    +'<rect'+shirtAttrs+' x="20" y="54" width="40" height="48" rx="5"'
-    +' fill="'+s.fill+'" stroke="'+s.stroke+'" stroke-width="2.5">'+breathe+'</rect>'
-    // head
-    +'<circle cx="40" cy="30" r="22" fill="'+h.fill+'" stroke="'+h.stroke+'" stroke-width="2.5"/>'
-    // eyes — ellipse for blink on ry
-    +'<ellipse cx="33" cy="34" rx="3" ry="3" fill="#111">'+blink1+shift1+'</ellipse>'
-    +'<ellipse cx="47" cy="34" rx="3" ry="3" fill="#111">'+blink2+shift2+'</ellipse>'
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130" width="'+W+'" height="'+H+'">'
+    // ── Body trapezoid with breathing animateTransform ──
+    +'<path d="'+bp+'" fill="'+s.fill+'" stroke="'+s.stroke+'" stroke-width="3" stroke-linejoin="round">'
+    +breathe
+    +'</path>'
+    // ── Head: large circle — NO transform, sits on top ──
+    +'<circle cx="50" cy="46" r="38" fill="'+h.fill+'" stroke="'+h.stroke+'" stroke-width="3.5"/>'
+    // ── Eyes: ellipses for blink + shift ──
+    +'<ellipse cx="38" cy="50" rx="3.5" ry="3.5" fill="#111">'+blink1+shift1+'</ellipse>'
+    +'<ellipse cx="62" cy="50" rx="3.5" ry="3.5" fill="#111">'+blink2+shift2+'</ellipse>'
     +'</svg>';
 }
+
 function avatarSVGForMap(headIdx, shirtIdx){
-  // Return animated SVG string — SMIL works in <img> src blob URLs
   return avatarSVG(headIdx, shirtIdx, 54, true);
 }
 
@@ -143,10 +254,7 @@ function avatarBlobURL(headIdx, shirtIdx){
   return URL.createObjectURL(blob);
 }
 
-function renderAvatarPreview(){
-  const el=document.getElementById('avatar-preview');
-  if(el)el.innerHTML=avatarSVG(myHeadIdx,myShirtIdx,160,true);
-}
+// renderAvatarPreview defined above (two-layer version)
 
 // ═══════════════════════════════════════
 // STATE
@@ -388,34 +496,36 @@ async function initMap(){
   placeMyMarker();saveLocation(c.lat,c.lng);tuneIntoRoom();
 }
 function drawAvatarCanvas(hi,si,W){
-  var H=Math.round(W*170/80);
+  var H=Math.round(W*130/100);
   if(W<8)return null;
   var hc=HEAD_COLORS[hi]||HEAD_COLORS[0];
   var sc=SHIRT_COLORS[si]||SHIRT_COLORS[0];
   var canvas=document.createElement('canvas');
   canvas.width=W;canvas.height=H;
   var ctx=canvas.getContext('2d');
-  var sx=W/80,sy=H/170;
-  ctx.save();ctx.scale(sx,sy);ctx.lineCap='round';
-  function line(x1,y1,x2,y2){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
-  ctx.strokeStyle='#222';ctx.lineWidth=4.5;
-  line(20,65,6,92);line(60,65,74,92);
-  line(30,102,26,148);line(26,148,16,148);
-  line(50,102,54,148);line(54,148,64,148);
-  ctx.fillStyle=sc.fill;ctx.strokeStyle=sc.stroke;ctx.lineWidth=2.5;
+  // scale 100x130 → W x H
+  ctx.save();ctx.scale(W/100,H/130);
+
+  // ── body trapezoid ──
   ctx.beginPath();
-  var r=5,x=20,y=54,w=40,h=48;
-  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
-  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
-  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
-  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
-  ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.fillStyle=hc.fill;ctx.strokeStyle=hc.stroke;ctx.lineWidth=2.5;
-  ctx.beginPath();ctx.arc(40,30,22,0,Math.PI*2);ctx.fill();ctx.stroke();
-  ctx.strokeStyle='#FFD600';ctx.lineWidth=3;ctx.beginPath();ctx.arc(40,30,25,0,Math.PI*2);ctx.stroke();
+  ctx.moveTo(33,75);ctx.lineTo(67,75);ctx.lineTo(83,115);
+  ctx.arcTo(83,124,74,124,9);
+  ctx.lineTo(26,124);
+  ctx.arcTo(17,124,17,115,9);
+  ctx.closePath();
+  ctx.fillStyle=sc.fill;ctx.strokeStyle=sc.stroke;ctx.lineWidth=3;
+  ctx.fill();ctx.stroke();
+
+  // ── head ──
+  ctx.beginPath();ctx.arc(50,46,38,0,Math.PI*2);
+  ctx.fillStyle=hc.fill;ctx.strokeStyle=hc.stroke;ctx.lineWidth=3.5;
+  ctx.fill();ctx.stroke();
+
+  // ── eyes ──
   ctx.fillStyle='#111';
-  ctx.beginPath();ctx.arc(33,34,3,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(47,34,3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(38,50,3.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(62,50,3.5,0,Math.PI*2);ctx.fill();
+
   ctx.restore();
   return canvas.toDataURL();
 }
@@ -424,7 +534,7 @@ var _myMarkerBlobURL=null, _myMarkerBlobKey='';
 function makeMyMarkerIcon(){
   var hi=myAvatarHead||0,si=myAvatarShirt||0;
   var W=avatarSizeForZoom();
-  var H=Math.round(W*170/80);
+  var H=Math.round(W*130/100);
   if(W<8)return L.divIcon({html:'',className:'',iconSize:[1,1],iconAnchor:[0,0]});
   var key=hi+'_'+si;
   if(!_myMarkerBlobURL||_myMarkerBlobKey!==key){
@@ -437,7 +547,8 @@ function makeMyMarkerIcon(){
   ringCanvas.width=W;ringCanvas.height=H;
   var ctx=ringCanvas.getContext('2d');
   ctx.strokeStyle='#FFD600';ctx.lineWidth=Math.max(2,W*0.06);
-  ctx.beginPath();ctx.arc(W/2,W*0.375,W*0.32,0,Math.PI*2);ctx.stroke();
+  var headCY=H*(46/130);var headR=W*0.40;
+  ctx.beginPath();ctx.arc(W/2,headCY,headR,0,Math.PI*2);ctx.stroke();
   var ringDataURL=ringCanvas.toDataURL();
   var html='<div style="position:relative;width:'+W+'px;height:'+H+'px">'
     +'<img src="'+_myMarkerBlobURL+'" width="'+W+'" height="'+H+'" style="display:block;position:absolute;top:0;left:0">'
@@ -464,9 +575,16 @@ function updateMyCircle(){
 function ensureHeatCanvas(){
   if(heatCanvas)return;
   heatCanvas=document.createElement('canvas');
-  // no blend mode — straight normal composite so colors show vivid on light map
-  heatCanvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;';
-  document.getElementById('map').appendChild(heatCanvas);
+  heatCanvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;';
+  // Insert into Leaflet's overlayPane (z-index 400) so it sits
+  // ABOVE tiles (200) but BELOW markers (600) — avatars show on top
+  var pane=map.getPanes().overlayPane;
+  if(pane){
+    pane.style.position='relative'; // ensure stacking context
+    pane.appendChild(heatCanvas);
+  } else {
+    document.getElementById('map').appendChild(heatCanvas);
+  }
 }
 
 function drawHeatmap(){
@@ -538,7 +656,7 @@ function makeAvatarMarkerIcon(u){
   var hi=parseInt(u.avatarHead)||0;
   var si=parseInt(u.avatarShirt)||0;
   var W=avatarSizeForZoom();
-  var H=Math.round(W*170/80);
+  var H=Math.round(W*130/100);
   if(W<8)return L.divIcon({html:'',className:'',iconSize:[1,1],iconAnchor:[0,0]});
   var uid=u.uid||(''+hi+si);
   var key=hi+'_'+si;
