@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Walkie-Chatie</title>
+<link rel="manifest" href="#" id="manifest-link">
+  <link rel="icon" type="image/png" href="fav.png">
+
+  <!-- Open Graph (Link Preview) -->
+  <meta property="og:title" content="Walkie-Chatie">
+  <meta property="og:description" content="Walkie Chatie lets you chat with people within 60 meters of you and join Frequency Bars to talk with anyone nearby on the same channel, just a text-based walkie-talkie.">
+  <meta property="og:image" content="banner.jpeg">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:ital,opsz,wght@0,8..144,100..900;1,8..144,100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+</head>
+<body>
+
+<div id="loading"><div class="ld-ring"></div><div class="ld-text">Scanning frequencies…</div></div>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="ob-glow"></div>
+  <h1 class="ob-title">Walkie-Chatie</h1>
+  <div class="ob-sub">Open Frequency Network</div>
+
+  <div class="ob-auth-row" id="auth-gate">
+    <a class="ob-auth-btn ob-auth-primary" href="signup.html">
+      <span class="material-icons-round">person_add</span>Create Account
+    </a>
+    <a class="ob-auth-btn ob-auth-secondary" href="signin.html">
+      <span class="material-icons-round">login</span>Sign In
+    </a>
+    <div class="ob-divider">or</div>
+    <button class="ob-auth-btn ob-auth-anon" onclick="enterAnonymous()">
+      <span class="material-icons-round">visibility_off</span>Enter as Anonymous
+    </button>
+  </div>
+
+  <div id="freq-picker" style="display:none;width:100%;max-width:460px;margin:0 auto">
+    <!-- Avatar Picker -->
+    <div id="avatar-section">
+      <div id="username-edit-wrap" title="This is your permanent callsign">
+        <input type="text" id="username-input" maxlength="20" autocomplete="off" spellcheck="false" placeholder="username">
+      </div>
+
+      <!-- Avatar stage: head arrows align with the head, shirt arrows align with the body -->
+      <div id="avatar-stage">
+        <!-- Left column: head arrow (top) + shirt arrow (bottom) -->
+        <div class="av-stage-col">
+          <button class="av-side-btn av-head-pos" onclick="cycleHead(-1)" title="Skin">
+            <span class="material-icons-round">chevron_left</span>
+          </button>
+          <button class="av-side-btn av-shirt-pos" onclick="cycleShirt(-1)" title="Shirt">
+            <span class="material-icons-round">chevron_left</span>
+          </button>
+        </div>
+
+        <div id="avatar-preview"><!-- filled by JS --></div>
+
+        <!-- Right column: head arrow (top) + shirt arrow (bottom) -->
+        <div class="av-stage-col">
+          <button class="av-side-btn av-head-pos" onclick="cycleHead(1)" title="Skin">
+            <span class="material-icons-round">chevron_right</span>
+          </button>
+          <button class="av-side-btn av-shirt-pos" onclick="cycleShirt(1)" title="Shirt">
+            <span class="material-icons-round">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="ob-freq-section">
+      <label>Choose Frequency</label>
+      <div class="ob-rainbow-wrap" id="ob-rainbow-wrap">
+        <div class="ob-rainbow-bar" id="ob-rainbow-bar"></div>
+        <div class="ob-roller" id="ob-roller">
+          <div class="ob-roller-line"></div><div class="ob-roller-line"></div><div class="ob-roller-line"></div><div class="ob-roller-line"></div>
+        </div>
+      </div>
+      <div class="ob-band-labels" id="ob-band-labels"></div>
+      <div class="ob-selected-band" id="ob-selected-band">FM</div>
+      <div class="ob-selected-sub" id="ob-selected-sub">100 MHz · Frequency Modulated</div>
+    </div>
+    <button class="ob-btn" id="join-btn"><span class="material-icons-round">cell_tower</span>Tune In</button>
+    <div class="ob-disclaimer">
+      <strong style="color:var(--text2)">CAUTION — OPEN CHANNEL</strong><br><br>
+      You can only speak with people nearby on the same frequency.<br>
+      Never share personal information or contact details.<br><br>
+      By tuning in you agree to communicate responsibly.<br>
+      <span style="color:var(--text3)">Must be 16 or older.</span>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div id="panel-map">
+    <div id="map"></div>
+
+    <div id="topbar">
+      <div class="tb-avatar" id="tb-avatar">?</div>
+      <span id="tb-name">–</span>
+      <div class="tb-band-pill" id="tb-band-pill">FM</div>
+      <button class="tb-btn" id="ghost-btn" title="Ghost mode" onclick="toggleGhostMode()" style="display:none">
+        <span class="material-icons-round">person_off</span>
+      </button>
+    </div>
+
+    <div id="nearby-toast"></div>
+
+    <!-- Add Pin button (registered only) -->
+    <button id="add-pin-btn" title="Drop an event pin" onclick="openPinModal()" style="display:none">
+      <span class="material-icons-round">add_location_alt</span>
+    </button>
+
+    <div id="freq-dock">
+      <div class="freq-label-row">
+        <span class="material-icons-round">radio</span>
+        <span id="freq-title">Frequency</span>
+        <span id="freq-current-name">FM</span>
+        <span id="freq-current-hz">100 MHz</span>
+      </div>
+      <div class="rainbow-wrap" id="rainbow-wrap">
+        <div class="rainbow-bar" id="rainbow-bar"></div>
+        <div id="roller"><div class="roller-line"></div><div class="roller-line"></div><div class="roller-line"></div><div class="roller-line"></div></div>
+      </div>
+      <div class="band-labels" id="band-labels"></div>
+    </div>
+
+    <!-- Chat pill — shown on mobile above freq dock -->
+    <div id="chat-tab" onclick="openChat()">
+      <span class="material-icons-round">chat</span>
+      <span id="chat-tab-lbl">Chat</span>
+      <div id="chat-unread-badge">0</div>
+    </div>
+  </div>
+
+  <div id="panel-chat">
+    <div id="chat-header">
+      <button id="chat-back" onclick="closeChat()"><span class="material-icons-round">arrow_back</span></button>
+      <div class="chat-band-dot" id="chat-band-dot"></div>
+      <div style="flex:1;min-width:0">
+        <div id="chat-room-title">FM · 100 MHz</div>
+        <div id="chat-room-sub">Nearby only</div>
+      </div>
+      <div id="chat-online-count">
+        <div class="ch-pulse"></div>
+        <span id="ch-online-num">0</span>
+        <span id="ch-online-lbl">&nbsp;nearby</span>
+      </div>
+    </div>
+    <div id="messages-area"></div>
+    <div id="typing-row" style="display:none">
+      <div style="display:flex;align-items:center;padding:0 14px 5px">
+        <div class="typing-dots"><div class="td"></div><div class="td"></div><div class="td"></div></div>
+        <span id="typing-label"></span>
+      </div>
+    </div>
+    <div id="chat-input-row">
+      <button id="snap-btn" title="Take photo snap" onclick="openCamera()">
+        <span class="material-icons-round">photo_camera</span>
+      </button>
+      <textarea id="msg-input" placeholder="Transmit…" rows="1" oninput="autoResize(this);handleTyping()"></textarea>
+      <button id="send-btn" onclick="sendMessage()"><span class="material-icons-round">send</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- CAMERA MODAL -->
+<div id="camera-modal">
+  <video id="camera-video" autoplay playsinline muted></video>
+  <canvas id="camera-canvas"></canvas>
+  <div class="cam-row">
+    <button class="cam-btn" id="cam-cancel" onclick="closeCamera()">
+      <span class="material-icons-round">close</span>Cancel
+    </button>
+    <button class="cam-btn" id="cam-shoot" onclick="shootPhoto()">
+      <span class="material-icons-round">camera</span>
+    </button>
+  </div>
+  <div class="cam-preview-wrap" id="cam-preview-wrap">
+    <img id="cam-preview-img" alt="preview">
+    <div class="cam-confirm-row">
+      <button class="cam-btn" id="cam-retake" onclick="retakePhoto()"><span class="material-icons-round">refresh</span>Retake</button>
+      <button class="cam-btn" id="cam-send" onclick="sendSnap()"><span class="material-icons-round">send</span>Send Snap</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN PLACE OVERLAY -->
+<div id="pin-place-overlay">
+  <div id="pin-place-banner">
+    <span class="material-icons-round">touch_app</span>
+    <div>
+      <div id="pin-place-banner-text">Tap the map to place your pin</div>
+      <div id="pin-place-banner-sub">Drag to reposition · Tap again to confirm</div>
+    </div>
+    <button id="pin-place-cancel" onclick="cancelPinPlacement()">
+      <span class="material-icons-round">close</span>
+    </button>
+  </div>
+  <button id="pin-confirm-btn" onclick="confirmPinLocation()">
+    <span class="material-icons-round">check_circle</span>
+    Confirm Location
+  </button>
+</div>
+
+<!-- Floating animated pin cursor -->
+<div id="map-pin-cursor">
+  <svg xmlns="http://www.w3.org/2000/svg" width="52" height="66" viewBox="0 0 52 66">
+    <defs>
+      <radialGradient id="pcg" cx="35%" cy="25%" r="68%">
+        <stop offset="0%" stop-color="#ff7070"/>
+        <stop offset="100%" stop-color="#c0000a"/>
+      </radialGradient>
+      <filter id="pcf" x="-40%" y="-20%" width="200%" height="180%">
+        <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="rgba(0,0,0,.5)"/>
+      </filter>
+    </defs>
+    <path d="M26 2C15.5 2 7 10.5 7 21c0 15 19 42 19 42s19-27 19-42C45 10.5 36.5 2 26 2z"
+          fill="url(#pcg)" filter="url(#pcf)"/>
+    <circle cx="26" cy="21" r="10" fill="rgba(0,0,0,.2)"/>
+    <circle cx="26" cy="21" r="8.5" fill="rgba(255,255,255,.92)"/>
+    <ellipse cx="21" cy="15.5" rx="3.5" ry="2.2" fill="rgba(255,255,255,.5)" transform="rotate(-25,21,15.5)"/>
+    <text id="pc-emoji" x="26" y="25" text-anchor="middle" font-size="11" dominant-baseline="middle">📍</text>
+  </svg>
+</div>
+<div id="pin-drop-shadow"></div>
+
+<!-- PIN MODAL -->
+<div id="pin-modal">
+  <div class="pin-sheet">
+    <div class="pin-sheet-handle"></div>
+
+    <!-- Title + close -->
+    <div class="pin-row" style="display:flex;align-items:center;justify-content:space-between;padding-bottom:0">
+      <div class="pin-sheet-title" id="pin-sheet-title">New Event</div>
+      <button onclick="closePinModal()"
+        style="background:rgba(255,255,255,.07);border:none;border-radius:50%;width:32px;height:32px;
+               color:#888;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="material-icons-round" style="font-size:18px">close</span>
+      </button>
+    </div>
+
+    <!-- Event Name -->
+    <div class="pin-row">
+      <input class="pin-input" type="text" id="pin-name"
+        placeholder="Event Name" maxlength="60"
+        style="font-size:17px;font-weight:700;height:54px;">
+    </div>
+
+    <!-- Event Desc -->
+    <div class="pin-row">
+      <textarea class="pin-input" id="pin-desc"
+        placeholder="Event Desc" maxlength="300"></textarea>
+    </div>
+
+    <!-- Event Type -->
+    <div class="pin-row">
+      <div class="pin-field-label">Select Event Type</div>
+      <div class="pin-type-row" id="pin-type-row">
+        <button class="pt-btn selected" data-type="gathering" onclick="selectPinType(this)" title="Gathering">
+          <span class="material-icons-round">groups</span>
+        </button>
+        <button class="pt-btn" data-type="party" onclick="selectPinType(this)" title="Party">
+          <span class="material-icons-round">celebration</span>
+        </button>
+        <button class="pt-btn" data-type="meetup" onclick="selectPinType(this)" title="Meetup">
+          <span class="material-icons-round">handshake</span>
+        </button>
+        <button class="pt-btn" data-type="market" onclick="selectPinType(this)" title="Market">
+          <span class="material-icons-round">storefront</span>
+        </button>
+        <button class="pt-btn" data-type="performance" onclick="selectPinType(this)" title="Performance">
+          <span class="material-icons-round">music_note</span>
+        </button>
+        <button class="pt-btn" data-type="sports" onclick="selectPinType(this)" title="Sports">
+          <span class="material-icons-round">sports_soccer</span>
+        </button>
+        <button class="pt-btn" data-type="rally" onclick="selectPinType(this)" title="Rally">
+          <span class="material-icons-round">campaign</span>
+        </button>
+        <button class="pt-btn" data-type="food" onclick="selectPinType(this)" title="Food">
+          <span class="material-icons-round">restaurant</span>
+        </button>
+        <button class="pt-btn" data-type="other" onclick="selectPinType(this)" title="Other">
+          <span class="material-icons-round">star</span>
+        </button>
+      </div>
+      <div id="pin-type-label">Gathering</div>
+    </div>
+
+    <!-- Start / End Time -->
+    <div class="pin-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <div class="pin-field-label">Start Time</div>
+        <input class="pin-input" type="datetime-local" id="pin-datetime">
+      </div>
+      <div>
+        <div class="pin-field-label">End Time</div>
+        <input class="pin-input" type="datetime-local" id="pin-endtime">
+      </div>
+    </div>
+
+    <!-- Frequencies -->
+    <div class="pin-row">
+      <div class="pin-field-label">Frequencies</div>
+      <div class="pin-band-row" id="pin-band-row"></div>
+    </div>
+
+    <!-- Location note -->
+    <div class="pin-row">
+      <input class="pin-input" type="text" id="pin-location-note"
+        placeholder="Location note — e.g. Near fountain, Gate B…" maxlength="80">
+    </div>
+
+    <!-- CONFIRM -->
+    <button class="pin-submit-btn" id="pin-submit-btn" onclick="submitPin()">
+      <span class="material-icons-round">check_circle</span>
+      CONFIRM
+    </button>
+  </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
