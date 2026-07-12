@@ -31,7 +31,7 @@ function animateHeadChange(dir){
   headEl.style.opacity='0';
 
   setTimeout(function(){
-    headEl.innerHTML=headOnlySVG(myHeadIdx,true);
+    headEl.innerHTML=headOnlySVG(myHeadIdx,true,false,myAvatarHat,myAvatarEmotion);
     headEl.style.transition='none';
     headEl.style.transform='translateX('+inX+')';
     headEl.style.opacity='0.4';
@@ -41,7 +41,7 @@ function animateHeadChange(dir){
     headEl.style.opacity='1';
 
     setTimeout(function(){
-      headEl.innerHTML=headOnlySVG(myHeadIdx,false);
+      headEl.innerHTML=headOnlySVG(myHeadIdx,false,false,myAvatarHat,myAvatarEmotion);
       var eyes=headEl.querySelectorAll('ellipse');
       eyes.forEach(function(eye){
         eye.style.transformBox='fill-box';
@@ -53,7 +53,7 @@ function animateHeadChange(dir){
         eye.style.transform='scaleY(1)';
       });
       setTimeout(function(){
-        headEl.innerHTML=headOnlySVG(myHeadIdx,false,true);
+        headEl.innerHTML=headOnlySVG(myHeadIdx,false,true,myAvatarHat,myAvatarEmotion);
         _headChanging=false;
       },260);
     },200);
@@ -90,26 +90,105 @@ function animateShirtChange(dir){
 }
 
 // ── Split SVG builders ──
-function headOnlySVG(headIdx, eyesClosed, animated){
-  var h=HEAD_COLORS[headIdx]||HEAD_COLORS[0];
-  var blink1='', blink2='', shift1='', shift2='';
+// ── Emotion eyes (members only feature — falls back to normal for everyone else) ──
+// Small helpers draw shapes centred on LOCAL (0,0) so they can be wrapped in a
+// translate(cx,cy) group and animated (scale/rotate) without drifting off-centre.
+function pulseWrap(cx,cy,shapeSvg,animType,values,dur,animated){
+  var anim=animated?'<animateTransform attributeName="transform" type="'+animType+'" values="'+values+'" dur="'+dur+'" repeatCount="indefinite"/>':'';
+  return '<g transform="translate('+cx+','+cy+')"><g>'+anim+shapeSvg+'</g></g>';
+}
+function squareLocal(size){
+  return '<rect x="'+(-size/2)+'" y="'+(-size/2)+'" width="'+size+'" height="'+size+'" rx="1.5" fill="#111"/>';
+}
+function xLocal(d){
+  return '<line x1="'+(-d)+'" y1="'+(-d)+'" x2="'+d+'" y2="'+d+'" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>'
+    +'<line x1="'+d+'" y1="'+(-d)+'" x2="'+(-d)+'" y2="'+d+'" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>';
+}
+function eyesSVG(emotion, animated, bigEyes){
+  var sc=bigEyes?1.6:1;
+  if(emotion==='angry'){
+    var wob1=animated?'<animateTransform attributeName="transform" type="rotate" additive="sum" values="0 38 50;6 38 50;-6 38 50;0 38 50" dur="2.2s" repeatCount="indefinite"/>':'';
+    var wob2=animated?'<animateTransform attributeName="transform" type="rotate" additive="sum" values="0 62 50;-6 62 50;6 62 50;0 62 50" dur="2.2s" repeatCount="indefinite"/>':'';
+    return '<g transform="rotate(10,38,50)">'+wob1+'<path d="M32,50 A6,6 0 0 1 44,50 Z" fill="#111"/></g>'
+      +'<line x1="30" y1="52" x2="34" y2="55" stroke="#111" stroke-width="2" stroke-linecap="round"/>'
+      +'<line x1="31" y1="42" x2="45" y2="46" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>'
+      +'<g transform="rotate(-10,62,50)">'+wob2+'<path d="M56,50 A6,6 0 0 1 68,50 Z" fill="#111"/></g>'
+      +'<line x1="70" y1="52" x2="66" y2="55" stroke="#111" stroke-width="2" stroke-linecap="round"/>'
+      +'<line x1="69" y1="42" x2="55" y2="46" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>';
+  }
+  if(emotion==='shocked'){
+    return pulseWrap(38,50,squareLocal(10*sc),'translate','0 0;-4 0;0 0;4 0;0 0','3.4s',animated)
+      +pulseWrap(62,50,squareLocal(10*sc),'translate','0 0;-4 0;0 0;4 0;0 0','3.4s',animated);
+  }
+  if(emotion==='dead'){
+    var d=5*sc;
+    return '<g transform="translate(38,50)">'+xLocal(d)+'</g>'
+      +'<g transform="translate(62,50)">'+xLocal(d)+'</g>';
+  }
+  if(emotion==='wink'){
+    var blink=animated?'<animate attributeName="ry" dur="4.5s" repeatCount="indefinite" values="'+(3.5*sc)+';'+(3.5*sc)+';0.2;'+(3.5*sc)+';'+(3.5*sc)+'" keyTimes="0;0.87;0.90;0.93;1"/>':'';
+    return '<ellipse cx="38" cy="50" rx="'+(3.5*sc)+'" ry="'+(3.5*sc)+'" fill="#111">'+blink+'</ellipse>'
+      +'<line x1="58" y1="50" x2="66" y2="50" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>';
+  }
+  if(emotion==='sleepy'){
+    var arc='<path d="M'+(-6*sc)+',0 Q0,'+(4.5*sc)+' '+(6*sc)+',0" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"/>';
+    var zAnim=animated?'<animateTransform attributeName="transform" type="translate" values="78 20;78 12;78 20" dur="2.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.2;1;0.2" dur="2.6s" repeatCount="indefinite"/>':'';
+    return '<g transform="translate(38,50)">'+arc+'</g>'
+      +'<g transform="translate(62,50)">'+arc+'</g>'
+      +'<g transform="translate(78,20)">'+zAnim+'<text x="0" y="0" font-size="10" font-weight="700" fill="#8a8a8a">z</text></g>';
+  }
+  var blink1='',blink2='',shift1='',shift2='';
   if(animated){
-    blink1='<animate attributeName="ry" dur="4.5s" repeatCount="indefinite" values="3.5;3.5;0.2;3.5;3.5" keyTimes="0;0.87;0.90;0.93;1"/>';
-    blink2='<animate attributeName="ry" dur="4.5s" repeatCount="indefinite" begin="0.06s" values="3.5;3.5;0.2;3.5;3.5" keyTimes="0;0.87;0.90;0.93;1"/>';
+    blink1='<animate attributeName="ry" dur="4.5s" repeatCount="indefinite" values="'+(3.5*sc)+';'+(3.5*sc)+';0.2;'+(3.5*sc)+';'+(3.5*sc)+'" keyTimes="0;0.87;0.90;0.93;1"/>';
+    blink2='<animate attributeName="ry" dur="4.5s" repeatCount="indefinite" begin="0.06s" values="'+(3.5*sc)+';'+(3.5*sc)+';0.2;'+(3.5*sc)+';'+(3.5*sc)+'" keyTimes="0;0.87;0.90;0.93;1"/>';
     shift1='<animate attributeName="cx" dur="9s" repeatCount="indefinite" values="38;38;34;34;38;42;42;38" keyTimes="0;0.20;0.28;0.45;0.50;0.72;0.85;1" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>';
     shift2='<animate attributeName="cx" dur="9s" repeatCount="indefinite" values="62;62;58;58;62;66;66;62" keyTimes="0;0.20;0.28;0.45;0.50;0.72;0.85;1" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>';
   }
+  return '<ellipse cx="38" cy="50" rx="'+(3.5*sc)+'" ry="'+(3.5*sc)+'" fill="#111">'+blink1+shift1+'</ellipse>'
+    +'<ellipse cx="62" cy="50" rx="'+(3.5*sc)+'" ry="'+(3.5*sc)+'" fill="#111">'+blink2+shift2+'</ellipse>';
+}
+// ── Hats / accessories (members only feature) ──
+function hatSVG(hatId){
+  switch(hatId){
+    case 'party':
+      return '<path d="M50,-19 L64,14 L36,14 Z" fill="#ff3b8d" stroke="#c21a63" stroke-width="3" stroke-linejoin="round"/>'
+        +'<circle cx="50" cy="-20" r="4" fill="#ffd600" stroke="#c9a800" stroke-width="2"/>';
+    case 'flower':
+      return '<circle cx="76" cy="6" r="6.5" fill="#ff6fae" stroke="#c2447a" stroke-width="2"/>'
+        +'<circle cx="86" cy="12" r="6.5" fill="#ff6fae" stroke="#c2447a" stroke-width="2"/>'
+        +'<circle cx="82" cy="21" r="6.5" fill="#ff6fae" stroke="#c2447a" stroke-width="2"/>'
+        +'<circle cx="71" cy="15" r="6.5" fill="#ff6fae" stroke="#c2447a" stroke-width="2"/>'
+        +'<circle cx="79" cy="13" r="5" fill="#ffd600" stroke="#c9a800" stroke-width="2"/>';
+    case 'crown':
+      return '<path d="M20,20 L20,14 L32,-4 L50,8 L68,-4 L80,14 L80,20 Z" fill="#ffd600" stroke="#c9a800" stroke-width="3" stroke-linejoin="round"/>'
+        +'<circle cx="50" cy="5" r="3.2" fill="#ff3b3b"/>';
+    case 'eyepatch':
+      return '<line x1="8" y1="41" x2="92" y2="53" stroke="#1a1a1a" stroke-width="3"/>'
+        +'<ellipse cx="38" cy="50" rx="8" ry="9" fill="#161616" stroke="#000" stroke-width="3"/>';
+    case 'glasses':
+      return '<circle cx="38" cy="50" r="11" fill="none" stroke="#222" stroke-width="3"/>'
+        +'<circle cx="62" cy="50" r="11" fill="none" stroke="#222" stroke-width="3"/>'
+        +'<line x1="49" y1="50" x2="51" y2="50" stroke="#222" stroke-width="3"/>';
+    default: return '';
+  }
+}
+
+function headOnlySVG(headIdx, eyesClosed, animated, hat, emotion){
+  var h=HEAD_COLORS[headIdx]||HEAD_COLORS[0];
+  hat=hat||'none';emotion=emotion||'normal';
+  var bigEyes=(hat==='glasses');
   var eyesSvg;
   if(eyesClosed){
     eyesSvg='<line x1="34" y1="50" x2="42" y2="50" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>'
            +'<line x1="58" y1="50" x2="66" y2="50" stroke="#111" stroke-width="2.5" stroke-linecap="round"/>';
   } else {
-    eyesSvg='<ellipse cx="38" cy="50" rx="3.5" ry="3.5" fill="#111">'+blink1+shift1+'</ellipse>'
-           +'<ellipse cx="62" cy="50" rx="3.5" ry="3.5" fill="#111">'+blink2+shift2+'</ellipse>';
+    eyesSvg=eyesSVG(emotion,animated,bigEyes);
   }
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130" width="100%" height="100%" style="display:block">'
+  var hatSvg=hat!=='none'?hatSVG(hat):'';
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130" width="100%" height="100%" style="display:block;overflow:visible">'
     +'<circle cx="50" cy="46" r="38" fill="'+h.fill+'" stroke="'+h.stroke+'" stroke-width="3.5"/>'
     +eyesSvg
+    +hatSvg
     +'</svg>';
 }
 
@@ -129,7 +208,11 @@ function renderAvatarPreview(){
   if(!el)return;
   el.innerHTML=
     '<div id="av-body-layer" style="position:absolute;inset:0">'+bodyOnlySVG(myShirtIdx,true)+'</div>'
-    +'<div id="av-head-layer" style="position:absolute;inset:0">'+headOnlySVG(myHeadIdx,false,true)+'</div>';
+    +'<div id="av-head-layer" style="position:absolute;inset:0">'+headOnlySVG(myHeadIdx,false,true,myAvatarHat,myAvatarEmotion)+'</div>';
+  el.onclick=function(){
+    if(isRegisteredUser){openAvatarCustomizer();}
+    else{showToast('🔒 Sign in to unlock hats, glasses & emotions');}
+  };
 }
 
 // ═══════════════════════════════════════
@@ -178,11 +261,31 @@ const SHIRT_COLORS=[
   {id:'red',    fill:'#ff6161',stroke:'#d43030',label:'Red'},
 ];
 
+// ── Hats (accessories) — members only ──
+const HATS=[
+  {id:'none',      label:'None',        icon:'block'},
+  {id:'party',     label:'Party Hat',   icon:'celebration'},
+  {id:'flower',    label:'Flower',      icon:'local_florist'},
+  {id:'crown',     label:'Crown',       icon:'workspace_premium'},
+  {id:'eyepatch',  label:'Eye Patch',   icon:'visibility_off'},
+  {id:'glasses',   label:'Round Glasses',icon:'panorama_fish_eye'},
+];
+// ── Emotions — members only — change eye shape (all animated) ──
+const EMOTIONS=[
+  {id:'normal', label:'Normal', icon:'sentiment_satisfied'},
+  {id:'angry',  label:'Grumpy', icon:'sentiment_very_dissatisfied'},
+  {id:'shocked',label:'Shocked',icon:'sentiment_neutral'},
+  {id:'dead',   label:'Dead',   icon:'close'},
+  {id:'wink',   label:'Wink',   icon:'visibility'},
+  {id:'sleepy', label:'Sleepy', icon:'bedtime'},
+];
+
 let myHeadIdx=0, myShirtIdx=0;
 
-function avatarSVG(headIdx, shirtIdx, size, animated){
+function avatarSVG(headIdx, shirtIdx, size, animated, hat, emotion){
   if(size===undefined)size=120;
   if(animated===undefined)animated=false;
+  hat=hat||'none';emotion=emotion||'normal';
   var h=HEAD_COLORS[headIdx]||HEAD_COLORS[0];
   var s=SHIRT_COLORS[shirtIdx]||SHIRT_COLORS[0];
   // ViewBox 100x130: head r=38 centred at (50,46), body trapezoid below
@@ -197,54 +300,33 @@ function avatarSVG(headIdx, shirtIdx, size, animated){
       +' keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>'
     : '';
 
-  // ── Eye blink ──
-  var blink1 = animated
-    ? '<animate attributeName="ry" dur="4.5s" repeatCount="indefinite"'
-      +' values="3.5;3.5;0.2;3.5;3.5" keyTimes="0;0.87;0.90;0.93;1"/>'
-    : '';
-  var blink2 = animated
-    ? '<animate attributeName="ry" dur="4.5s" repeatCount="indefinite"'
-      +' begin="0.06s" values="3.5;3.5;0.2;3.5;3.5" keyTimes="0;0.87;0.90;0.93;1"/>'
-    : '';
-
-  // ── Eye shift left/right ──
-  var shift1 = animated
-    ? '<animate attributeName="cx" dur="9s" repeatCount="indefinite"'
-      +' values="38;38;34;34;38;42;42;38"'
-      +' keyTimes="0;0.20;0.28;0.45;0.50;0.72;0.85;1"'
-      +' calcMode="spline"'
-      +' keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>'
-    : '';
-  var shift2 = animated
-    ? '<animate attributeName="cx" dur="9s" repeatCount="indefinite"'
-      +' values="62;62;58;58;62;66;66;62"'
-      +' keyTimes="0;0.20;0.28;0.45;0.50;0.72;0.85;1"'
-      +' calcMode="spline"'
-      +' keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>'
-    : '';
+  var bigEyes=(hat==='glasses');
+  var eyesSvg=eyesSVG(emotion,animated,bigEyes);
+  var hatSvg=hat!=='none'?hatSVG(hat):'';
 
   // Body trapezoid path: narrow top, wider bottom, rounded corners
   var bp = 'M33,75 L67,75 L83,115 Q83,124 74,124 L26,124 Q17,124 17,115 Z';
 
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130" width="'+W+'" height="'+H+'">'
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130" width="'+W+'" height="'+H+'" style="overflow:visible">'
     // ── Body trapezoid with breathing animateTransform ──
     +'<path d="'+bp+'" fill="'+s.fill+'" stroke="'+s.stroke+'" stroke-width="3" stroke-linejoin="round">'
     +breathe
     +'</path>'
     // ── Head: large circle — NO transform, sits on top ──
     +'<circle cx="50" cy="46" r="38" fill="'+h.fill+'" stroke="'+h.stroke+'" stroke-width="3.5"/>'
-    // ── Eyes: ellipses for blink + shift ──
-    +'<ellipse cx="38" cy="50" rx="3.5" ry="3.5" fill="#111">'+blink1+shift1+'</ellipse>'
-    +'<ellipse cx="62" cy="50" rx="3.5" ry="3.5" fill="#111">'+blink2+shift2+'</ellipse>'
+    // ── Eyes: shape depends on emotion ──
+    +eyesSvg
+    // ── Hat / accessory (members only) ──
+    +hatSvg
     +'</svg>';
 }
 
-function avatarSVGForMap(headIdx, shirtIdx){
-  return avatarSVG(headIdx, shirtIdx, 54, true);
+function avatarSVGForMap(headIdx, shirtIdx, hat, emotion){
+  return avatarSVG(headIdx, shirtIdx, 54, true, hat, emotion);
 }
 
-function avatarBlobURL(headIdx, shirtIdx){
-  var svgStr=avatarSVGForMap(headIdx, shirtIdx);
+function avatarBlobURL(headIdx, shirtIdx, hat, emotion){
+  var svgStr=avatarSVGForMap(headIdx, shirtIdx, hat, emotion);
   var blob=new Blob([svgStr],{type:'image/svg+xml'});
   return URL.createObjectURL(blob);
 }
@@ -256,6 +338,7 @@ function avatarBlobURL(headIdx, shirtIdx){
 // ═══════════════════════════════════════
 let db,auth,map,myUID,myUsername,myPfp='',myLocation=null;
 let myAvatarHead=0,myAvatarShirt=0;
+let myAvatarHat='none',myAvatarEmotion='normal';
 let isAnonymous=true,isGhostMode=false,isRegisteredUser=false;
 let selectedBand=4,myMarker=null,myCircle=null;
 let currentRoomId=null,activeRoomListeners={};
@@ -319,6 +402,9 @@ function initOnboarding(){
     myAvatarHead=parseInt(sessionStorage.getItem('wc_head')||'0');
     myAvatarShirt=parseInt(sessionStorage.getItem('wc_shirt')||'0');
     myHeadIdx=myAvatarHead;myShirtIdx=myAvatarShirt;
+    // Hats & emotions are a members-only perk — anonymous sessions never carry one
+    myAvatarHat=isRegisteredUser?(sessionStorage.getItem('wc_hat')||'none'):'none';
+    myAvatarEmotion=isRegisteredUser?(sessionStorage.getItem('wc_emotion')||'normal'):'normal';
     document.getElementById('auth-gate').style.display='none';
     document.getElementById('freq-picker').style.display='block';
     document.getElementById('username-input').value=myUsername;
@@ -334,7 +420,9 @@ function enterAnonymous(){
   myUID='u_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   myUsername=adj[Math.floor(Math.random()*adj.length)]+noun[Math.floor(Math.random()*noun.length)]+(Math.floor(Math.random()*900000)+100000);
   myPfp='';isAnonymous=true;isRegisteredUser=false;
+  myAvatarHat='none';myAvatarEmotion='normal';
   sessionStorage.setItem('wc_uid',myUID);sessionStorage.setItem('wc_username',myUsername);sessionStorage.setItem('wc_pfp','');sessionStorage.setItem('wc_anon','true');
+  sessionStorage.removeItem('wc_hat');sessionStorage.removeItem('wc_emotion');
   document.getElementById('auth-gate').style.display='none';
   document.getElementById('freq-picker').style.display='block';
   document.getElementById('username-input').value=myUsername;
@@ -374,11 +462,25 @@ async function joinApp(){
   sessionStorage.setItem('wc_username',myUsername);
   const btn=document.getElementById('join-btn');
   btn.disabled=true;btn.innerHTML='<span class="material-icons-round" style="animation:spin .8s linear infinite">refresh</span> Locating…';
-  try{await getLocation()}
-  catch(e){alert('Location required. Please allow it and retry.');btn.disabled=false;btn.innerHTML='<span class="material-icons-round">cell_tower</span>Tune In';return}
   document.getElementById('onboarding').classList.add('hidden');
+  showTuneLoading();
+  try{await getLocation()}
+  catch(e){
+    hideTuneLoading();
+    document.getElementById('onboarding').classList.remove('hidden');
+    alert('Location required. Please allow it and retry.');btn.disabled=false;btn.innerHTML='<span class="material-icons-round">cell_tower</span>Tune In';return
+  }
   await initMap();showUI();initWatch();listenAllUsers();listenPins();
   setTimeout(drawHeatmap,300); // ensure first paint even if 'value' fired early
+  hideTuneLoading();
+}
+function showTuneLoading(){
+  const headEl=document.getElementById('tune-loading-head');
+  if(headEl)headEl.innerHTML=headOnlySVG(myAvatarHead,false,true,myAvatarHat,myAvatarEmotion);
+  document.getElementById('tune-loading').classList.add('show');
+}
+function hideTuneLoading(){
+  document.getElementById('tune-loading').classList.remove('show');
 }
 
 // ═══════════════════════════════════════
@@ -390,14 +492,7 @@ function showUI(){
   document.getElementById('chat-tab').style.display='flex';
   document.getElementById('loading').classList.add('hidden');
   document.getElementById('tb-name').textContent=myUsername;
-  const av=document.getElementById('tb-avatar');
-  if(myPfp){
-    av.innerHTML=`<img src="${myPfp}" alt="">`;
-  } else {
-    var tbW=32, tbDataURL=drawAvatarCanvas(myAvatarHead,myAvatarShirt,tbW);
-    av.innerHTML = tbDataURL ? `<img src="${tbDataURL}" width="${tbW}" style="display:block">` : '';
-    av.style.background='transparent';av.style.border='none';
-  }
+  refreshTbAvatar();
   if(isRegisteredUser){
     document.getElementById('ghost-btn').style.display='flex';
     document.getElementById('add-pin-btn').style.display='flex';
@@ -415,6 +510,81 @@ function showUI(){
 
 function updateSnapBtnVis(){
   document.getElementById('snap-btn').style.display=(isRegisteredUser&&!isGhostMode)?'flex':'none';
+}
+
+// ═══════════════════════════════════════
+// AVATAR CUSTOMIZER — hats & emotions (members only)
+// ═══════════════════════════════════════
+function refreshTbAvatar(){
+  const av=document.getElementById('tb-avatar');
+  if(!av)return;
+  if(myPfp){
+    av.innerHTML='<img src="'+myPfp+'" alt="">';
+  } else {
+    av.innerHTML=avatarSVG(myAvatarHead,myAvatarShirt,32,false,myAvatarHat,myAvatarEmotion);
+    av.style.background='transparent';av.style.border='none';
+  }
+  av.classList.add('tb-avatar-clickable');
+  av.classList.toggle('tb-avatar-locked',!isRegisteredUser);
+  av.title=isRegisteredUser?'Customize avatar':'Sign in to unlock hats & emotions';
+  av.onclick=function(){
+    if(isRegisteredUser){openAvatarCustomizer();}
+    else{showToast('🔒 Sign in to unlock hats, glasses & emotions');}
+  };
+}
+
+let avcTab='hats';
+function openAvatarCustomizer(){
+  if(!isRegisteredUser){showToast('🔒 Sign in to unlock hats, glasses & emotions');return;}
+  document.getElementById('avc-modal').classList.add('open');
+  avcRenderPreview();
+  avcSwitchTab('hats');
+}
+function closeAvatarCustomizer(){
+  document.getElementById('avc-modal').classList.remove('open');
+}
+function avcRenderPreview(){
+  const p=document.getElementById('avc-preview');
+  if(p)p.innerHTML=avatarSVG(myAvatarHead,myAvatarShirt,150,true,myAvatarHat,myAvatarEmotion);
+}
+function avcSwitchTab(tab){
+  avcTab=tab;
+  document.querySelectorAll('.avc-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===tab)});
+  const grid=document.getElementById('avc-grid');
+  grid.innerHTML='';
+  const items=tab==='hats'?HATS:EMOTIONS;
+  const current=tab==='hats'?myAvatarHat:myAvatarEmotion;
+  items.forEach(function(it){
+    const card=document.createElement('button');
+    card.className='avc-card'+(it.id===current?' selected':'');
+    card.onclick=function(){tab==='hats'?selectHat(it.id):selectEmotion(it.id)};
+    let thumb;
+    if(tab==='hats'){
+      thumb=avatarSVG(myAvatarHead,myAvatarShirt,54,false,it.id,'normal');
+    } else {
+      thumb=avatarSVG(myAvatarHead,myAvatarShirt,54,true,'none',it.id);
+    }
+    card.innerHTML='<div class="avc-card-thumb">'+thumb+'</div><div class="avc-card-label">'+it.label+'</div>'
+      +(it.id===current?'<div class="avc-card-check"><span class="material-icons-round">check_circle</span></div>':'');
+    grid.appendChild(card);
+  });
+}
+function selectHat(hatId){
+  myAvatarHat=hatId;
+  sessionStorage.setItem('wc_hat',myAvatarHat);
+  avcRenderPreview();avcSwitchTab('hats');
+  persistAvatarCustomization();
+}
+function selectEmotion(emoId){
+  myAvatarEmotion=emoId;
+  sessionStorage.setItem('wc_emotion',myAvatarEmotion);
+  avcRenderPreview();avcSwitchTab('emotions');
+  persistAvatarCustomization();
+}
+function persistAvatarCustomization(){
+  refreshTbAvatar();
+  if(myMarker)myMarker.setIcon(makeMyMarkerIcon());
+  if(myLocation&&db&&myUID)saveLocation(myLocation.lat,myLocation.lng);
 }
 
 function toggleGhostMode(){
@@ -480,7 +650,7 @@ function initWatch(){
 function saveLocation(lat,lng){
   if(!myUID)return;
   const b=BANDS[selectedBand];
-  db.ref('users/'+myUID).set({username:myUsername,color:b.color,band:b.id,bandIdx:selectedBand,lat,lng,online:true,lastSeen:Date.now(),pfp:myPfp,isAnonymous,avatarHead:myAvatarHead,avatarShirt:myAvatarShirt});
+  db.ref('users/'+myUID).set({username:myUsername,color:b.color,band:b.id,bandIdx:selectedBand,lat,lng,online:true,lastSeen:Date.now(),pfp:myPfp,isAnonymous,avatarHead:myAvatarHead,avatarShirt:myAvatarShirt,avatarHat:myAvatarHat,avatarEmotion:myAvatarEmotion});
   if(myMarker&&map)myMarker.setIcon(makeMyMarkerIcon());
   db.ref('users/'+myUID).onDisconnect().update({online:false,lastSeen:Date.now()});
 }
@@ -533,14 +703,14 @@ function drawAvatarCanvas(hi,si,W){
 // Cache blob URLs to avoid creating new ones every zoom tick
 var _myMarkerBlobURL=null, _myMarkerBlobKey='';
 function makeMyMarkerIcon(){
-  var hi=myAvatarHead||0,si=myAvatarShirt||0;
+  var hi=myAvatarHead||0,si=myAvatarShirt||0,ht=myAvatarHat||'none',em=myAvatarEmotion||'normal';
   var W=avatarSizeForZoom();
   var H=Math.round(W*130/100);
   if(W<8)return L.divIcon({html:'',className:'',iconSize:[1,1],iconAnchor:[0,0]});
-  var key=hi+'_'+si;
+  var key=hi+'_'+si+'_'+ht+'_'+em;
   if(!_myMarkerBlobURL||_myMarkerBlobKey!==key){
     if(_myMarkerBlobURL)URL.revokeObjectURL(_myMarkerBlobURL);
-    _myMarkerBlobURL=avatarBlobURL(hi,si);
+    _myMarkerBlobURL=avatarBlobURL(hi,si,ht,em);
     _myMarkerBlobKey=key;
   }
   // Yellow ring overlay to distinguish self — drawn as canvas overlay
@@ -670,14 +840,16 @@ var _markerBlobURLs={};
 function makeAvatarMarkerIcon(u){
   var hi=parseInt(u.avatarHead)||0;
   var si=parseInt(u.avatarShirt)||0;
+  var ht=u.avatarHat||'none';
+  var em=u.avatarEmotion||'normal';
   var W=avatarSizeForZoom();
   var H=Math.round(W*130/100);
   if(W<8)return L.divIcon({html:'',className:'',iconSize:[1,1],iconAnchor:[0,0]});
   var uid=u.uid||(''+hi+si);
-  var key=hi+'_'+si;
+  var key=hi+'_'+si+'_'+ht+'_'+em;
   if(!_markerBlobURLs[uid]||_markerBlobURLs[uid].key!==key){
     if(_markerBlobURLs[uid])URL.revokeObjectURL(_markerBlobURLs[uid].url);
-    _markerBlobURLs[uid]={url:avatarBlobURL(hi,si),key:key};
+    _markerBlobURLs[uid]={url:avatarBlobURL(hi,si,ht,em),key:key};
   }
   var blobURL=_markerBlobURLs[uid].url;
   var html='<img src="'+blobURL+'" width="'+W+'" height="'+H+'" style="display:block">';
