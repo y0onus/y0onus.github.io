@@ -7,22 +7,20 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Walkie-Chatie</title>
 <link rel="manifest" href="#" id="manifest-link">
-  <link rel="icon" type="image/png" href="fav.png">
-
-  <!-- Open Graph (Link Preview) -->
-  <meta property="og:title" content="Walkie-Chatie">
-  <meta property="og:description" content="Walkie Chatie lets you chat with people within 60 meters of you and join Frequency Bars to talk with anyone nearby on the same channel, just a text-based walkie-talkie.">
-  <meta property="og:image" content="banner.jpeg">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:ital,opsz,wght@0,8..144,100..900;1,8..144,100..900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-</head>
-<body>
 
 <div id="loading"><div class="ld-ring"></div><div class="ld-text">Scanning frequencies…</div></div>
+
+<!-- TUNE IN LOADING — floating head while we locate you -->
+<div id="tune-loading">
+  <div id="tune-loading-headwrap"><div id="tune-loading-head"></div></div>
+  <div class="tune-loading-text">Tuning in<span class="tune-dots"><span>.</span><span>.</span><span>.</span></span></div>
+</div>
 
 <!-- ONBOARDING -->
 <div id="onboarding">
@@ -233,6 +231,44 @@
 </div>
 <div id="pin-drop-shadow"></div>
 
+<!-- AVATAR CUSTOMIZER MODAL (members only) -->
+<div id="avc-modal">
+  <div class="avc-sheet">
+    <div class="avc-sheet-handle"></div>
+    <div class="avc-header">
+      <div>
+        <div class="avc-title">Customize Avatar</div>
+        <div class="avc-sub">Hats &amp; emotions — members only</div>
+      </div>
+      <button class="avc-close" onclick="closeAvatarCustomizer()">
+        <span class="material-icons-round">close</span>
+      </button>
+    </div>
+
+    <div class="avc-stage">
+      <div class="avc-pedestal-glow"></div>
+      <div id="avc-preview"></div>
+      <div class="avc-pedestal"></div>
+    </div>
+
+    <div class="avc-tabs">
+      <button class="avc-tab active" data-tab="hats" onclick="avcSwitchTab('hats')">
+        <span class="material-icons-round">checkroom</span>Hats
+      </button>
+      <button class="avc-tab" data-tab="emotions" onclick="avcSwitchTab('emotions')">
+        <span class="material-icons-round">mood</span>Emotions
+      </button>
+    </div>
+
+    <div class="avc-grid" id="avc-grid"><!-- filled by JS --></div>
+
+    <button class="avc-done-btn" onclick="closeAvatarCustomizer()">
+      <span class="material-icons-round">check_circle</span>
+      Done
+    </button>
+  </div>
+</div>
+
 <!-- PIN MODAL -->
 <div id="pin-modal">
   <div class="pin-sheet">
@@ -332,5 +368,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="script.js"></script>
+<script src="tutorial.js"></script>
 </body>
 </html>
