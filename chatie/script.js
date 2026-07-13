@@ -218,7 +218,13 @@ function renderAvatarPreview(){
 // ═══════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════
+// Firebase — kept ONLY for user accounts (sign up / sign in / user data).
 const FB={apiKey:"AIzaSyDW0UpHNzP_JaOsDH_6ZFlA3wHg26M8Y4s",authDomain:"locationchatbase.firebaseapp.com",databaseURL:"https://locationchatbase-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"locationchatbase",storageBucket:"locationchatbase.firebasestorage.app",messagingSenderId:"645678725889",appId:"1:645678725889:web:2a36a0aebc1d1dcb6af900"};
+// Supabase — live map presence, chat, typing, snaps & event pins.
+// Only the PUBLISHABLE (anon) key belongs here — it is safe for the browser.
+// The secret key must never be shipped in client code; it stays server-side only.
+const SUPABASE_URL='https://dstzagukxixsobryzvth.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_O5O2NvS1d8VggEogxKlXnQ_lB3pbdB9';
 const _S3={region:'ap-southeast-2',bucket:'boalhathakey',keyId:'AKIAYXUC44KXTUULTTWI',secret:'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'};
 const PROXIMITY_METERS=60;
 const BANDS=[
@@ -336,12 +342,13 @@ function avatarBlobURL(headIdx, shirtIdx, hat, emotion){
 // ═══════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════
-let db,auth,map,myUID,myUsername,myPfp='',myLocation=null;
+let sb,auth,map,myUID,myUsername,myPfp='',myLocation=null;
 let myAvatarHead=0,myAvatarShirt=0;
 let myAvatarHat='none',myAvatarEmotion='normal';
 let isAnonymous=true,isGhostMode=false,isRegisteredUser=false;
 let selectedBand=4,myMarker=null,myCircle=null;
-let currentRoomId=null,activeRoomListeners={};
+let currentRoomId=null,roomChannel=null,presenceChannel=null,pinsChannel=null;
+let typingUsers={},typingWatchdog=null;
 let typingTimeout=null,chatOpen=false,unreadCount=0;
 let cameraStream=null,capturedBlob=null;
 let heatCanvas=null,allUsersData={};
@@ -584,7 +591,7 @@ function selectEmotion(emoId){
 function persistAvatarCustomization(){
   refreshTbAvatar();
   if(myMarker)myMarker.setIcon(makeMyMarkerIcon());
-  if(myLocation&&db&&myUID)saveLocation(myLocation.lat,myLocation.lng);
+  if(myLocation&&sb&&myUID)saveLocation(myLocation.lat,myLocation.lng);
 }
 
 function toggleGhostMode(){
@@ -624,9 +631,16 @@ function closeChat(){
 }
 
 // ═══════════════════════════════════════
-// FIREBASE
+// FIREBASE — user accounts only
 // ═══════════════════════════════════════
-function initFirebase(){firebase.initializeApp(FB);db=firebase.database();auth=firebase.auth()}
+function initFirebase(){firebase.initializeApp(FB);auth=firebase.auth()}
+
+// ═══════════════════════════════════════
+// SUPABASE — live presence, chat, typing, snaps, pins
+// ═══════════════════════════════════════
+function initSupabase(){
+  sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{realtime:{params:{eventsPerSecond:10}}});
+}
 
 // ═══════════════════════════════════════
 // LOCATION
@@ -647,12 +661,36 @@ function initWatch(){
     }
   },null,{enableHighAccuracy:true,maximumAge:10000});
 }
+// Broadcasts our live spot on the map via a Supabase Realtime Presence channel.
+// Presence auto-clears the moment this tab disconnects — no onDisconnect() needed.
+function myPresencePayload(lat,lng){
+  const b=BANDS[selectedBand];
+  return{username:myUsername,color:b.color,band:b.id,bandIdx:selectedBand,lat,lng,online:true,lastSeen:Date.now(),pfp:myPfp,isAnonymous,avatarHead:myAvatarHead,avatarShirt:myAvatarShirt,avatarHat:myAvatarHat,avatarEmotion:myAvatarEmotion};
+}
+let presenceReady=false;
 function saveLocation(lat,lng){
   if(!myUID)return;
-  const b=BANDS[selectedBand];
-  db.ref('users/'+myUID).set({username:myUsername,color:b.color,band:b.id,bandIdx:selectedBand,lat,lng,online:true,lastSeen:Date.now(),pfp:myPfp,isAnonymous,avatarHead:myAvatarHead,avatarShirt:myAvatarShirt,avatarHat:myAvatarHat,avatarEmotion:myAvatarEmotion});
   if(myMarker&&map)myMarker.setIcon(makeMyMarkerIcon());
-  db.ref('users/'+myUID).onDisconnect().update({online:false,lastSeen:Date.now()});
+  if(!presenceChannel){startPresence(lat,lng);return}
+  if(presenceReady)presenceChannel.track(myPresencePayload(lat,lng));
+}
+function startPresence(lat,lng){
+  if(!sb||!myUID)return;
+  presenceChannel=sb.channel('presence-users',{config:{presence:{key:myUID}}});
+  presenceChannel.on('presence',{event:'sync'},function(){
+    const state=presenceChannel.presenceState();
+    const merged={};
+    Object.keys(state).forEach(function(uid){
+      const entries=state[uid];
+      if(entries&&entries.length)merged[uid]=entries[entries.length-1];
+    });
+    allUsersData=merged;
+    if(map){refreshUserMarkers();drawHeatmap();}
+    updateNearbyCount();
+  });
+  presenceChannel.subscribe(function(status){
+    if(status==='SUBSCRIBED'){presenceReady=true;presenceChannel.track(myPresencePayload(lat,lng));}
+  });
 }
 function dist(la1,ln1,la2,ln2){const R=6371000,dL=(la2-la1)*Math.PI/180,dN=(ln2-ln1)*Math.PI/180,a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dN/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
 function isNearby(lat,lng){return myLocation&&dist(myLocation.lat,myLocation.lng,lat,lng)<=PROXIMITY_METERS}
@@ -898,13 +936,8 @@ function refreshUserMarkers(){
 }
 
 function listenAllUsers(){
-  db.ref('users').on('value',function(snap){
-    allUsersData=snap.val()||{};
-    refreshUserMarkers();
-    drawHeatmap();
-    updateNearbyCount();
-  });
-  // Redraw heatmap AND resize avatar markers on zoom/move
+  // Presence sync (see startPresence) already keeps allUsersData / markers / heatmap live.
+  // Just wire up redraws for zoom & pan.
   map.on('zoomend',function(){
     refreshUserMarkers();
     drawHeatmap();
@@ -932,16 +965,20 @@ function tuneIntoRoom(){
   // Refresh markers so only same-band users visible
   if(map&&Object.keys(allUsersData).length)refreshUserMarkers();
 }
+function leaveRoomChannel(){
+  if(roomChannel){sb.removeChannel(roomChannel);roomChannel=null;}
+  typingUsers={};
+  if(typingWatchdog){clearInterval(typingWatchdog);typingWatchdog=null;}
+  renderTypingRow();
+}
 function joinRoom(roomId){
   if(currentRoomId===roomId)return;
-  Object.values(activeRoomListeners).forEach(off=>off());activeRoomListeners={};
-  if(currentRoomId)db.ref(`rooms/${currentRoomId}/members/${myUID}`).remove();
+  leaveRoomChannel();
   currentRoomId=roomId;
   const b=BANDS[selectedBand];
-  db.ref(`rooms/${roomId}/members/${myUID}`).set({username:myUsername,color:b.color,band:b.id,lat:myLocation?.lat||0,lng:myLocation?.lng||0});
-  db.ref(`rooms/${roomId}/members/${myUID}`).onDisconnect().remove();
-  db.ref(`rooms/${roomId}/messages`).push({type:'system',text:`${myUsername} tuned into ${b.label} · ${b.freq}`,ts:Date.now(),lat:myLocation?.lat||0,lng:myLocation?.lng||0});
-  listenMessages(roomId);listenTyping(roomId);listenMemberCount(roomId);updateNearbyCount();
+  if(sb)sb.from('messages').insert({room_id:roomId,type:'system',text:`${myUsername} tuned into ${b.label} · ${b.freq}`,ts:Date.now(),lat:myLocation?.lat||0,lng:myLocation?.lng||0}).then(function(){});
+  listenMessages(roomId);
+  updateNearbyCount();
 }
 
 function shouldShowMsg(msg){
@@ -951,23 +988,42 @@ function shouldShowMsg(msg){
   return false;
 }
 
-function listenMessages(roomId){
+function rowToMsg(row){
+  return{uid:row.uid,username:row.username,color:row.color,text:row.text,ts:row.ts,pfp:row.pfp,isAnonymous:row.is_anonymous,lat:row.lat,lng:row.lng,type:row.type,snapId:row.snap_id,snapUrl:row.snap_url};
+}
+async function listenMessages(roomId){
   document.getElementById('messages-area').innerHTML='';
-  const ref=db.ref(`rooms/${roomId}/messages`).orderByChild('ts').limitToLast(200);
-  let first=true;
-  ref.on('value',snap=>{if(!first)return;first=false;snap.forEach(c=>{if(shouldShowMsg(c.val()))renderMsg(c.val())});scrollMsgs()});
-  ref.on('child_added',snap=>{
-    if(first)return;
-    const msg=snap.val();if(!shouldShowMsg(msg))return;
-    renderMsg(msg);scrollMsgs();
-    if(!chatOpen){
-      unreadCount++;
-      const badge=document.getElementById('chat-unread-badge');
-      badge.textContent=unreadCount>9?'9+':unreadCount;
-      badge.style.display='flex';
-    }
-  });
-  activeRoomListeners['msgs']=()=>ref.off();
+  if(!sb)return;
+  const{data}=await sb.from('messages').select('*').eq('room_id',roomId).order('ts',{ascending:true}).limit(200);
+  (data||[]).forEach(function(row){const msg=rowToMsg(row);if(shouldShowMsg(msg))renderMsg(msg)});
+  scrollMsgs();
+  roomChannel=sb.channel('room:'+roomId)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'room_id=eq.'+roomId},function(payload){
+      const msg=rowToMsg(payload.new);
+      if(!shouldShowMsg(msg))return;
+      renderMsg(msg);scrollMsgs();
+      if(!chatOpen){
+        unreadCount++;
+        const badge=document.getElementById('chat-unread-badge');
+        badge.textContent=unreadCount>9?'9+':unreadCount;
+        badge.style.display='flex';
+      }
+    })
+    .on('broadcast',{event:'typing'},function(msg){
+      const p=msg.payload;
+      if(!p||p.uid===myUID)return;
+      if(p.typing)typingUsers[p.uid]={name:p.name,ts:Date.now()};
+      else delete typingUsers[p.uid];
+      renderTypingRow();
+    })
+    .subscribe();
+  typingWatchdog=setInterval(function(){
+    let changed=false;
+    Object.keys(typingUsers).forEach(function(uid){
+      if(Date.now()-typingUsers[uid].ts>4000){delete typingUsers[uid];changed=true;}
+    });
+    if(changed)renderTypingRow();
+  },1000);
 }
 
 function renderMsg(msg){
@@ -1022,7 +1078,7 @@ function renderSnapMsg(msg,div,area){
 function openSnap(msg,el,oKey){
   el.className='snap-bubble snap-open';el.innerHTML=`<img src="${msg.snapUrl}" alt="snap">`;
   localStorage.setItem(oKey,'1');
-  if(msg.snapId)db.ref(`snaps/${msg.snapId}/openedBy/${myUID}`).set(Date.now());
+  if(msg.snapId&&sb)sb.from('snap_opens').insert({snap_id:msg.snapId,uid:myUID,ts:Date.now()}).then(function(){});
   setTimeout(()=>{el.className='snap-bubble';el.innerHTML=`<div class="snap-opened-label"><span class="material-icons-round" style="font-size:14px">done</span>Snap expired</div>`;el.onclick=null},10000);
   el.onclick=()=>{el.className='snap-bubble';el.innerHTML=`<div class="snap-opened-label"><span class="material-icons-round" style="font-size:14px">done</span>Snap closed</div>`;el.onclick=null};
 }
@@ -1031,30 +1087,29 @@ function scrollMsgs(){const a=document.getElementById('messages-area');a.scrollT
 function fmtTime(ts){return new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
 function sendMessage(){
   const inp=document.getElementById('msg-input');const text=inp.value.trim();
-  if(!text||!currentRoomId||!myLocation)return;
-  db.ref(`rooms/${currentRoomId}/messages`).push({uid:myUID,username:getEffName(),color:BANDS[selectedBand].color,text,ts:Date.now(),pfp:getEffPfp(),isAnonymous,lat:myLocation.lat,lng:myLocation.lng});
+  if(!text||!currentRoomId||!myLocation||!sb)return;
+  sb.from('messages').insert({room_id:currentRoomId,uid:myUID,username:getEffName(),color:BANDS[selectedBand].color,text,ts:Date.now(),pfp:getEffPfp(),is_anonymous:isAnonymous,lat:myLocation.lat,lng:myLocation.lng,type:'chat'}).then(function(){});
   inp.value='';autoResize(inp);clearTyping();
 }
 // msg input listener moved to boot()
 
 // ═══════════════════════════════════════
-// TYPING
+// TYPING — Supabase Realtime Broadcast (ephemeral, no table needed)
 // ═══════════════════════════════════════
-function listenTyping(roomId){
-  const ref=db.ref(`rooms/${roomId}/typing`);
-  ref.on('value',snap=>{
-    const t=snap.val()||{},names=Object.entries(t).filter(([id,v])=>id!==myUID&&v&&Date.now()-v.ts<4000).map(([,v])=>v.name);
-    const row=document.getElementById('typing-row');
-    if(names.length){row.style.display='block';document.getElementById('typing-label').textContent=names.join(', ')+(names.length===1?' is':' are')+' transmitting…'}else row.style.display='none';
-  });
-  activeRoomListeners['typing']=()=>ref.off();
+function renderTypingRow(){
+  const names=Object.values(typingUsers).map(function(v){return v.name});
+  const row=document.getElementById('typing-row');
+  if(names.length){row.style.display='block';document.getElementById('typing-label').textContent=names.join(', ')+(names.length===1?' is':' are')+' transmitting…'}
+  else row.style.display='none';
 }
-function handleTyping(){if(!currentRoomId||!myUID)return;db.ref(`rooms/${currentRoomId}/typing/${myUID}`).set({name:getEffName(),ts:Date.now()});clearTimeout(typingTimeout);typingTimeout=setTimeout(clearTyping,3000)}
-function clearTyping(){if(!currentRoomId||!myUID)return;db.ref(`rooms/${currentRoomId}/typing/${myUID}`).remove()}
-function listenMemberCount(roomId){
-  const ref=db.ref(`rooms/${roomId}/members`);
-  ref.on('value',snap=>{if(!myLocation)return;let c=0;snap.forEach(s=>{const m=s.val();if(s.key===myUID)return;if(m.lat!==undefined&&isNearby(m.lat,m.lng))c++});document.getElementById('ch-online-num').textContent=c});
-  activeRoomListeners['members']=()=>ref.off();
+function handleTyping(){
+  if(!currentRoomId||!myUID||!roomChannel)return;
+  roomChannel.send({type:'broadcast',event:'typing',payload:{uid:myUID,name:getEffName(),typing:true}});
+  clearTimeout(typingTimeout);typingTimeout=setTimeout(clearTyping,3000);
+}
+function clearTyping(){
+  if(!currentRoomId||!myUID||!roomChannel)return;
+  roomChannel.send({type:'broadcast',event:'typing',payload:{uid:myUID,name:getEffName(),typing:false}});
 }
 
 // ═══════════════════════════════════════
@@ -1082,8 +1137,8 @@ async function sendSnap(){
   try{
     const snapId='snap_'+Date.now()+'_'+myUID.slice(0,6);
     const url=await uploadToS3(capturedBlob,`snaps/${snapId}.jpg`,'image/jpeg');
-    db.ref(`rooms/${currentRoomId}/messages`).push({type:'snap',uid:myUID,username:getEffName(),pfp:getEffPfp(),snapId,snapUrl:url,ts:Date.now(),lat:myLocation.lat,lng:myLocation.lng});
-    db.ref(`snaps/${snapId}`).set({url,sentBy:myUID,ts:Date.now()});
+    sb.from('messages').insert({room_id:currentRoomId,type:'snap',uid:myUID,username:getEffName(),pfp:getEffPfp(),snap_id:snapId,snap_url:url,ts:Date.now(),lat:myLocation.lat,lng:myLocation.lng}).then(function(){});
+    sb.from('snaps').insert({id:snapId,url,sent_by:myUID,ts:Date.now()}).then(function(){});
     closeCamera();showToast('📸 Snap sent');
   }catch(e){showToast('Upload failed');btn.disabled=false;btn.innerHTML='<span class="material-icons-round">send</span>Send Snap'}
 }
@@ -1317,24 +1372,27 @@ async function submitPin(){
   btn.innerHTML='<span class="material-icons-round" style="animation:spin .7s linear infinite;display:inline-block">refresh</span> Saving…';
   const pinData={
     name,
-    desc:document.getElementById('pin-desc').value.trim(),
-    locationNote:document.getElementById('pin-location-note').value.trim(),
+    description:document.getElementById('pin-desc').value.trim(),
+    location_note:document.getElementById('pin-location-note').value.trim(),
     type:selectedPinType,
     emoji:PIN_TYPES[selectedPinType]?.icon||'star',
     bands:Array.from(selectedPinBands),
     datetime:document.getElementById('pin-datetime').value,
     endtime:document.getElementById('pin-endtime').value,
     lat,lng,
-    createdBy:myUID,createdByName:myUsername,
+    created_by:myUID,created_by_name:myUsername,
     pfp:myPfp,
-    createdAt:Date.now(),updatedAt:Date.now(),
+    updated_at:Date.now(),
   };
   try{
     if(editingPinId){
-      await db.ref('pins/'+editingPinId).update({...pinData,createdAt:undefined});
+      const{error}=await sb.from('pins').update(pinData).eq('id',editingPinId);
+      if(error)throw error;
       showToast('📍 Pin updated');
     } else {
-      await db.ref('pins').push(pinData);
+      pinData.created_at=Date.now();
+      const{error}=await sb.from('pins').insert(pinData);
+      if(error)throw error;
       showToast('📍 Pin dropped!');
     }
     // Fully close and reset everything
@@ -1453,11 +1511,12 @@ function buildPinPopup(pin,pinId){
 
 async function deletePin(pinId){
   // Extra ownership check — must be the creator
-  const snap=await db.ref('pins/'+pinId+'/createdBy').once('value');
-  if(snap.val()!==myUID){showToast('You can only delete your own pins');return;}
+  const pin=window._pinData?.[pinId];
+  if(!pin||pin.createdBy!==myUID){showToast('You can only delete your own pins');return;}
   if(!confirm('Remove this pin?'))return;
-  await db.ref('pins/'+pinId).remove();
+  await sb.from('pins').delete().eq('id',pinId);
   if(pinMarkers[pinId]){pinMarkers[pinId].remove();delete pinMarkers[pinId]}
+  delete window._pinData[pinId];
   showToast('Pin removed');
 }
 
@@ -1471,23 +1530,52 @@ function refreshPinMarkers(){
   });
 }
 
-function listenPins(){
-  db.ref('pins').on('value',function(snap){
-    Object.values(pinMarkers).forEach(function(m){m.remove();});
-    for(var k in pinMarkers)delete pinMarkers[k];
-    window._pinData={};
-    var pins=snap.val()||{};
-    Object.entries(pins).forEach(function(e){
-      var pid=e[0],pin=e[1];
-      window._pinData[pid]=pin;
-      var icon=makePinIcon(pin.type,pin.emoji||PIN_TYPES[pin.type]?.icon||'push_pin');
-      var m=L.marker([pin.lat,pin.lng],{icon:icon,zIndexOffset:800}).addTo(map);
-      var popupHtml=buildPinPopup(pin,pid);
-      m.bindPopup(popupHtml,{maxWidth:260,minWidth:220,className:''});
-      m.on('popupopen',function(){window._popupRef=m;});
-      pinMarkers[pid]=m;
-    });
+function pinRowToObj(row){
+  return{
+    name:row.name,desc:row.description,locationNote:row.location_note,
+    type:row.type,emoji:row.emoji,bands:row.bands||[],
+    datetime:row.datetime,endtime:row.endtime,
+    lat:row.lat,lng:row.lng,
+    createdBy:row.created_by,createdByName:row.created_by_name,
+    pfp:row.pfp,createdAt:row.created_at,updatedAt:row.updated_at,
+  };
+}
+
+function upsertPinMarker(pinId){
+  var pin=window._pinData[pinId];
+  if(!pin)return;
+  if(pinMarkers[pinId]){pinMarkers[pinId].remove();}
+  var icon=makePinIcon(pin.type,pin.emoji||PIN_TYPES[pin.type]?.icon||'push_pin');
+  var m=L.marker([pin.lat,pin.lng],{icon:icon,zIndexOffset:800}).addTo(map);
+  var popupHtml=buildPinPopup(pin,pinId);
+  m.bindPopup(popupHtml,{maxWidth:260,minWidth:220,className:''});
+  m.on('popupopen',function(){window._popupRef=m;});
+  pinMarkers[pinId]=m;
+}
+
+async function listenPins(){
+  if(!sb)return;
+  const{data}=await sb.from('pins').select('*');
+  Object.values(pinMarkers).forEach(function(m){m.remove();});
+  for(var k in pinMarkers)delete pinMarkers[k];
+  window._pinData={};
+  (data||[]).forEach(function(row){
+    window._pinData[row.id]=pinRowToObj(row);
+    upsertPinMarker(row.id);
   });
+  pinsChannel=sb.channel('pins-changes')
+    .on('postgres_changes',{event:'*',schema:'public',table:'pins'},function(payload){
+      if(payload.eventType==='DELETE'){
+        var pid=payload.old.id;
+        if(pinMarkers[pid]){pinMarkers[pid].remove();delete pinMarkers[pid];}
+        delete window._pinData[pid];
+      } else {
+        var row=payload.new;
+        window._pinData[row.id]=pinRowToObj(row);
+        upsertPinMarker(row.id);
+      }
+    })
+    .subscribe();
   // Resize pins on zoom
   map.on('zoomend',refreshPinMarkers);
 }
@@ -1527,6 +1615,7 @@ if(document.readyState==='loading'){
 }
 function boot(){
   initFirebase();
+  initSupabase();
   initOnboarding();
   setTimeout(()=>{const l=document.getElementById('loading');if(l)l.classList.add('hidden');},700);
   // msg input enter key
