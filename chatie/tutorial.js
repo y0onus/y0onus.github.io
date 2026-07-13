@@ -1,9 +1,3 @@
-/* ═══════════════════════════════════════════════════
-   Walkie-Chatie Tutorial System
-   Phase A: Full-screen intro modal (replaces plain welcome + adds freq explanation)
-   Phase B: Existing step-by-step spotlight tutorial (avatar → tune in → map → chat)
-   Montserrat · mobile-only · cookie-gated
-   ═══════════════════════════════════════════════════ */
 (function(){
 
 if(window.innerWidth>=769)return;
