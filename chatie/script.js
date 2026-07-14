@@ -351,7 +351,7 @@ let currentRoomId=null,roomChannel=null,presenceChannel=null,pinsChannel=null;
 let typingUsers={},typingWatchdog=null;
 let typingTimeout=null,chatOpen=false,unreadCount=0;
 let cameraStream=null,capturedBlob=null;
-let heatCanvas=null,allUsersData={};
+let allUsersData={};
 let pinMarkers={},editingPinId=null,selectedPinType='gathering',selectedPinBands=new Set();
 let pendingPinLat=null,pendingPinLng=null,draggablePinMarker=null;
 
@@ -590,7 +590,7 @@ function selectEmotion(emoId){
 }
 function persistAvatarCustomization(){
   refreshTbAvatar();
-  if(myMarker)myMarker.setIcon(makeMyMarkerIcon());
+  if(myMarker)myMarker.getElement().innerHTML=myMarkerHtml();
   if(myLocation&&sb&&myUID)saveLocation(myLocation.lat,myLocation.lng);
 }
 
@@ -656,7 +656,7 @@ function initWatch(){
     const lat=p.coords.latitude,lng=p.coords.longitude;
     if(!myLocation||dist(myLocation.lat,myLocation.lng,lat,lng)>5){
       myLocation={lat,lng};saveLocation(lat,lng);
-      if(myMarker)myMarker.setLatLng([lat,lng]);
+      if(myMarker)myMarker.setLngLat([lng,lat]);
       updateMyCircle();updateNearbyCount();
     }
   },null,{enableHighAccuracy:true,maximumAge:10000});
@@ -670,7 +670,7 @@ function myPresencePayload(lat,lng){
 let presenceReady=false;
 function saveLocation(lat,lng){
   if(!myUID)return;
-  if(myMarker&&map)myMarker.setIcon(makeMyMarkerIcon());
+  if(myMarker&&map)myMarker.getElement().innerHTML=myMarkerHtml();
   if(!presenceChannel){startPresence(lat,lng);return}
   if(presenceReady)presenceChannel.track(myPresencePayload(lat,lng));
 }
@@ -700,51 +700,27 @@ function isNearby(lat,lng){return myLocation&&dist(myLocation.lat,myLocation.lng
 // ═══════════════════════════════════════
 async function initMap(){
   const c=myLocation||{lat:4.1755,lng:73.5093};
-  map=L.map('map',{center:[c.lat,c.lng],zoom:16,zoomControl:true,attributionControl:false});
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(map);
+  map=new maplibregl.Map({
+    container:'map',
+    style:'https://tiles.openfreemap.org/styles/liberty',
+    center:[c.lng,c.lat],
+    zoom:16,
+    pitch:55,
+    bearing:-12,
+    attributionControl:false,
+  });
+  map.addControl(new maplibregl.NavigationControl({showCompass:true,visualizePitch:true}),'top-right');
+  await new Promise(function(res){map.on('load',res)});
   placeMyMarker();saveLocation(c.lat,c.lng);tuneIntoRoom();
-}
-function drawAvatarCanvas(hi,si,W){
-  var H=Math.round(W*130/100);
-  if(W<8)return null;
-  var hc=HEAD_COLORS[hi]||HEAD_COLORS[0];
-  var sc=SHIRT_COLORS[si]||SHIRT_COLORS[0];
-  var canvas=document.createElement('canvas');
-  canvas.width=W;canvas.height=H;
-  var ctx=canvas.getContext('2d');
-  // scale 100x130 → W x H
-  ctx.save();ctx.scale(W/100,H/130);
-
-  // ── body trapezoid ──
-  ctx.beginPath();
-  ctx.moveTo(33,75);ctx.lineTo(67,75);ctx.lineTo(83,115);
-  ctx.arcTo(83,124,74,124,9);
-  ctx.lineTo(26,124);
-  ctx.arcTo(17,124,17,115,9);
-  ctx.closePath();
-  ctx.fillStyle=sc.fill;ctx.strokeStyle=sc.stroke;ctx.lineWidth=3;
-  ctx.fill();ctx.stroke();
-
-  // ── head ──
-  ctx.beginPath();ctx.arc(50,46,38,0,Math.PI*2);
-  ctx.fillStyle=hc.fill;ctx.strokeStyle=hc.stroke;ctx.lineWidth=3.5;
-  ctx.fill();ctx.stroke();
-
-  // ── eyes ──
-  ctx.fillStyle='#111';
-  ctx.beginPath();ctx.arc(38,50,3.5,0,Math.PI*2);ctx.fill();
-  ctx.beginPath();ctx.arc(62,50,3.5,0,Math.PI*2);ctx.fill();
-
-  ctx.restore();
-  return canvas.toDataURL();
+  ensureHeatmapLayer();
 }
 // Cache blob URLs to avoid creating new ones every zoom tick
 var _myMarkerBlobURL=null, _myMarkerBlobKey='';
-function makeMyMarkerIcon(){
+function myMarkerHtml(){
   var hi=myAvatarHead||0,si=myAvatarShirt||0,ht=myAvatarHat||'none',em=myAvatarEmotion||'normal';
   var W=avatarSizeForZoom();
   var H=Math.round(W*130/100);
-  if(W<8)return L.divIcon({html:'',className:'',iconSize:[1,1],iconAnchor:[0,0]});
+  if(W<8)return '';
   var key=hi+'_'+si+'_'+ht+'_'+em;
   if(!_myMarkerBlobURL||_myMarkerBlobKey!==key){
     if(_myMarkerBlobURL)URL.revokeObjectURL(_myMarkerBlobURL);
@@ -759,130 +735,98 @@ function makeMyMarkerIcon(){
   var headCY=H*(46/130);var headR=W*0.40;
   ctx.beginPath();ctx.arc(W/2,headCY,headR,0,Math.PI*2);ctx.stroke();
   var ringDataURL=ringCanvas.toDataURL();
-  var html='<div style="position:relative;width:'+W+'px;height:'+H+'px">'
+  return '<div style="position:relative;width:'+W+'px;height:'+H+'px">'
     +'<img src="'+_myMarkerBlobURL+'" width="'+W+'" height="'+H+'" style="display:block;position:absolute;top:0;left:0">'
     +'<img src="'+ringDataURL+'" width="'+W+'" height="'+H+'" style="display:block;position:absolute;top:0;left:0">'
     +'</div>';
-  return L.divIcon({html:html,className:'',iconSize:[W,H],iconAnchor:[W/2,H]});
 }
 function placeMyMarker(){
   if(!myLocation||!map)return;
   if(myMarker)myMarker.remove();
-  myMarker=L.marker([myLocation.lat,myLocation.lng],{icon:makeMyMarkerIcon(),zIndexOffset:1000}).addTo(map);
-  myMarker.on('click',openChat);updateMyCircle();map.panTo([myLocation.lat,myLocation.lng]);
+  var el=document.createElement('div');
+  el.innerHTML=myMarkerHtml();
+  el.style.cursor='pointer';
+  el.addEventListener('click',openChat);
+  myMarker=new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([myLocation.lng,myLocation.lat]).addTo(map);
+  myMarker.getElement().style.zIndex='1000';
+  updateMyCircle();
+  map.panTo([myLocation.lng,myLocation.lat]);
+}
+function circlePolygon(lat,lng,radiusMeters,points){
+  points=points||64;
+  var coords=[];
+  var distRad=radiusMeters/6371000;
+  var latRad=lat*Math.PI/180, lngRad=lng*Math.PI/180;
+  for(var i=0;i<=points;i++){
+    var brng=i*2*Math.PI/points;
+    var lat2=Math.asin(Math.sin(latRad)*Math.cos(distRad)+Math.cos(latRad)*Math.sin(distRad)*Math.cos(brng));
+    var lng2=lngRad+Math.atan2(Math.sin(brng)*Math.sin(distRad)*Math.cos(latRad),Math.cos(distRad)-Math.sin(latRad)*Math.sin(lat2));
+    coords.push([lng2*180/Math.PI, lat2*180/Math.PI]);
+  }
+  return {type:'Feature',geometry:{type:'Polygon',coordinates:[coords]},properties:{}};
 }
 function updateMyCircle(){
-  if(myCircle){myCircle.remove();myCircle=null}
   if(!myLocation||!map)return;
   const b=BANDS[selectedBand];
-  myCircle=L.circle([myLocation.lat,myLocation.lng],{radius:PROXIMITY_METERS,color:b.color,weight:2,opacity:.8,fillColor:b.color,fillOpacity:.12,dashArray:'6,4'}).addTo(map);
-}
-
-// ═══════════════════════════════════════
-// HEATMAP — vibrant canvas
-// ═══════════════════════════════════════
-function ensureHeatCanvas(){
-  if(heatCanvas && heatCanvas.isConnected)return;
-  heatCanvas=document.createElement('canvas');
-  heatCanvas.style.cssText='position:absolute;top:0;left:0;pointer-events:none;';
-  var mapEl=document.getElementById('map');
-  var mapPane=map.getPane('mapPane'); // wrapper that holds tilePane/overlayPane/markerPane and gets panned/zoomed
-  // IMPORTANT: keep the canvas as a DIRECT CHILD OF #map (sibling of mapPane),
-  // NOT inside mapPane — mapPane receives Leaflet's translate3d() transform during
-  // pan/zoom, and our drawHeatmap() math (map.latLngToContainerPoint) is relative
-  // to the *map container*, not to mapPane's shifting origin. Putting the canvas
-  // inside mapPane would double-offset every blob as soon as you pan.
-  // Insert it directly BEFORE mapPane in #map's child list — this still renders
-  // it underneath every Leaflet pane (tiles, overlay, markers all live inside
-  // mapPane, which comes after), while leaving the canvas's own coordinate
-  // space untouched by Leaflet's transforms.
-  if(mapPane && mapPane.parentNode===mapEl){
-    mapEl.insertBefore(heatCanvas, mapPane);
+  const feature=circlePolygon(myLocation.lat,myLocation.lng,PROXIMITY_METERS);
+  const src=map.getSource('my-circle');
+  if(src){
+    src.setData(feature);
   } else {
-    mapEl.insertBefore(heatCanvas, mapEl.firstChild);
+    map.addSource('my-circle',{type:'geojson',data:feature});
+    map.addLayer({id:'my-circle-fill',type:'fill',source:'my-circle',paint:{'fill-color':b.color,'fill-opacity':.12}});
+    map.addLayer({id:'my-circle-line',type:'line',source:'my-circle',paint:{'line-color':b.color,'line-width':2,'line-opacity':.8,'line-dasharray':[2,1.3]}});
   }
+  if(map.getLayer('my-circle-fill'))map.setPaintProperty('my-circle-fill','fill-color',b.color);
+  if(map.getLayer('my-circle-line'))map.setPaintProperty('my-circle-line','line-color',b.color);
+  myCircle=true;
 }
 
+// ═══════════════════════════════════════
+// HEATMAP — native MapLibre heatmap layer, driven by live presence data
+// ═══════════════════════════════════════
+function ensureHeatmapLayer(){
+  if(!map||map.getSource('heat-users'))return;
+  map.addSource('heat-users',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+  map.addLayer({
+    id:'heat-users-layer',
+    type:'heatmap',
+    source:'heat-users',
+    paint:{
+      'heatmap-weight':1,
+      'heatmap-intensity':1.2,
+      'heatmap-radius':32,
+      'heatmap-opacity':.75,
+      'heatmap-color':[
+        'interpolate',['linear'],['heatmap-density'],
+        0,   'rgba(30,144,255,0)',
+        0.2, 'rgba(30,144,255,.6)',
+        0.4, 'rgba(0,200,160,.75)',
+        0.6, 'rgba(255,120,0,.8)',
+        1,   'rgba(220,20,40,.9)'
+      ]
+    }
+  });
+}
 function drawHeatmap(){
   if(!map||!myLocation)return;
-  ensureHeatCanvas();
-  const mapEl=document.getElementById('map');
-  const W=mapEl.offsetWidth, H=mapEl.offsetHeight;
-  // Explicit pixel size (not percentage) so the canvas always has real backing pixels
-  if(heatCanvas.width!==W||heatCanvas.height!==H){
-    heatCanvas.width=W; heatCanvas.height=H;
-    heatCanvas.style.width=W+'px';
-    heatCanvas.style.height=H+'px';
-  }
-  const ctx=heatCanvas.getContext('2d');
-  ctx.clearRect(0,0,W,H);
-
-  const users=Object.values(allUsersData).filter(u=>u.online&&u.lat);
-  if(!users.length)return;
-
-  // Grid cluster ~40m cells
-  const cellDeg=0.0004;
-  const clusters={};
-  users.forEach(u=>{
-    const cx=Math.round(u.lat/cellDeg),cy=Math.round(u.lng/cellDeg);
-    const key=`${cx},${cy}`;
-    if(!clusters[key])clusters[key]={lat:u.lat,lng:u.lng,count:0};
-    clusters[key].count++;
-  });
-
-  // Count-based colour tiers — bold visible colors
-  // 1-10  → sky blue
-  // 11-20 → deep blue
-  // 21-35 → teal
-  // 36-50 → orange
-  // 50+   → red
-  function tierColor(count){
-    if(count<=10) return {r:30, g:144,b:255};  // dodger blue
-    if(count<=20) return {r:0,  g:60, b:200};  // deep blue
-    if(count<=35) return {r:0,  g:200,b:160};  // teal
-    if(count<=50) return {r:255,g:120,b:0};    // orange
-    return              {r:220,g:20, b:40};     // crimson
-  }
-
-  // Pass 1 — large glow blob — bigger, bolder, less fade-out
-  Object.values(clusters).forEach(function(cl){
-    var pt=map.latLngToContainerPoint([cl.lat,cl.lng]);
-    var tc=tierColor(cl.count);
-    // Much bigger radius, grows faster with count
-    var r=Math.min(140+cl.count*5, 360);
-    var coreAlpha=Math.min(0.92+cl.count*0.003, 1);
-    var edgeAlpha=Math.min(0.65+cl.count*0.003, 0.85);
-    var g=ctx.createRadialGradient(pt.x,pt.y,0,pt.x,pt.y,r);
-    g.addColorStop(0,   'rgba('+tc.r+','+tc.g+','+tc.b+','+coreAlpha.toFixed(2)+')');
-    g.addColorStop(0.55,'rgba('+tc.r+','+tc.g+','+tc.b+','+edgeAlpha.toFixed(2)+')');
-    g.addColorStop(0.85,'rgba('+tc.r+','+tc.g+','+tc.b+','+(edgeAlpha*0.35).toFixed(2)+')');
-    g.addColorStop(1,   'rgba('+tc.r+','+tc.g+','+tc.b+',0)');
-    ctx.beginPath();ctx.arc(pt.x,pt.y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
-  });
-
-  // Pass 2 — solid bright core, bigger and fully opaque at centre
-  Object.values(clusters).forEach(function(cl){
-    var pt=map.latLngToContainerPoint([cl.lat,cl.lng]);
-    var tc=tierColor(cl.count);
-    var r2=Math.min(26+cl.count*2, 90);
-    var g2=ctx.createRadialGradient(pt.x,pt.y,0,pt.x,pt.y,r2);
-    g2.addColorStop(0,  'rgba('+tc.r+','+tc.g+','+tc.b+',1)');
-    g2.addColorStop(0.6,'rgba('+tc.r+','+tc.g+','+tc.b+',0.95)');
-    g2.addColorStop(1,  'rgba('+tc.r+','+tc.g+','+tc.b+',0)');
-    ctx.beginPath();ctx.arc(pt.x,pt.y,r2,0,Math.PI*2);ctx.fillStyle=g2;ctx.fill();
-  });
+  ensureHeatmapLayer();
+  const users=Object.values(allUsersData).filter(function(u){return u.online&&u.lat});
+  const features=users.map(function(u){return{type:'Feature',geometry:{type:'Point',coordinates:[u.lng,u.lat]},properties:{}};});
+  const src=map.getSource('heat-users');
+  if(src)src.setData({type:'FeatureCollection',features:features});
 }
 
 // Cache blob URLs per user to avoid leaking
 var _markerBlobURLs={};
-function makeAvatarMarkerIcon(u){
+function avatarMarkerHtml(u){
   var hi=parseInt(u.avatarHead)||0;
   var si=parseInt(u.avatarShirt)||0;
   var ht=u.avatarHat||'none';
   var em=u.avatarEmotion||'normal';
   var W=avatarSizeForZoom();
   var H=Math.round(W*130/100);
-  if(W<8)return L.divIcon({html:'',className:'',iconSize:[1,1],iconAnchor:[0,0]});
+  if(W<8)return '';
   var uid=u.uid||(''+hi+si);
   var key=hi+'_'+si+'_'+ht+'_'+em;
   if(!_markerBlobURLs[uid]||_markerBlobURLs[uid].key!==key){
@@ -890,8 +834,7 @@ function makeAvatarMarkerIcon(u){
     _markerBlobURLs[uid]={url:avatarBlobURL(hi,si,ht,em),key:key};
   }
   var blobURL=_markerBlobURLs[uid].url;
-  var html='<img src="'+blobURL+'" width="'+W+'" height="'+H+'" style="display:block">';
-  return L.divIcon({html:html,className:'',iconSize:[W,H],iconAnchor:[W/2,H]});
+  return '<img src="'+blobURL+'" width="'+W+'" height="'+H+'" style="display:block">';
 }
 let userMarkers={};
 
@@ -922,17 +865,20 @@ function refreshUserMarkers(){
   // Add/update visible markers
   visible.forEach(function(e){
     var id=e[0],u=e[1];
-    var icon=makeAvatarMarkerIcon(u);
+    var html=avatarMarkerHtml(u);
     if(userMarkers[id]){
-      userMarkers[id].setLatLng([u.lat,u.lng]);
-      userMarkers[id].setIcon(icon);
+      userMarkers[id].setLngLat([u.lng,u.lat]);
+      userMarkers[id].getElement().innerHTML=html;
     } else {
-      var m=L.marker([u.lat,u.lng],{icon:icon,zIndexOffset:500}).addTo(map);
+      var el=document.createElement('div');
+      el.innerHTML=html;
+      var m=new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([u.lng,u.lat]).addTo(map);
+      m.getElement().style.zIndex='500';
       userMarkers[id]=m;
     }
   });
   // Refresh own marker size too
-  if(myMarker)myMarker.setIcon(makeMyMarkerIcon());
+  if(myMarker)myMarker.getElement().innerHTML=myMarkerHtml();
 }
 
 function listenAllUsers(){
@@ -1214,10 +1160,9 @@ function moveCursor(x,y){
 
 function onMapClickPlace(e){
   if(!pinPlacingMode)return;
-  const pt=map.latLngToContainerPoint(e.latlng);
   const mapRect=document.getElementById('map').getBoundingClientRect();
-  const screenX=mapRect.left+pt.x, screenY=mapRect.top+pt.y;
-  dropPinAtPoint(e.latlng.lat,e.latlng.lng,screenX,screenY);
+  const screenX=mapRect.left+e.point.x, screenY=mapRect.top+e.point.y;
+  dropPinAtPoint(e.lngLat.lat,e.lngLat.lng,screenX,screenY);
 }
 
 function dropPinAtPoint(lat,lng,screenX,screenY){
@@ -1257,33 +1202,32 @@ function onMapReplace(e){
   // Remove old and re-drop
   if(draggablePinMarker){draggablePinMarker.remove();draggablePinMarker=null}
   document.getElementById('pin-confirm-btn').classList.remove('visible');
-  const pt=map.latLngToContainerPoint(e.latlng);
   const mapRect=document.getElementById('map').getBoundingClientRect();
-  const sx=mapRect.left+pt.x,sy=mapRect.top+pt.y;
-  dropPinAtPoint(e.latlng.lat,e.latlng.lng,sx,sy);
+  const sx=mapRect.left+e.point.x,sy=mapRect.top+e.point.y;
+  dropPinAtPoint(e.lngLat.lat,e.lngLat.lng,sx,sy);
 }
 
 function placeDraggablePin(lat,lng){
   if(draggablePinMarker){draggablePinMarker.remove();draggablePinMarker=null}
   const emoji=document.getElementById('pin-emoji')?.value||'📍';
-  draggablePinMarker=L.marker([lat,lng],{
-    icon:makePinIcon('new',emoji),
-    draggable:true,
-    zIndexOffset:2000
-  }).addTo(map);
+  var el=document.createElement('div');
+  el.innerHTML=pinMarkerHtml('new',emoji);
+  draggablePinMarker=new maplibregl.Marker({element:el,anchor:'bottom',draggable:true}).setLngLat([lng,lat]).addTo(map);
+  draggablePinMarker.getElement().style.zIndex='2000';
   // Drag animations
   draggablePinMarker.on('dragstart',()=>{
     document.getElementById('map-pin-cursor').classList.add('dragging');
   });
-  draggablePinMarker.on('drag',e=>{
-    const pt=map.latLngToContainerPoint(e.target.getLatLng());
+  draggablePinMarker.on('drag',()=>{
+    const ll=draggablePinMarker.getLngLat();
+    const pt=map.project(ll);
     const r=document.getElementById('map').getBoundingClientRect();
     moveCursor(r.left+pt.x,r.top+pt.y);
     document.getElementById('pin-drop-shadow').style.left=(r.left+pt.x)+'px';
     document.getElementById('pin-drop-shadow').style.top=(r.top+pt.y)+'px';
   });
-  draggablePinMarker.on('dragend',e=>{
-    const p=e.target.getLatLng();
+  draggablePinMarker.on('dragend',()=>{
+    const p=draggablePinMarker.getLngLat();
     pendingPinLat=p.lat;pendingPinLng=p.lng;
     document.getElementById('map-pin-cursor').classList.remove('dragging');
     // bounce
@@ -1436,10 +1380,10 @@ function pinSizeForZoom(){
   return{w:0,h:0,icon:0,hidden:true};
 }
 
-function makePinIcon(pt,iconName){
+function pinMarkerHtml(pt,iconName){
   if(!iconName||iconName==='📍')iconName=PIN_TYPES[pt]?.icon||'push_pin';
   var sz=pinSizeForZoom();
-  if(sz.hidden)return L.divIcon({html:'',className:'',iconSize:[1,1],iconAnchor:[0,0]});
+  if(sz.hidden)return '';
   var W=sz.w,H=sz.h;
   // Draw pin on canvas — no SVG encoding needed
   var canvas=document.createElement('canvas');
@@ -1477,10 +1421,9 @@ function makePinIcon(pt,iconName){
     iconHtml='<span class="material-icons-round" style="position:absolute;top:'
       +Math.round(H*0.14)+'px;left:50%;transform:translateX(-50%);font-size:'+sz.icon+'px;line-height:1;color:#c0000a;pointer-events:none">'+iconName+'</span>';
   }
-  var html='<div style="position:relative;width:'+W+'px;height:'+H+'px">'
+  return '<div style="position:relative;width:'+W+'px;height:'+H+'px">'
     +'<img src="'+dataURL+'" width="'+W+'" height="'+H+'" style="display:block">'
     +iconHtml+'</div>';
-  return L.divIcon({html:html,className:'',iconSize:[W,H],iconAnchor:[W/2,H-2],popupAnchor:[0,-(H-2)]});
 }
 
 function fmtDateTime(dt){if(!dt)return null;try{return new Date(dt).toLocaleString([],{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}catch{return dt}}
@@ -1525,7 +1468,7 @@ function refreshPinMarkers(){
   Object.entries(pins).forEach(function(e){
     var pid=e[0],pin=e[1];
     if(pinMarkers[pid]){
-      pinMarkers[pid].setIcon(makePinIcon(pin.type,pin.emoji||PIN_TYPES[pin.type]?.icon||'push_pin'));
+      pinMarkers[pid].getElement().innerHTML=pinMarkerHtml(pin.type,pin.emoji||PIN_TYPES[pin.type]?.icon||'push_pin');
     }
   });
 }
@@ -1545,11 +1488,15 @@ function upsertPinMarker(pinId){
   var pin=window._pinData[pinId];
   if(!pin)return;
   if(pinMarkers[pinId]){pinMarkers[pinId].remove();}
-  var icon=makePinIcon(pin.type,pin.emoji||PIN_TYPES[pin.type]?.icon||'push_pin');
-  var m=L.marker([pin.lat,pin.lng],{icon:icon,zIndexOffset:800}).addTo(map);
+  var html=pinMarkerHtml(pin.type,pin.emoji||PIN_TYPES[pin.type]?.icon||'push_pin');
+  var el=document.createElement('div');
+  el.innerHTML=html;
   var popupHtml=buildPinPopup(pin,pinId);
-  m.bindPopup(popupHtml,{maxWidth:260,minWidth:220,className:''});
-  m.on('popupopen',function(){window._popupRef=m;});
+  var popup=new maplibregl.Popup({offset:25,maxWidth:'260px'}).setHTML(popupHtml);
+  var m=new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([pin.lng,pin.lat]).setPopup(popup).addTo(map);
+  m.getElement().style.zIndex='800';
+  m.getElement().style.cursor='pointer';
+  popup.on('open',function(){window._popupRef=m;});
   pinMarkers[pinId]=m;
 }
 
