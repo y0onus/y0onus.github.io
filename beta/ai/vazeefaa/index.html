@@ -69,27 +69,27 @@
   a{color:inherit;}
   button{font-family:inherit;}
 
-  /* ---------- Ambient mesh-gradient background ---------- */
+  /* ---------- Ambient background: independent floating color blobs ---------- */
   .ambient{
     position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none;
     background:#ffffff;
   }
   .mesh-bg{
-    position:absolute; inset:-10%; 
-    background:
-      radial-gradient(ellipse 55% 45% at 88% 6%,  rgba(255,150,110,0.75), transparent 62%),
-      radial-gradient(ellipse 50% 45% at 100% 46%, rgba(255,140,165,0.60), transparent 60%),
-      radial-gradient(ellipse 60% 50% at 62% 100%, rgba(120,225,165,0.60), transparent 60%),
-      radial-gradient(ellipse 55% 45% at 6% 96%,   rgba(170,235,195,0.55), transparent 60%),
-      radial-gradient(ellipse 45% 40% at 100% 100%,rgba(205,190,245,0.45), transparent 60%),
-      radial-gradient(ellipse 45% 40% at 0% 10%,   rgba(190,225,255,0.40), transparent 60%),
-      radial-gradient(ellipse 60% 55% at 45% 45%,  rgba(255,255,255,0.9), transparent 65%);
-    animation:meshDrift 22s ease-in-out infinite;
+    position:absolute; inset:-15%;
   }
-  @keyframes meshDrift{
-    0%,100%{ transform:translate(0,0) scale(1); }
-    50%{ transform:translate(-1.5%,1.5%) scale(1.03); }
+  .blob{
+    position:absolute; border-radius:50%; filter:blur(min(11vw,95px));
+    mix-blend-mode:multiply;
+    will-change:transform; transform:translate(-50%,-50%);
   }
+  .blob-1{ width:72vw; height:72vw; left:74%; top:6%;  background:radial-gradient(circle, rgba(255,140,90,0.55)  0%, rgba(255,140,90,0)  70%); }
+  .blob-2{ width:66vw; height:66vw; left:92%; top:44%; background:radial-gradient(circle, rgba(255,110,175,0.5) 0%, rgba(255,110,175,0) 70%); }
+  .blob-3{ width:74vw; height:74vw; left:58%; top:88%; background:radial-gradient(circle, rgba(110,220,155,0.5) 0%, rgba(110,220,155,0) 70%); }
+  .blob-4{ width:68vw; height:68vw; left:10%; top:90%; background:radial-gradient(circle, rgba(90,210,200,0.48)  0%, rgba(90,210,200,0)  70%); }
+  .blob-5{ width:64vw; height:64vw; left:0%;  top:42%; background:radial-gradient(circle, rgba(175,140,255,0.48) 0%, rgba(175,140,255,0) 70%); }
+  .blob-6{ width:62vw; height:62vw; left:16%; top:2%;  background:radial-gradient(circle, rgba(110,210,255,0.48)  0%, rgba(110,210,255,0)  70%); }
+  .blob-7{ width:58vw; height:58vw; left:46%; top:42%; background:radial-gradient(circle, rgba(255,224,110,0.42) 0%, rgba(255,224,110,0)  70%); }
+  .blob-8{ width:60vw; height:60vw; left:62%; top:22%; background:radial-gradient(circle, rgba(255,130,150,0.42) 0%, rgba(255,130,150,0)  70%); }
 
   /* ---------- Section shell ---------- */
   section{ position:relative; z-index:2; padding:10px 6vw 70px; }
@@ -134,6 +134,11 @@
     animation:stepIn .45s cubic-bezier(.22,1,.36,1);
   }
   .step-header .msg-bubble + .msg-bubble{ margin-top:20px; }
+  .msg-bubble.typing-caret::after{
+    content:''; display:inline-block; width:3px; height:1em; margin-left:3px;
+    background:currentColor; vertical-align:-0.15em; animation:caretBlink 0.85s steps(1) infinite;
+  }
+  @keyframes caretBlink{ 0%,55%{ opacity:1; } 56%,100%{ opacity:0; } }
   .step-body{ flex:1; display:flex; flex-direction:column; justify-content:flex-end; gap:16px; padding-top:40px; }
   .step-options{ display:flex; flex-wrap:wrap; gap:10px; }
 
@@ -213,8 +218,58 @@
   .bento-card:disabled:not(.picked){ display:none; }
   .bento-card.wide{ grid-column:span 2; flex-direction:row; align-items:center; justify-content:flex-start; min-height:88px; }
 
-  .chat-input-row{ display:flex; gap:8px; }
+  .chat-input-row{ display:flex; gap:8px; flex-wrap:wrap; }
   .chat-input-row input{ flex:1; }
+
+  /* ---------- Swipe game ---------- */
+  .game-step{ display:flex; flex-direction:column; gap:16px; padding-bottom:50px; }
+  .game-topbar{ display:flex; align-items:center; gap:14px; }
+  .game-icon-btn{
+    width:44px; height:44px; border-radius:50%; flex-shrink:0; cursor:pointer;
+    border:1.5px solid rgba(44,42,50,0.14); background:rgba(255,255,255,0.5);
+    backdrop-filter:blur(10px) saturate(160%); -webkit-backdrop-filter:blur(10px) saturate(160%);
+    display:flex; align-items:center; justify-content:center; color:var(--ink);
+    transition:all .2s;
+  }
+  .game-icon-btn:hover:not(:disabled){ border-color:var(--indigo); color:var(--indigo-deep); transform:translateY(-2px); box-shadow:var(--shadow-sm); }
+  .game-icon-btn:disabled{ opacity:0.35; cursor:default; }
+  .game-progress{ flex:1; display:flex; flex-direction:column; gap:6px; }
+  .game-progress-track{ height:6px; border-radius:999px; background:rgba(44,42,50,0.1); overflow:hidden; }
+  .game-progress-fill{ height:100%; background:var(--indigo); border-radius:999px; transition:width .4s ease; }
+  .game-progress-label{ font-size:0.72rem; font-weight:700; color:var(--ink-soft); text-align:center; }
+  .game-hint{ text-align:center; font-size:0.78rem; color:var(--ink-soft); }
+
+  .swipe-stack{ position:relative; flex:1; min-height:430px; touch-action:none; }
+  .swipe-card{
+    position:absolute; inset:0 0 auto 0; width:100%; max-width:420px; margin:0 auto;
+    transform:translateY(calc(var(--depth,0) * 12px)) scale(calc(1 - var(--depth,0) * 0.05));
+    opacity:calc(1 - var(--depth,0) * 0.3);
+    z-index:calc(10 - var(--depth,0));
+    transition:transform .35s cubic-bezier(.22,1,.36,1), opacity .35s;
+    cursor:grab; user-select:none;
+  }
+  .swipe-card:not([data-depth="0"]){ pointer-events:none; }
+  .swipe-card.dragging{ transition:none; cursor:grabbing; }
+  .swipe-card.entering{ animation:cardPeekIn .35s cubic-bezier(.22,1,.36,1); }
+  @keyframes cardPeekIn{ from{ opacity:0; transform:translateY(16px) scale(0.97);} }
+  .swipe-stamp{
+    position:absolute; top:22px; z-index:5; padding:7px 16px; border:3px solid; border-radius:10px;
+    font-family:'Baloo 2',sans-serif; font-weight:800; font-size:1.15rem; letter-spacing:1.5px;
+    opacity:0; pointer-events:none; text-transform:uppercase; background:rgba(255,255,255,0.65);
+  }
+  .swipe-stamp.like{ left:20px; color:#2FAE6B; border-color:#2FAE6B; transform:rotate(-12deg); }
+  .swipe-stamp.pass{ right:20px; color:#E1495A; border-color:#E1495A; transform:rotate(12deg); }
+
+  .game-actions{ display:flex; justify-content:center; gap:26px; }
+  .swipe-action-btn{
+    width:62px; height:62px; border-radius:50%; cursor:pointer; background:#fff;
+    display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-md);
+    transition:transform .15s; flex-shrink:0;
+  }
+  .swipe-action-btn:active{ transform:scale(0.9); }
+  .swipe-action-btn.pass{ color:#E1495A; border:2px solid #F3D3D6; }
+  .swipe-action-btn.like{ color:#2FAE6B; border:2px solid #CDEEDC; }
+  .swipe-action-btn .msym{ font-size:28px; }
 
   .chip-input{
     display:flex; flex-wrap:wrap; gap:8px; align-items:center;
@@ -373,7 +428,16 @@
 <body>
 
 <div class="ambient">
-  <div class="mesh-bg"></div>
+  <div class="mesh-bg">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="blob blob-4"></div>
+    <div class="blob blob-5"></div>
+    <div class="blob blob-6"></div>
+    <div class="blob blob-7"></div>
+    <div class="blob blob-8"></div>
+  </div>
 </div>
 
 <section id="welcome-screen">
@@ -407,7 +471,7 @@
 
    Reality check on how this works (read before relying on it):
    - Browsers block cross-origin fetch() to sites that don't send
-     CORS headers, and none of these three job boards do. So this
+     CORS headers, and none of these job boards do. So this
      routes requests through a public CORS proxy (allorigins.win)
      that fetches the page server-side and hands the raw HTML back
      with permissive CORS headers. That's still "a server" — just
@@ -430,14 +494,16 @@
 const CORS_PROXIES = [
   { name:'allorigins', mode:'html', build: url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` },
   { name:'codetabs',   mode:'html', build: url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}` },
-  { name:'corsproxy.io', mode:'html', build: url => `https://corsproxy.io/?url=${encodeURIComponent(url)}` },
+  { name:'thingproxy', mode:'html', build: url => `https://thingproxy.freeboard.io/fetch/${url}` },
   { name:'r.jina.ai (reader)', mode:'text', build: url => `https://r.jina.ai/${url}` },
+  { name:'corsproxy.io', mode:'html', build: url => `https://corsproxy.io/?url=${encodeURIComponent(url)}` },
 ];
 
 const SOURCES = [
   { site:"Jobsicle", listUrl:"https://jobsicle.mv/", base:"https://jobsicle.mv", linkPattern:/^\/job\//i },
   { site:"Job Center Maldives", listUrl:"https://jobcenter.mv/en/jobs", base:"https://jobcenter.mv", linkPattern:/^\/en\/jobs\/[a-z0-9-]+$/i },
   { site:"Career Maldives", listUrl:"https://career-maldives.com/jobs/", base:"https://career-maldives.com", linkPattern:/\/jobs\/[a-z0-9-]+\/?$/i },
+  { site:"Job Maldives", listUrl:"https://www.job-maldives.com/", base:"https://www.job-maldives.com", linkPattern:/^\/\d{4}\/\d{2}\/[a-z0-9_-]+\.html$/i },
 ];
 
 const AREA_LIST = [
@@ -475,18 +541,26 @@ function guessPosted(text){
 }
 const COMPANY_SUFFIXES = /(Pvt\.?\s?Ltd|LLC|LLP|Ltd|Resort(?:\s*&\s*Spa)?|Hotel|Guesthouse|Group|Trading|Enterprises|Company|Co\.|Inc|Maldives|School|Hospital|Clinic)/i;
 function guessCompany(text, title){
+  // Only look outside the job title itself — otherwise a resort/hotel name
+  // that's part of the title (e.g. "... at Sun Siyam Resort") gets picked
+  // up as if it were separate "company" text describing the employer.
+  const idx = text.indexOf(title);
+  const searchText = idx !== -1 ? (text.slice(0, idx) + ' ' + text.slice(idx + title.length)) : text;
+  // a candidate is junk if it's a leftover markdown-link fragment (e.g.
+  // "](https://...") or otherwise looks like a URL rather than a name
+  const looksLikeMarkdownOrUrl = s => /[\[\]()]/.test(s) || /https?:|www\.|\.[a-z]{2,4}\//i.test(s);
+
   // 1) look for a capitalised phrase ending in a recognisable business suffix
-  const suffixMatch = text.match(new RegExp(`([A-Z][A-Za-z&'.,\\- ]{2,55}${COMPANY_SUFFIXES.source})`));
-  if(suffixMatch) return suffixMatch[1].trim();
+  const suffixMatch = searchText.match(new RegExp(`([A-Z][A-Za-z&'.,\\- ]{2,55}${COMPANY_SUFFIXES.source})`));
+  if(suffixMatch && !looksLikeMarkdownOrUrl(suffixMatch[1])) return suffixMatch[1].trim();
 
   // 2) otherwise look at whatever text immediately follows the job title in
   // the card and see if it looks like a name (not a date/location/duration)
-  const idx = text.indexOf(title);
   if(idx !== -1){
     const after = text.slice(idx + title.length, idx + title.length + 80);
     const candidate = after.split(/[•·|\-]/)[0].replace(/^[\s,]+/, '').trim();
     const looksLikeNoise = /^\d|ago$|^(full|part)[\s-]?time$|remote|hybrid|onsite/i.test(candidate);
-    if(candidate.length > 2 && candidate.length < 60 && !looksLikeNoise && !AREA_LIST.some(a=>candidate.toLowerCase()===a.toLowerCase())){
+    if(candidate.length > 2 && candidate.length < 60 && !looksLikeNoise && !looksLikeMarkdownOrUrl(candidate) && !AREA_LIST.some(a=>candidate.toLowerCase()===a.toLowerCase())){
       return candidate;
     }
   }
@@ -511,7 +585,6 @@ function guessSkills(title){
   for(const [kw, sk] of Object.entries(SKILL_KEYWORDS)){
     if(t.includes(kw)) sk.forEach(s=>tags.add(s));
   }
-  if(tags.size === 0) tags.add("Communication");
   return [...tags];
 }
 
@@ -520,7 +593,7 @@ async function fetchViaProxy(url){
 
   const attempt = (proxy) => (async () => {
     try{
-      const res = await fetch(proxy.build(url), { signal: AbortSignal.timeout(9000) });
+      const res = await fetch(proxy.build(url), { signal: AbortSignal.timeout(15000) });
       if(!res.ok){
         const e = new Error(`${proxy.name}: HTTP ${res.status}`);
         console.warn(`[${proxy.name}] HTTP ${res.status} for`, url);
@@ -559,6 +632,7 @@ function extractJobsFromHTML(html, source){
   const doc = new DOMParser().parseFromString(html, 'text/html');
   if(source.site === 'Jobsicle') return parseJobsicleHTML(doc, source);
   if(source.site === 'Job Center Maldives') return parseJobCenterHTML(doc, source);
+  if(source.site === 'Job Maldives') return parseJobMaldivesHTML(doc, source);
   return parseGenericHTML(doc, source);
 }
 
@@ -568,6 +642,29 @@ function extractJobsFromHTML(html, source){
 // row in the static HTML, so the detail URL is reconstructed from the
 // numeric id in the button's id attribute — this is a best-effort guess
 // (falls back to the listing page itself if nothing better is found).
+// Generic call-to-action link text (e.g. a separate "Apply Now" button
+// pointing at the same job URL as the real title link) that should never
+// be mistaken for the job title itself.
+const CTA_LABEL_RE = /^(apply(\s*now)?|apply here|view( job| details| more)?|read more|learn more|see (more|job|details)|more info|(job|full) details|details)$/i;
+
+// Given a list of {href, label, ...} candidates (possibly several per href,
+// e.g. a title link plus a separate "Apply Now" button to the same job),
+// keep one winner per href: prefer a real-looking label over a CTA one,
+// and the more descriptive label when both look real. Drops any href where
+// every candidate label was just a CTA phrase.
+function pickBestPerHref(candidates){
+  const byHref = new Map();
+  candidates.forEach(c=>{
+    if(!c.href || !c.label || c.label.length < 3) return;
+    const isCTA = CTA_LABEL_RE.test(c.label);
+    const existing = byHref.get(c.href);
+    if(!existing) byHref.set(c.href, { ...c, isCTA });
+    else if(existing.isCTA && !isCTA) byHref.set(c.href, { ...c, isCTA });
+    else if(!existing.isCTA && !isCTA && c.label.length > existing.label.length) byHref.set(c.href, { ...c, isCTA });
+  });
+  return [...byHref.values()].filter(v => !v.isCTA);
+}
+
 function parseJobsicleHTML(doc, source){
   const jobs = [];
   const seen = new Set();
@@ -612,8 +709,8 @@ function parseJobsicleHTML(doc, source){
 // the other holds the plain-text business name.
 function parseJobCenterHTML(doc, source){
   const jobs = [];
-  const seen = new Set();
 
+  const candidates = [];
   doc.querySelectorAll('a[href]').forEach(a=>{
     let path;
     try{ path = new URL(a.getAttribute('href'), source.base).pathname; }
@@ -621,11 +718,14 @@ function parseJobCenterHTML(doc, source){
     if(!source.linkPattern.test(path)) return;
 
     const href = absUrl(a.getAttribute('href'), source.base);
-    if(!href || seen.has(href)) return;
+    if(!href) return;
+    const label = (a.getAttribute('title') || a.textContent || '').replace(/\s+/g,' ').trim();
+    if(label.length < 3) return;
+    candidates.push({ href, label, el: a });
+  });
 
-    const title = (a.getAttribute('title') || a.textContent || '').replace(/\s+/g,' ').trim();
-    if(title.length < 3) return;
-    seen.add(href);
+  pickBestPerHref(candidates).forEach(({ href, label, el: a })=>{
+    const title = label;
 
     // .mb-2 blocks may sit inside the <a> or on a sibling within the same card
     let scope = a.querySelectorAll('.mb-2').length ? a : (a.closest('.mb-2') ? a.parentElement : a.parentElement);
@@ -652,24 +752,77 @@ function parseJobCenterHTML(doc, source){
   return jobs.slice(0, 40);
 }
 
+// ---- Job Maldives: a Blogger-hosted site. Each posting is
+// <h3 class="post-title"><a href="...2026/07/....html">Title</a></h3>,
+// and the real skill/category tags sit in a sibling "post-labels" block
+// within the same post container — much more reliable than guessing
+// skills from the title text, so we use them as-is when present.
+function parseJobMaldivesHTML(doc, source){
+  const jobs = [];
+  const seen = new Set();
+
+  doc.querySelectorAll('.post-title a[href], h3.post-title a[href], h2.post-title a[href]').forEach(a=>{
+    const href = absUrl(a.getAttribute('href'), source.base);
+    if(!href) return;
+    let path;
+    try{ path = new URL(href).pathname; } catch(e){ return; }
+    if(!source.linkPattern.test(path)) return;
+    if(seen.has(href)) return;
+
+    const title = a.textContent.replace(/\s+/g,' ').trim();
+    if(title.length < 3) return;
+    seen.add(href);
+
+    // walk up to the post container so we can find its .post-labels block
+    const postScope = a.closest('.post, .post-outer, article, .hentry') || a.closest('div') || a.parentElement;
+    const labelEls = postScope ? [...postScope.querySelectorAll('.post-labels a, .post-labels')] : [];
+    const tags = [...new Set(
+      labelEls.flatMap(el => el.matches('a') ? [el.textContent] : [...el.querySelectorAll('a')].map(l=>l.textContent))
+        .map(t => t.replace(/\s+/g,' ').trim())
+        .filter(Boolean)
+    )];
+
+    const contextScope = postScope ? postScope.cloneNode(true) : null;
+    if(contextScope){
+      contextScope.querySelectorAll('.post-labels').forEach(el => el.remove());
+    }
+    const context = (postScope ? postScope.textContent : title).replace(/\s+/g,' ').trim();
+    const companyContext = (contextScope ? contextScope.textContent : title).replace(/\s+/g,' ').trim();
+    jobs.push({
+      id: href, title,
+      company: guessCompany(companyContext, title),
+      logoUrl: null,
+      area: guessArea(context), type: guessType(context), mode: guessMode(context),
+      minYears: 0,
+      skills: tags.length ? tags : guessSkills(title),
+      site: source.site, url: href, posted: guessPosted(context),
+    });
+  });
+
+  return jobs.slice(0, 40);
+}
+
 // ---- Career Maldives: no confirmed DOM details yet, so this stays on the
 // generic href + surrounding-text heuristic until we know its real markup.
 function parseGenericHTML(doc, source){
-  const seen = new Set();
   const jobs = [];
 
+  const candidates = [];
   [...doc.querySelectorAll('a[href]')].forEach(a=>{
     let path;
     try{ path = new URL(a.getAttribute('href'), source.base).pathname; }
     catch(e){ return; }
     if(!source.linkPattern.test(path)) return;
 
-    const title = a.textContent.replace(/\s+/g,' ').trim();
-    if(title.length < 3) return;
-
+    const label = a.textContent.replace(/\s+/g,' ').trim();
+    if(label.length < 3) return;
     const href = absUrl(a.getAttribute('href'), source.base);
-    if(!href || seen.has(href)) return;
-    seen.add(href);
+    if(!href) return;
+    candidates.push({ href, label, el: a });
+  });
+
+  pickBestPerHref(candidates).forEach(({ href, label, el: a })=>{
+    const title = label;
 
     let node = a, context = '';
     for(let i=0;i<4 && node.parentElement;i++){
@@ -697,26 +850,56 @@ function parseGenericHTML(doc, source){
   return jobs.slice(0, 40);
 }
 
+// (CTA_LABEL_RE is shared — declared earlier alongside pickBestPerHref)
+
+function cleanMarkdownContext(str){
+  return str
+    // fully-formed [label](url) -> just the label
+    .replace(/\[([^\]\n]{1,160})\]\(https?:\/\/[^\s)]+\)/g, '$1')
+    // a link that started before our window, so only "...](url)" survived
+    .replace(/\]\(https?:\/\/[^\s)]*\)?/g, '')
+    // any other stray brackets left behind
+    .replace(/[\[\]]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function extractJobsFromMarkdown(text, source){
   // r.jina.ai (and similar readers) return markdown-ish text with [label](url) links
-  const seen = new Set();
-  const jobs = [];
-  const linkRe = /\[([^\]\n]{3,120})\]\((https?:\/\/[^\s)]+)\)/g;
+  const linkRe = /\[([^\]\n]{1,160})\]\((https?:\/\/[^\s)]+)\)/g;
+  const byHref = new Map(); // href -> { label, isCTA, index, len }
   let m;
   while((m = linkRe.exec(text)) !== null){
-    const [full, label, href] = m;
+    const [full, rawLabel, href] = m;
     let path;
     try{ path = new URL(href).pathname; } catch(e){ continue; }
     if(!source.linkPattern.test(path)) continue;
 
-    const title = label.replace(/\s+/g,' ').trim();
-    if(title.length < 3 || seen.has(href)) continue;
-    seen.add(href);
+    const label = rawLabel.replace(/\s+/g,' ').trim();
+    if(label.length < 3) continue;
+    const isCTA = CTA_LABEL_RE.test(label);
 
-    // grab a window of surrounding plain text as context for the guessers
-    const start = Math.max(0, m.index - 20);
-    const end = Math.min(text.length, m.index + full.length + 200);
-    const context = text.slice(start, end).replace(/\s+/g,' ');
+    const existing = byHref.get(href);
+    if(!existing){
+      byHref.set(href, { label, isCTA, index: m.index, len: full.length });
+    } else if(existing.isCTA && !isCTA){
+      // a real-looking title beats a generic "Apply Now"-style link to the same job
+      byHref.set(href, { label, isCTA, index: existing.index, len: full.length });
+    } else if(!existing.isCTA && !isCTA && label.length > existing.label.length){
+      // both look like real titles — prefer the more descriptive one
+      byHref.set(href, { ...existing, label });
+    }
+  }
+
+  const jobs = [];
+  for(const [href, info] of byHref){
+    // every link to this job was a generic CTA — skip rather than show "Apply Now" as the title
+    if(info.isCTA) continue;
+    const title = info.label;
+
+    const start = Math.max(0, info.index - 20);
+    const end = Math.min(text.length, info.index + info.len + 200);
+    const context = cleanMarkdownContext(text.slice(start, end));
 
     jobs.push({
       id: href,
@@ -736,7 +919,7 @@ function extractJobsFromMarkdown(text, source){
   return jobs.slice(0, 40);
 }
 
-async function scrapeSource(source){
+async function scrapeSource(source, attempt = 1){
   try{
     const { content, mode, via } = await fetchViaProxy(source.listUrl);
     const jobs = mode === 'text'
@@ -747,6 +930,12 @@ async function scrapeSource(source){
     }
     return { site: source.site, jobs, error: null };
   }catch(err){
+    if(attempt < 2){
+      // one retry with a short backoff — proxy timeouts/rate limits are
+      // often transient, so a single retry recovers a lot of failures
+      await new Promise(r => setTimeout(r, 1200));
+      return scrapeSource(source, attempt + 1);
+    }
     console.warn('Live scrape failed for', source.site, err);
     return { site: source.site, jobs: [], error: (err && err.message) || 'fetch failed' };
   }
@@ -773,7 +962,7 @@ async function initJobs(){
   if(statusEl){
     const parts = statuses.map(s => s.error ? `${s.site}: 0 (${s.error})` : `${s.site}: ${s.count}`);
     statusEl.innerHTML = `${parts.join(' &middot; ')}. `
-      + (JOBS.length ? '' : 'All three came back empty — likely the free CORS proxy is rate-limited right now. ')
+      + (JOBS.length ? '' : 'All sources came back empty — likely the free CORS proxy is rate-limited right now. ')
       + `<a href="#" id="retry-scrape" style="color:var(--lagoon-deep); font-weight:700;">Retry scrape</a>`;
     const retryLink = document.getElementById('retry-scrape');
     if(retryLink) retryLink.onclick = (e)=>{ e.preventDefault(); initJobs(); };
@@ -784,6 +973,50 @@ async function initJobs(){
   return { count: JOBS.length, statuses };
 }
 
+/* ---------------- AMBIENT BACKGROUND DRIFT ----------------
+   Each colored blob roams on its own independent, asynchronous path while
+   a message is being typed out, then every blob freezes exactly where it
+   is the instant typing for that step finishes (started/stopped from
+   renderStep below) — so the blend keeps shifting into new areas of the
+   screen per prompt, but never drifts once the reply is fully shown. */
+const blobEls = [...document.querySelectorAll('.blob')];
+// distinct amplitude/frequency/phase per blob so none of them move in
+// lockstep — each one floats along its own fluid, independent loop.
+const BLOB_MOTION = [
+  { ax:16, ay:14, fx:0.62, fy:0.51, ph:0.0, rr:16, rf:0.24, sa:0.11, sf:0.38 },
+  { ax:14, ay:17, fx:0.48, fy:0.70, ph:1.1, rr:14, rf:0.30, sa:0.10, sf:0.44 },
+  { ax:17, ay:12, fx:0.55, fy:0.40, ph:2.3, rr:19, rf:0.19, sa:0.13, sf:0.31 },
+  { ax:12, ay:15, fx:0.75, fy:0.58, ph:3.4, rr:15, rf:0.26, sa:0.09, sf:0.50 },
+  { ax:16, ay:13, fx:0.36, fy:0.66, ph:0.7, rr:18, rf:0.33, sa:0.12, sf:0.27 },
+  { ax:14, ay:11, fx:0.68, fy:0.44, ph:4.1, rr:12, rf:0.23, sa:0.10, sf:0.42 },
+  { ax:11, ay:14, fx:0.42, fy:0.82, ph:1.8, rr:20, rf:0.20, sa:0.15, sf:0.34 },
+  { ax:13, ay:16, fx:0.58, fy:0.48, ph:2.9, rr:15, rf:0.27, sa:0.10, sf:0.46 },
+];
+let meshAnimId = null;
+let meshStartTs = null;
+
+function meshFrame(ts){
+  if(meshStartTs === null) meshStartTs = ts;
+  const t = (ts - meshStartTs) / 1000;
+  blobEls.forEach((el, i)=>{
+    const m = BLOB_MOTION[i % BLOB_MOTION.length];
+    const tx = Math.sin(t*m.fx + m.ph) * m.ax;
+    const ty = Math.cos(t*m.fy + m.ph*1.3) * m.ay;
+    const rot = Math.sin(t*m.rf + m.ph) * m.rr;
+    const scale = 1 + Math.sin(t*m.sf + m.ph) * m.sa;
+    el.style.transform = `translate(calc(-50% + ${tx}vw), calc(-50% + ${ty}vh)) rotate(${rot}deg) scale(${scale})`;
+  });
+  meshAnimId = requestAnimationFrame(meshFrame);
+}
+function startMeshDrift(){
+  if(meshAnimId !== null) return;
+  meshStartTs = null;
+  meshAnimId = requestAnimationFrame(meshFrame);
+}
+function stopMeshDrift(){
+  if(meshAnimId !== null){ cancelAnimationFrame(meshAnimId); meshAnimId = null; }
+}
+
 /* ---------------- CHAT ENGINE (one full-page step at a time) ---------------- */
 const CARD_COLORS_LIST = CARD_COLORS;
 const chatWindow = document.getElementById('chat-window');
@@ -792,9 +1025,9 @@ const pageFooter = document.getElementById('page-footer');
 
 const WELCOME_GREETINGS = ["Hi there.", "Vazeefaa.", "Let's find your fit.", "Ready when you are."];
 const WELCOME_SUBS = [
-  "Let's find a job that actually fits you — a few quick questions, then I'll bring back real openings from Maldives job boards.",
-  "A few quick questions, then I'll pull live openings from Maldives job boards and match them to you.",
-  "Tell me a bit about yourself and I'll go check Jobsicle, Job Center Maldives, and Career Maldives for you.",
+  "Let's find a job that actually fits you. I'll ask a handful of quick questions about your skills and preferences, then go bring back real, currently-open positions from across the Maldives job boards — no generic listings, no dead links.",
+  "A few quick questions about what you're good at and what you're looking for, and I'll pull live openings straight from the Maldives job boards and match them to you, ranked by how well they actually fit.",
+  "Tell me a bit about yourself — your skills, your experience, the hours you want — and I'll go check Jobsicle, Job Center Maldives, Career Maldives, and Job Maldives for real, up-to-date postings that match.",
 ];
 document.getElementById('welcome-greeting').textContent = pick(WELCOME_GREETINGS);
 document.getElementById('welcome-sub').textContent = pick(WELCOME_SUBS);
@@ -803,19 +1036,74 @@ let lastResults = [];
 const chatAnswers = { skills: [], years: 2, title: '', area: 'Any', hours: 'Any', mode: 'Any' };
 
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
 
-/* Renders one full-page step: header text(s) up top, options/body lower down,
-   and an optional fixed bottom bar (used only when free text entry is needed). */
-function renderStep(headerHTML, bodyHTML, barHTML){
-  pageFooter.classList.remove('show');
-  chatWindow.innerHTML = `<div class="chat-step"><div class="step-header">${headerHTML}</div><div class="step-body">${bodyHTML || ''}</div></div>`;
-  if(barHTML){ chatBar.innerHTML = barHTML; chatBar.style.display = 'block'; }
-  else { chatBar.innerHTML = ''; chatBar.style.display = 'none'; }
-  window.scrollTo(0,0);
-  return chatWindow.querySelector('.chat-step');
+/* Types `text` into `el` one character at a time, pausing a little longer
+   after commas/periods so it reads naturally. Tapping anywhere on the
+   current step fast-forwards straight to the full text. */
+function typeInto(el, text, isSkipped){
+  return new Promise(resolve=>{
+    if(isSkipped()){ el.textContent = text; resolve(); return; }
+    el.classList.add('typing-caret');
+    let i = 0;
+    const step = ()=>{
+      if(isSkipped()){ el.textContent = text; el.classList.remove('typing-caret'); resolve(); return; }
+      i++;
+      el.textContent = text.slice(0, i);
+      if(i >= text.length){ el.classList.remove('typing-caret'); resolve(); return; }
+      const ch = text[i-1];
+      let delay = 14 + Math.random()*16;
+      if(/[,;—]/.test(ch)) delay += 90;
+      if(/[.!?]/.test(ch)) delay += 220;
+      setTimeout(step, delay);
+    };
+    step();
+  });
 }
 
-function showStepTyping(cb, delay=400){
+/* Renders one full-page step: header text(s) type out at the top one by
+   one, then the options/body lower down fade in, plus an optional fixed
+   bottom bar (used only when free text entry is needed). Returns a
+   Promise that resolves with the step element once the body is mounted
+   and ready for event listeners to be attached. */
+async function renderStep(headerTexts, bodyHTML, barHTML){
+  pageFooter.classList.remove('show');
+  const texts = Array.isArray(headerTexts) ? headerTexts : [headerTexts];
+  const bubblesHTML = texts.map((_,i)=>`<div class="msg-bubble" id="type-bubble-${i}"></div>`).join('');
+  chatWindow.innerHTML = `<div class="chat-step"><div class="step-header">${bubblesHTML}</div><div class="step-body" id="step-body-target"></div></div>`;
+  chatBar.innerHTML = ''; chatBar.style.display = 'none';
+  window.scrollTo(0,0);
+  const step = chatWindow.querySelector('.chat-step');
+  const bodyTarget = step.querySelector('#step-body-target');
+  bodyTarget.style.opacity = '0';
+
+  let skipped = false;
+  const onTap = ()=>{ skipped = true; };
+  step.addEventListener('click', onTap);
+
+  startMeshDrift(); // background starts roaming into a new area for this prompt
+
+  if(!skipped) await wait(280); // brief pause before the reply starts typing
+
+  for(let i=0;i<texts.length;i++){
+    const el = step.querySelector('#type-bubble-'+i);
+    await typeInto(el, texts[i], ()=>skipped);
+    if(!skipped) await wait(380);
+  }
+  step.removeEventListener('click', onTap);
+
+  stopMeshDrift(); // freeze the background the instant typing is done
+
+  if(!skipped) await wait(220); // small beat before the options/body appear
+
+  bodyTarget.innerHTML = bodyHTML || '';
+  bodyTarget.style.transition = 'opacity .45s ease';
+  requestAnimationFrame(()=>{ bodyTarget.style.opacity = '1'; });
+  if(barHTML){ chatBar.innerHTML = barHTML; chatBar.style.display = 'block'; }
+  return step;
+}
+
+function showStepTyping(cb, delay=550){
   chatBar.style.display = 'none';
   chatWindow.innerHTML = `<div class="chat-step"><div class="step-header"><div class="msg-bubble typing-dots"><span></span><span></span><span></span></div></div></div>`;
   window.scrollTo(0,0);
@@ -827,12 +1115,6 @@ const YEARS_OPTIONS = [
   { label:'1–3 years', value:'2', icon:'trending_up' },
   { label:'4–7 years', value:'5', icon:'workspace_premium' },
   { label:'8+ years', value:'9', icon:'military_tech' },
-];
-const AREA_OPTIONS = [
-  { label:'Anywhere in the Maldives', value:'Any', icon:'public' },
-  { label:"Male' / Hulhumale'", value:"Male'", icon:'location_city' },
-  { label:'Addu City', value:'Addu City', icon:'location_on' },
-  { label:'A resort island', value:'Kaafu Atoll', icon:'beach_access' },
 ];
 const HOURS_OPTIONS = [
   { label:'Full-time', value:'Full-time', icon:'work' },
@@ -847,33 +1129,23 @@ const MODE_OPTIONS = [
 
 const QUESTION_VARIANTS = {
   years: [
-    "How many years of relevant work experience do you have?",
-    "Next — what's your experience level?",
-    "How long have you been working in this field?",
-  ],
-  title: [
-    "What job title are you looking for?",
-    "What kind of role are you after?",
-    "Got a specific job title in mind?",
-  ],
-  area: [
-    "Where in the Maldives would you like to work?",
-    "Any preferred location?",
-    "Where should I focus the search?",
+    "How many years of relevant work experience do you have? This helps me steer clear of listings that are asking for way more seniority than you've got, and surface the ones that are actually within reach.",
+    "Next up — what's your experience level? Whether you're fresh out of school or you've been doing this for a decade changes a lot about which openings are worth your time, so let's get this right.",
+    "How long have you been working in this field so far? No wrong answer here — I just use it to weigh how well each listing's requirements line up with where you're at.",
   ],
   hours: [
-    "Looking for full-time or part-time hours?",
-    "Full-time or part-time — what works for you?",
-    "How many hours are you hoping to work?",
+    "Looking for full-time or part-time hours? Some of the boards mix both together without labeling them clearly, so this helps me filter out the ones that don't match what you actually want.",
+    "Full-time or part-time — what works better for your schedule right now? I'll use this to quietly rule out anything that doesn't fit before I show you results.",
+    "How many hours are you hoping to work — a full-time role, or something part-time that fits around other commitments? Let me know and I'll factor that into the search.",
   ],
   mode: [
-    "Remote, onsite, or hybrid?",
-    "How do you want to work day-to-day — remote, onsite, or a mix?",
-    "Last one — remote, onsite, or hybrid?",
+    "Last one — remote, onsite, or hybrid? A lot of these postings don't say clearly, so I do my best to read between the lines, but your preference still steers which ones float to the top.",
+    "How do you want to work day-to-day — fully remote, in person at a workplace, or some mix of the two? This is the last question, then I'll go put everything together.",
+    "Remote, onsite, or hybrid — which one fits how you want to work? Once I've got this, I'll head off and match you against everything currently posted.",
   ],
 };
 
-const CHAT_STEPS = ['skills','years','title','area','hours','mode'];
+const CHAT_STEPS = ['skills','years','hours','mode'];
 let chatIndex = 0;
 let isRestart = false;
 
@@ -882,12 +1154,10 @@ function askStep(i){
   const key = CHAT_STEPS[i];
   showStepTyping(()=>{
     if(key === 'skills') askSkillsStep();
-    else if(key === 'title') askTitleStep();
     else if(key === 'years') askOptionsStep('years', pick(QUESTION_VARIANTS.years), YEARS_OPTIONS);
-    else if(key === 'area') askOptionsStep('area', pick(QUESTION_VARIANTS.area), AREA_OPTIONS);
     else if(key === 'hours') askOptionsStep('hours', pick(QUESTION_VARIANTS.hours), HOURS_OPTIONS);
     else if(key === 'mode') askOptionsStep('mode', pick(QUESTION_VARIANTS.mode), MODE_OPTIONS);
-  }, i===0 ? 0 : 350);
+  }, i===0 ? 250 : 500);
 }
 
 function goNext(){ chatIndex++; askStep(chatIndex); }
@@ -901,75 +1171,41 @@ function bentoCardsHtml(items){
   }).join('');
 }
 
-function askOptionsStep(key, question, options){
-  const step = renderStep(`<div class="msg-bubble">${question}</div>`, `<div class="bento-grid">${bentoCardsHtml(options)}</div>`);
+async function askOptionsStep(key, question, options){
+  const step = await renderStep([question], `<div class="bento-grid">${bentoCardsHtml(options)}</div>`);
   step.querySelectorAll('.bento-card').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       step.querySelectorAll('.bento-card').forEach(b=>b.disabled = true);
       btn.classList.add('picked');
       chatAnswers[key] = btn.dataset.val;
-      setTimeout(goNext, 200);
-    });
-  });
-}
-
-function askTitleStep(){
-  const topTitles = ALL_TITLES.slice(0, 5);
-  const items = topTitles.map(t=>({ value:t, label:t, icon:'badge' }))
-    .concat([{ value:'__other', label:'Something else', icon:'edit' }]);
-  const step = renderStep(`<div class="msg-bubble">${pick(QUESTION_VARIANTS.title)}</div>`, `<div class="bento-grid">${bentoCardsHtml(items)}</div>`);
-
-  step.querySelectorAll('.bento-card').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      if(btn.dataset.val === '__other'){
-        step.querySelectorAll('.bento-card').forEach(b=>b.disabled = true);
-        btn.classList.add('picked');
-        chatBar.innerHTML = `<div class="chat-bar-inner">
-            <input type="text" id="chat-title-input" placeholder="Type a job title, or leave blank to keep it open">
-            <button type="button" class="chat-bar-submit" id="chat-title-go"><span class="msym">arrow_forward</span></button>
-          </div>`;
-        chatBar.style.display = 'block';
-        const input = document.getElementById('chat-title-input');
-        const go = ()=>{
-          chatAnswers.title = input.value.trim();
-          goNext();
-        };
-        document.getElementById('chat-title-go').addEventListener('click', go);
-        input.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } });
-        input.focus();
-        return;
-      }
-      step.querySelectorAll('.bento-card').forEach(b=>b.disabled = true);
-      btn.classList.add('picked');
-      chatAnswers.title = btn.dataset.val;
-      setTimeout(goNext, 200);
+      setTimeout(goNext, 450);
     });
   });
 }
 
 const COMMON_SKILLS = ["Customer service","Excel","Sales","Housekeeping","Graphic design","Accounting"];
 const SKILLS_INTROS = [
-  "First up — what are your skills? Add a few, one at a time, then hit done.",
-  "Let's start with your skills. Type them in one at a time, then hit done.",
-  "To kick off — what are you good at? Add each skill, then hit done.",
+  "First up — what are your skills? Pick a few from the suggestions below, or type your own in one at a time down at the bottom, then hit the arrow when you're done adding them.",
+  "Let's start with your skills. Tap anything that applies below, or type your own into the bar at the bottom of the screen — add as many as you'd like, then hit done when you're finished.",
+  "To kick things off, tell me what you're good at. Add each skill one at a time — either tap a suggestion or type your own — and I'll use all of them together to rank what I find for you.",
 ];
 const GREETING_LINES = [
-  "Hi, I'm Vazeefaa 👋 I'll ask a few quick questions, then pull your best-matching jobs live from Maldives job boards.",
-  "Hey there — I'm Vazeefaa. A few quick questions and I'll go dig through Maldives job boards for you.",
-  "Welcome! I'm Vazeefaa. Let's find you a job — I just need a few answers first.",
+  "Hi, I'm Vazeefaa. I'll ask you a handful of quick questions about your skills, experience, and preferences, then go dig through live Maldives job boards to pull back the openings that actually fit you.",
+  "Hey there — I'm Vazeefaa. Give me a few minutes and a few honest answers, and I'll go check Jobsicle, Job Center Maldives, Career Maldives, and Job Maldives for real postings that match what you're after.",
+  "Welcome! I'm Vazeefaa, here to make job hunting in the Maldives a little less painful. I just need a few quick answers from you first, then I'll go find and rank real listings against them.",
 ];
 const RESTART_LINES = [
-  "Let's go again — I'll ask the same questions in case anything's changed.",
-  "Round two — same questions, fresh search.",
-  "Sure thing, let's redo this from the top.",
+  "Let's go again — I'll ask through the same questions in case anything about your situation has changed since last time, then run a fresh search against the current listings.",
+  "Round two — same questions as before, but I'll pull a completely fresh set of results, since the boards may have changed since you last asked.",
+  "Sure thing, let's redo this from the top. Answer through the same handful of questions and I'll head off to re-check every board for anything new that fits.",
 ];
 
 
-function askSkillsStep(){
-  const introHTML = `<div class="msg-bubble">${isRestart ? pick(RESTART_LINES) : pick(GREETING_LINES)}</div><div class="msg-bubble">${pick(SKILLS_INTROS)}</div>`;
+async function askSkillsStep(){
+  const introTexts = [isRestart ? pick(RESTART_LINES) : pick(GREETING_LINES), pick(SKILLS_INTROS)];
   const suggestHtml = COMMON_SKILLS.map(sk=>`<button type="button" class="option-btn" data-sk="${sk}"><span class="msym">add_circle</span>${sk}</button>`).join('');
-  const step = renderStep(
-    introHTML,
+  const step = await renderStep(
+    introTexts,
     `<div class="step-options" id="chat-skills-suggests">${suggestHtml}</div>`,
     `<div class="chat-bar-inner">
        <div class="chip-input" id="chat-skills-wrap"><input type="text" id="chat-skills-input" placeholder="Type a skill and press Enter"></div>
@@ -1017,39 +1253,62 @@ function askSkillsStep(){
 }
 
 /* ---------------- MATCHING ENGINE ---------------- */
+const TITLE_STOPWORDS = new Set([
+  "job","jobs","vacancy","vacancies","post","posted","hiring","wanted","required","urgent",
+  "at","for","the","and","in","of","a","an","to","with","new",
+  "maldives","island","islands","resort","hotel","guesthouse",
+  "full","part","time","fulltime","parttime",
+]);
+function titleTokens(t){
+  return (t || '').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/)
+    .filter(w => w.length > 2 && !TITLE_STOPWORDS.has(w));
+}
+function normSkill(s){ return (s || '').toLowerCase().trim().replace(/[^a-z0-9 ]/g,''); }
+// true only if one term appears as a *whole word* inside the other — plain
+// substring checks let unrelated terms match by accident (e.g. "sales"
+// inside "wholesale"), which was the main cause of unrelated job matches.
+function skillsRelate(a, b){
+  if(!a || !b) return false;
+  if(a === b) return true;
+  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return new RegExp(`\\b${esc(a)}\\b`).test(b) || new RegExp(`\\b${esc(b)}\\b`).test(a);
+}
+
 function scoreJobs(){
   const years = Number(chatAnswers.years);
   const desiredTitle = chatAnswers.title || "";
   const area = chatAnswers.area;
   const hours = chatAnswers.hours;
   const mode = chatAnswers.mode;
-  const skills = chatAnswers.skills.map(s=>s.toLowerCase());
+  const skills = chatAnswers.skills.map(normSkill).filter(Boolean);
+  const desiredTitleWords = titleTokens(desiredTitle);
 
   let results = JOBS.map(job=>{
     let score = 0;
     let skillMatchRatio = 0;
     let titleMatchRatio = 0;
 
-    // Skills overlap - 40 pts
+    // Skills overlap - 40 pts (word-boundary match against the user's chosen skills)
     if(job.skills.length && skills.length){
-      const jobSkillsLower = job.skills.map(s=>s.toLowerCase());
-      const matched = jobSkillsLower.filter(js => skills.some(us => js.includes(us) || us.includes(js)));
-      skillMatchRatio = matched.length / job.skills.length;
+      const jobSkillsNorm = job.skills.map(normSkill).filter(Boolean);
+      const matched = jobSkillsNorm.filter(js => skills.some(us => skillsRelate(us, js)));
+      skillMatchRatio = matched.length / jobSkillsNorm.length;
       score += Math.min(1, skillMatchRatio) * 40;
     }
 
-    // Title similarity - 25 pts
-    if(desiredTitle){
-      if(job.title.toLowerCase() === desiredTitle.toLowerCase()){
+    // Title similarity - 25 pts, measured against how many of the words the
+    // *person* typed actually show up in the job title (so "Accountant"
+    // matching inside "Senior Financial Accountant" still counts fully,
+    // and shared filler words like "Maldives"/"Resort" don't count at all).
+    if(desiredTitleWords.length){
+      const jobTitleWords = titleTokens(job.title);
+      if(job.title.toLowerCase().trim() === desiredTitle.toLowerCase().trim()){
         titleMatchRatio = 1;
-        score += 25;
       } else {
-        const jt = job.title.toLowerCase().split(' ');
-        const dt = desiredTitle.toLowerCase().split(' ');
-        const common = jt.filter(w => dt.includes(w) && w.length > 2);
-        titleMatchRatio = Math.min(1, common.length / Math.max(jt.length,1));
-        score += titleMatchRatio * 22;
+        const common = desiredTitleWords.filter(w => jobTitleWords.includes(w));
+        titleMatchRatio = common.length / desiredTitleWords.length;
       }
+      score += titleMatchRatio * 25;
     } else {
       score += 8; // neutral partial credit if no title chosen
     }
@@ -1071,13 +1330,37 @@ function scoreJobs(){
     return { job, score: Math.round(score), skillMatchRatio, titleMatchRatio };
   });
 
-  // Drop jobs that have essentially nothing to do with what the person asked
-  // for, instead of just ranking everything (incl. irrelevant jobs) by score.
+  // Drop jobs that clearly have nothing to do with what the person asked for,
+  // but don't demand a near-perfect match — scraped/guessed skill tags are
+  // inherently patchy, so requiring a big overlap just hides real jobs.
   const gaveSkills = skills.length > 0;
-  const gaveTitle = !!desiredTitle;
+  const gaveTitle = desiredTitleWords.length > 0;
+  let filtered = results;
   if(gaveSkills || gaveTitle){
-    results = results.filter(r => r.skillMatchRatio > 0 || r.titleMatchRatio > 0.3);
+    filtered = results.filter(r => {
+      const skillKnown = r.job.skills.length > 0;
+      if(gaveSkills && gaveTitle){
+        if(r.titleMatchRatio > 0) return true;
+        if(skillKnown && r.skillMatchRatio > 0) return true;
+        return false; // neither signal lines up — not confident enough to show
+      }
+      if(gaveSkills){
+        // no parsed skill tags for this job — give it the benefit of the
+        // doubt rather than hiding it outright (scraped tags are patchy)
+        return skillKnown ? r.skillMatchRatio > 0 : true;
+      }
+      return r.titleMatchRatio > 0;
+    });
   }
+  // Safety net: if that leaves too little to choose from (patchy source data,
+  // an unusual title, etc.), fall back to the best-scoring jobs overall
+  // rather than showing an empty results screen.
+  if(filtered.length < 3){
+    const backfill = results.slice().sort((a,b)=> b.score - a.score)
+      .filter(r => !filtered.includes(r));
+    filtered = filtered.concat(backfill.slice(0, 6 - filtered.length));
+  }
+  results = filtered;
 
   return results
     .map(r => ({ job: r.job, score: Math.max(4, Math.min(99, r.score)) }))
@@ -1087,28 +1370,52 @@ function scoreJobs(){
 function finishChat(){
   showStepTyping(()=>{
     lastResults = scoreJobs();
-    renderResultsInChat();
+    askPlayGameStep();
   }, 600);
 }
 
+async function askPlayGameStep(){
+  // nothing to play with — just go straight to the (empty) results message
+  if(lastResults.length === 0){ renderResultsInChat(); return; }
+
+  const items = [
+    { value:'yes', label:'Yes, let\u2019s play', icon:'sports_esports' },
+    { value:'no', label:'No, just show me the list', icon:'view_list' },
+  ];
+  const step = await renderStep(
+    [`I found ${lastResults.length} matches. Want to turn picking through them into a quick game? I'll show them to you one at a time, card by card — swipe right to save the ones you like, left to pass, and there's an undo if you change your mind.`],
+    `<div class="bento-grid">${bentoCardsHtml(items)}</div>`
+  );
+  step.querySelectorAll('.bento-card').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      step.querySelectorAll('.bento-card').forEach(b=>b.disabled = true);
+      btn.classList.add('picked');
+      setTimeout(()=>{
+        if(btn.dataset.val === 'yes') startSwipeGame(lastResults);
+        else renderResultsInChat();
+      }, 350);
+    });
+  });
+}
+
 const RESULTS_INTROS = [
-  n => `Here's what I found — these are your ${n} best matches!`,
-  n => `Nice — I dug through the boards and found ${n} jobs worth a look.`,
-  n => `Done! Here are the ${n} openings that fit best.`,
+  n => `Here's what I found — these are your ${n} best matches, ranked by how closely they line up with everything you told me. Have a look, and tap into any of them to apply directly on the source site.`,
+  n => `Nice — I dug through every board and found ${n} jobs worth a look. They're sorted best-fit first, so start from the top and work your way down.`,
+  n => `Done! Here are the ${n} openings that fit best, based on your skills, experience, and preferences. Tap "Apply" on any card to head straight to the original listing.`,
 ];
 const RESULTS_EMPTY = [
-  "I couldn't find any live listings that genuinely match what you're after right now — try loosening a preference, or check back after the boards refresh.",
-  "Nothing matched closely enough this time. Try widening one of your answers, or check back once the boards refresh.",
+  "I couldn't find any live listings that genuinely match what you're after right now — the boards may just be quiet at the moment, or your answers might be narrowing things down more than expected. Try loosening a preference, or check back after the boards refresh.",
+  "Nothing matched closely enough this time around. That doesn't necessarily mean there's nothing out there — try widening one of your answers, or check back once the boards have had a chance to update.",
 ];
 
-function renderResultsInChat(){
+async function renderResultsInChat(){
   const items = lastResults;
   const summary = items.length ? pick(RESULTS_INTROS)(items.length) : pick(RESULTS_EMPTY);
 
   const bodyHtml = (items.length ? `<div class="cards-grid" id="chat-results-grid"></div>` : '')
     + `<div class="chat-input-row"><button type="button" class="btn btn-ghost" id="chat-restart">Start over <span class="msym">refresh</span></button></div>`;
 
-  const step = renderStep(`<div class="msg-bubble">${summary}</div>`, bodyHtml);
+  const step = await renderStep([summary], bodyHtml);
   step.style.minHeight = '0';
 
   if(items.length){
@@ -1164,6 +1471,184 @@ function renderCards(grid, items){
       launchApply(this);
     });
   });
+}
+
+/* ---------------- SWIPE GAME ---------------- */
+let swipeQueue = [];
+let swipeHistory = [];
+let likedJobs = [];
+let swipeTotal = 0;
+
+function startSwipeGame(items){
+  swipeQueue = items.slice();
+  swipeHistory = [];
+  likedJobs = [];
+  swipeTotal = items.length;
+  pageFooter.classList.remove('show');
+  chatBar.innerHTML = ''; chatBar.style.display = 'none';
+  renderSwipeGame();
+}
+
+function renderSwipeGame(){
+  if(swipeQueue.length === 0){ renderGameResults(); return; }
+
+  const done = swipeTotal - swipeQueue.length;
+  chatWindow.innerHTML = `
+    <div class="chat-step game-step">
+      <div class="game-topbar">
+        <button type="button" class="game-icon-btn" id="game-undo" ${swipeHistory.length ? '' : 'disabled'} title="Undo last swipe"><span class="msym">undo</span></button>
+        <div class="game-progress">
+          <div class="game-progress-track"><div class="game-progress-fill" style="width:${(done/swipeTotal*100).toFixed(1)}%"></div></div>
+          <span class="game-progress-label">${done} of ${swipeTotal} &middot; ${likedJobs.length} saved</span>
+        </div>
+        <button type="button" class="game-icon-btn" id="game-skip-all" title="Show the full list instead"><span class="msym">list</span></button>
+      </div>
+      <div class="swipe-stack" id="swipe-stack"></div>
+      <div class="game-actions">
+        <button type="button" class="swipe-action-btn pass" id="game-pass" title="Pass"><span class="msym">close</span></button>
+        <button type="button" class="swipe-action-btn like" id="game-like" title="Save this one"><span class="msym">favorite</span></button>
+      </div>
+      <div class="game-hint">Drag a card, or use the buttons — swipe right to save, left to pass.</div>
+    </div>
+  `;
+  window.scrollTo(0,0);
+
+  const stack = document.getElementById('swipe-stack');
+  const visible = swipeQueue.slice(0, 1);
+  visible.slice().reverse().forEach((r, idxFromBack)=>{
+    const depth = visible.length - 1 - idxFromBack; // 0 = top, interactive card
+    stack.appendChild(buildSwipeCard(r, depth));
+  });
+  wireSwipeCard(stack.querySelector('.swipe-card[data-depth="0"]'));
+
+  const doPass = ()=>{ const top = stack.querySelector('.swipe-card[data-depth="0"]'); top ? flyCard(top, 'pass') : commitSwipe('pass'); };
+  const doLike = ()=>{ const top = stack.querySelector('.swipe-card[data-depth="0"]'); top ? flyCard(top, 'like') : commitSwipe('like'); };
+  document.getElementById('game-pass').addEventListener('click', doPass);
+  document.getElementById('game-like').addEventListener('click', doLike);
+  document.getElementById('game-undo').addEventListener('click', undoSwipe);
+  document.getElementById('game-skip-all').addEventListener('click', renderResultsInChat);
+}
+
+function buildSwipeCard(r, depth){
+  const color = CARD_COLORS_LIST[(swipeTotal - swipeQueue.indexOf(r)) % CARD_COLORS_LIST.length];
+  const div = document.createElement('div');
+  div.className = `swipe-card job-card ${color}${depth === 0 ? ' entering' : ''}`;
+  div.dataset.depth = depth;
+  div.style.setProperty('--depth', depth);
+
+  const circumference = 2 * Math.PI * 24;
+  const offset = circumference - (r.score/100) * circumference;
+
+  div.innerHTML = `
+    <div class="swipe-stamp like">Saved</div>
+    <div class="swipe-stamp pass">Pass</div>
+    <div class="top-row">
+      <span class="source-tag">${r.job.site}</span>
+      <div class="match-ring">
+        <svg viewBox="0 0 56 56">
+          <circle class="bg" cx="28" cy="28" r="24"></circle>
+          <circle class="fg" cx="28" cy="28" r="24" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"></circle>
+        </svg>
+        <div class="val">${r.score}%</div>
+      </div>
+    </div>
+    <h4>${r.job.title}</h4>
+    <div class="company">${r.job.logoUrl ? `<img src="${r.job.logoUrl}" alt="" style="width:16px;height:16px;object-fit:contain;border-radius:3px" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'msym',textContent:'storefront',style:'font-size:16px'}))">` : `<span class="msym" style="font-size:16px">storefront</span>`} ${r.job.company || 'Employer not listed — check posting'}</div>
+    <div class="meta-row">
+      <div class="meta-pill"><span class="msym">location_on</span> ${r.job.area}</div>
+      <div class="meta-pill"><span class="msym">schedule</span> ${r.job.type}</div>
+      <div class="meta-pill"><span class="msym">home_work</span> ${r.job.mode}</div>
+    </div>
+    <div class="skill-line"><b>Key skills</b>${r.job.skills.join(', ')}</div>
+  `;
+  return div;
+}
+
+function wireSwipeCard(card){
+  if(!card) return;
+  let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
+  const threshold = 100;
+  const likeStamp = card.querySelector('.swipe-stamp.like');
+  const passStamp = card.querySelector('.swipe-stamp.pass');
+
+  card.addEventListener('pointerdown', e=>{
+    dragging = true;
+    card.classList.add('dragging');
+    startX = e.clientX; startY = e.clientY;
+    try{ card.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  card.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    dx = e.clientX - startX; dy = e.clientY - startY;
+    card.style.transform = `translate(${dx}px, ${dy*0.35}px) rotate(${dx/16}deg)`;
+    likeStamp.style.opacity = Math.max(0, Math.min(1, dx/threshold));
+    passStamp.style.opacity = Math.max(0, Math.min(1, -dx/threshold));
+  });
+  const release = ()=>{
+    if(!dragging) return;
+    dragging = false;
+    card.classList.remove('dragging');
+    if(dx > threshold) flyCard(card, 'like');
+    else if(dx < -threshold) flyCard(card, 'pass');
+    else{
+      card.style.transform = '';
+      likeStamp.style.opacity = 0;
+      passStamp.style.opacity = 0;
+    }
+    dx = 0; dy = 0;
+  };
+  card.addEventListener('pointerup', release);
+  card.addEventListener('pointercancel', release);
+}
+
+function flyCard(card, decision){
+  const dir = decision === 'like' ? 1 : -1;
+  card.classList.add('dragging'); // disable the transform transition fight, apply our own
+  card.style.transition = 'transform .38s cubic-bezier(.22,1,.36,1), opacity .38s';
+  card.style.transform = `translate(${dir*560}px, -30px) rotate(${dir*26}deg)`;
+  card.style.opacity = '0';
+  card.querySelector('.swipe-stamp.like').style.opacity = decision === 'like' ? 1 : 0;
+  card.querySelector('.swipe-stamp.pass').style.opacity = decision === 'pass' ? 1 : 0;
+  setTimeout(()=> commitSwipe(decision), 300);
+}
+
+function commitSwipe(decision){
+  if(swipeQueue.length === 0) return;
+  const item = swipeQueue.shift();
+  swipeHistory.push({ item, decision });
+  if(decision === 'like') likedJobs.push(item);
+  renderSwipeGame();
+}
+
+function undoSwipe(){
+  if(swipeHistory.length === 0) return;
+  const last = swipeHistory.pop();
+  if(last.decision === 'like'){
+    const idx = likedJobs.lastIndexOf(last.item);
+    if(idx !== -1) likedJobs.splice(idx, 1);
+  }
+  swipeQueue.unshift(last.item);
+  renderSwipeGame();
+}
+
+async function renderGameResults(){
+  pageFooter.classList.remove('show');
+  const n = likedJobs.length;
+  const summary = n > 0
+    ? `That's the deck! You saved ${n} out of ${swipeTotal} — here they are, ready whenever you want to apply.`
+    : `That's the whole deck — none of them quite clicked this round. You can start over with different answers, or take a look at the full list instead.`;
+  const bodyHtml = (n > 0 ? `<div class="cards-grid" id="chat-results-grid"></div>` : '')
+    + `<div class="chat-input-row">
+         <button type="button" class="btn btn-ghost" id="chat-restart">Start over <span class="msym">refresh</span></button>
+         <button type="button" class="btn btn-ghost" id="chat-see-all">See full list <span class="msym">list</span></button>
+       </div>`;
+
+  const step = await renderStep([summary], bodyHtml);
+  step.style.minHeight = '0';
+  if(n > 0) renderCards(step.querySelector('#chat-results-grid'), likedJobs);
+  step.querySelector('#chat-restart').addEventListener('click', restartChat);
+  step.querySelector('#chat-see-all').addEventListener('click', renderResultsInChat);
+  pageFooter.classList.add('show');
 }
 
 function restartChat(){
