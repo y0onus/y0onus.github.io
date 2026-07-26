@@ -60,6 +60,15 @@
     display:inline-block;
     vertical-align:middle;
     -webkit-font-smoothing:antialiased;
+    white-space:nowrap;
+    word-wrap:normal;
+    direction:ltr;
+    letter-spacing:normal;
+    text-transform:none;
+    font-feature-settings:'liga';
+    -webkit-font-feature-settings:'liga';
+    -moz-font-feature-settings:'liga';
+    font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
   }
   h1,h2,h3,.display{
     font-family:'Baloo 2', sans-serif;
@@ -491,6 +500,175 @@
      worth checking each board's ToS/robots.txt before relying on
      this beyond a personal prototype.
 ---------------------------------------------------------- */
+/* ----------------------------------------------------------
+   KEYWORD-BASED CAREER MATCHING — no AI involved. Whatever the person
+   types into the skills search bar is scanned for known keywords (soft
+   skills, interests, subjects, technical/hands-on skills, personality
+   traits, hobbies), and a career-keyword database is scored to guess
+   which job titles are worth actually searching the job boards for.
+   Runs once, right when the skills step is submitted.
+---------------------------------------------------------- */
+const KEYWORD_CATEGORIES = {
+  softSkills: [
+    "good communicator","leadership","team player","independent","problem solver",
+    "creative","organized","detail-oriented","fast learner","adaptable","patient",
+    "friendly","responsible","reliable","confident","empathetic","persuasive",
+    "time management","critical thinking","decision making","public speaking",
+    "customer service","negotiation","conflict resolution",
+  ],
+  interests: [
+    "technology","cooking","sports","music","art","photography","gaming","cars",
+    "animals","nature","travel","fashion","business","finance","healthcare",
+    "education","science","fitness","social media","writing","reading",
+    "construction","aviation",
+  ],
+  subjects: [
+    "math","english","science","biology","chemistry","physics","history",
+    "geography","computer science","business studies","economics","accounting",
+    "design","art","physical education",
+  ],
+  technicalSkills: [
+    "coding","programming","web development","graphic design","video editing",
+    "photography","excel","word","powerpoint","data analysis","marketing","sales",
+    "accounting","bookkeeping","networking","cybersecurity","ai","machine learning",
+    "cad","autocad","photoshop","illustrator","figma",
+  ],
+  handsOnSkills: [
+    "chef","baking","carpentry","plumbing","electrical work","mechanic","welding",
+    "painting","farming","fishing","sewing","hairdressing",
+  ],
+  personalityTraits: [
+    "calm","curious","ambitious","competitive","helpful","honest","loyal",
+    "hardworking","analytical","innovative","outgoing","introverted",
+  ],
+  // extra hobby/creative terms beyond the base categories, so things like
+  // drawing, music, and performing arts are recognised too
+  creativeExtras: [
+    "food","drawing","sketching","illustration","singing","dancing","instrument",
+    "guitar","piano","drums","dj","filmmaking","acting","theatre","poetry",
+    "storytelling","blogging","vlogging","sculpting","animation",
+  ],
+};
+const ALL_KEYWORDS = [...new Set(Object.values(KEYWORD_CATEGORIES).flat())];
+
+// career title -> { keyword: points }. Not precise science — just enough
+// weighting to rank plausible titles the way the scoring examples do.
+const CAREER_KEYWORDS = {
+  "Chef":                  { chef:10, cooking:5, baking:4, creative:2, food:3 },
+  "Pastry Chef":           { baking:9, chef:4, cooking:3, creative:3, "detail-oriented":3 },
+  "Sous Chef":             { chef:7, cooking:6, baking:2, "team player":3, "time management":3 },
+  "Restaurant Manager":    { chef:2, cooking:2, leadership:5, organized:4, "customer service":5, "time management":3 },
+  "Baker":                 { baking:10, chef:3, cooking:3, "detail-oriented":3 },
+
+  "Software Engineer":     { coding:8, programming:8, "computer science":6, technology:3, "problem solver":4, analytical:3 },
+  "Web Developer":         { coding:6, "web development":8, programming:5, design:3, technology:3, creative:2 },
+  "Mobile App Developer":  { coding:6, programming:6, "computer science":4, technology:3, creative:2, "problem solver":3 },
+  "Backend Developer":     { coding:6, programming:7, "computer science":5, networking:3, analytical:3 },
+  "Data Analyst":          { "data analysis":9, excel:5, math:4, analytical:5, "critical thinking":3 },
+  "Cybersecurity Analyst": { cybersecurity:10, networking:5, technology:3, analytical:4, "problem solver":3 },
+  "AI / Machine Learning Engineer": { ai:8, "machine learning":9, coding:5, math:4, analytical:4 },
+  "Network Engineer":      { networking:9, cybersecurity:4, technology:4, "problem solver":3 },
+  "IT Support Specialist": { technology:6, networking:5, "problem solver":4, patient:3, "customer service":3 },
+  "Game Developer":        { gaming:6, coding:6, programming:6, creative:3, "problem solver":3 },
+  "Game Designer":         { gaming:6, design:5, creative:5, art:3, storytelling:2 },
+
+  "Teacher":               { "good communicator":4, patient:4, leadership:3, education:5, friendly:3 },
+  "Tutor":                 { patient:5, "good communicator":4, education:5, "detail-oriented":2 },
+  "Lecturer":              { education:5, "public speaking":5, "good communicator":4, leadership:2 },
+  "Teaching Assistant":    { patient:4, education:4, friendly:3, organized:2, responsible:2 },
+  "Librarian":             { reading:7, organized:4, helpful:4, "detail-oriented":3 },
+
+  "Nurse":                 { healthcare:6, biology:4, patient:4, responsible:4, empathetic:4 },
+  "Healthcare Assistant":  { healthcare:6, empathetic:4, responsible:3, patient:3 },
+  "Medical Technician":    { healthcare:5, biology:4, chemistry:3, "detail-oriented":4, analytical:3 },
+  "Veterinarian":          { animals:8, biology:6, science:4, empathetic:4, responsible:3 },
+
+  "Police Officer":        { leadership:4, responsible:4, honest:4, "team player":3, confident:3 },
+  "Security Officer":      { responsible:4, honest:3, reliable:4, calm:3, confident:2 },
+  "Military":              { leadership:4, responsible:3, "team player":4, hardworking:3, confident:3 },
+
+  "Accountant":            { math:5, accounting:9, excel:4, "detail-oriented":4, organized:3 },
+  "Auditor":               { accounting:8, "detail-oriented":5, analytical:4, organized:3, honest:3 },
+  "Financial Analyst":     { finance:8, accounting:5, math:5, analytical:5, excel:4 },
+  "Bookkeeper":            { bookkeeping:9, accounting:6, excel:4, organized:4, "detail-oriented":4 },
+  "Economist":             { economics:8, finance:5, math:4, analytical:5 },
+
+  "Marketing Specialist":  { marketing:8, creative:4, "good communicator":3, "social media":3, business:2 },
+  "Content Creator":       { writing:5, "social media":6, creative:5, "video editing":4, photography:3 },
+  "Brand Manager":         { marketing:6, business:4, creative:3, "good communicator":3, leadership:3 },
+  "Social Media Manager":  { "social media":9, marketing:5, creative:4, writing:3, "good communicator":3 },
+  "Blogger / Vlogger":     { blogging:7, vlogging:7, writing:4, "social media":5, creative:4 },
+  "Sales Executive":       { sales:9, "good communicator":5, persuasive:5, "customer service":4, negotiation:4 },
+  "Business Owner / Entrepreneur": { leadership:5, business:6, finance:3, ambitious:5, creative:3 },
+
+  "Mechanical Engineer":   { math:4, physics:5, "problem solver":4, analytical:4, technology:3 },
+  "Civil Engineer":        { math:4, physics:4, construction:6, "problem solver":4, analytical:3 },
+  "Electrical Engineer":   { math:4, physics:5, "electrical work":5, technology:4, analytical:3 },
+  "Aerospace Engineer":    { math:5, physics:6, aviation:5, analytical:4, "problem solver":3 },
+  "Architect":             { design:6, math:3, cad:5, autocad:5, creative:4 },
+  "Interior Designer":     { design:7, creative:6, art:3, "detail-oriented":3, fashion:2 },
+
+  "Electrician":           { "electrical work":9, mechanic:2, "detail-oriented":3, "problem solver":3 },
+  "Plumber":               { plumbing:9, mechanic:2, "problem solver":3, reliable:2 },
+  "Carpenter":             { carpentry:9, "detail-oriented":3, creative:2, reliable:2 },
+  "Mechanic":              { mechanic:9, cars:5, "problem solver":4, "detail-oriented":3 },
+  "Welder":                { welding:9, construction:3, "detail-oriented":3, reliable:2 },
+  "Farmer":                { farming:9, nature:4, hardworking:3, independent:2 },
+  "Fisheries Worker":      { fishing:9, nature:4, hardworking:3, independent:2 },
+  "Hairdresser":           { hairdressing:9, creative:4, "customer service":3, fashion:3 },
+
+  "Fitness Trainer":       { fitness:9, sports:5, "good communicator":3, confident:3, patient:2 },
+  "Pilot":                 { aviation:9, confident:3, calm:3, "decision making":4, analytical:2 },
+  "Flight Attendant":      { aviation:6, "customer service":5, friendly:4, calm:3, "good communicator":3 },
+
+  "Dive Instructor":       { nature:5, fitness:4, patient:4, "customer service":4, confident:3 },
+  "Tour Guide":            { travel:7, "good communicator":5, friendly:4, "public speaking":3, outgoing:3 },
+  "Marine Biologist":      { nature:6, biology:6, science:5, animals:4, curious:3 },
+  "Biologist":             { biology:9, science:5, nature:4, curious:3 },
+  "Chemist":               { chemistry:9, science:5, analytical:4, "detail-oriented":3 },
+  "Physicist":             { physics:9, math:5, analytical:5, curious:3 },
+  "Front Office / Guest Relations Officer": { "customer service":6, friendly:5, "good communicator":4, organized:3, patient:2 },
+  "Housekeeping Supervisor": { organized:6, "detail-oriented":5, reliable:4, "time management":3 },
+  "Spa Therapist":         { patient:3, "customer service":4, calm:3, fitness:2, empathetic:3 },
+
+  "Graphic Designer":      { art:5, photoshop:6, illustrator:6, creative:6, design:5 },
+  "UI/UX Designer":        { design:6, figma:6, creative:4, "problem solver":3, technology:3 },
+  "Artist / Illustrator":  { art:8, drawing:8, sketching:6, creative:6, painting:4 },
+  "Photographer":          { photography:10, art:3, creative:4, "detail-oriented":3 },
+  "Video Editor":          { "video editing":10, creative:4, "detail-oriented":3, photography:2 },
+  "Filmmaker / Video Producer": { filmmaking:8, "video editing":6, creative:5, photography:3, storytelling:4 },
+  "Fashion Designer":      { fashion:9, design:6, creative:6, art:3, sewing:3 },
+
+  "Musician":              { music:9, instrument:6, guitar:4, piano:4, drums:4, creative:5 },
+  "Singer":                { music:8, singing:9, confident:4, creative:4, "public speaking":2 },
+  "DJ":                    { music:8, dj:9, creative:4, outgoing:3 },
+  "Actor":                 { acting:9, theatre:6, confident:5, creative:4, "public speaking":3 },
+  "Dancer":                { dancing:9, fitness:4, creative:4, confident:3 },
+
+  "Writer / Author":       { writing:9, reading:5, creative:5, storytelling:6, "critical thinking":2 },
+  "Journalist":            { writing:7, "public speaking":3, curious:4, "critical thinking":4, "good communicator":4 },
+  "Editor":                { writing:6, reading:5, "detail-oriented":5, "critical thinking":3 },
+  "Historian":             { history:8, writing:4, curious:4, "critical thinking":3 },
+};
+
+function extractKeywords(text){
+  const lower = (text || "").toLowerCase();
+  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+  return ALL_KEYWORDS.filter(kw => new RegExp(`\\b${esc(kw)}\\b`).test(lower));
+}
+
+function scoreCareersFromKeywords(matchedKeywords){
+  const scores = {};
+  Object.entries(CAREER_KEYWORDS).forEach(([career, kwMap])=>{
+    let score = 0;
+    matchedKeywords.forEach(kw=>{ if(kwMap[kw]) score += kwMap[kw]; });
+    if(score > 0) scores[career] = score;
+  });
+  return Object.entries(scores).sort((a,b)=> b[1]-a[1]).map(([career])=>career);
+}
+
+let keywordJobTitles = null; // set once, right when the skills step is submitted
+
 const CORS_PROXIES = [
   { name:'allorigins', mode:'html', build: url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` },
   { name:'codetabs',   mode:'html', build: url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}` },
@@ -499,11 +677,21 @@ const CORS_PROXIES = [
   { name:'corsproxy.io', mode:'html', build: url => `https://corsproxy.io/?url=${encodeURIComponent(url)}` },
 ];
 
+// searchUrl(q) builds the URL for that site's own search bar, when it has
+// one — used to run a deeper, targeted search per candidate job title
+// instead of only relying on whatever's on the general listing page.
+function buildSiteSearchUrl(template, q){
+  const encoded = encodeURIComponent(q.trim()).replace(/%20/g, '+');
+  return template.replace('{q}', encoded);
+}
+
 const SOURCES = [
   { site:"Jobsicle", listUrl:"https://jobsicle.mv/", base:"https://jobsicle.mv", linkPattern:/^\/job\//i },
-  { site:"Job Center Maldives", listUrl:"https://jobcenter.mv/en/jobs", base:"https://jobcenter.mv", linkPattern:/^\/en\/jobs\/[a-z0-9-]+$/i },
+  { site:"Job Center Maldives", listUrl:"https://jobcenter.mv/en/jobs", base:"https://jobcenter.mv", linkPattern:/^\/en\/jobs\/[a-z0-9-]+$/i,
+    searchUrl: q => buildSiteSearchUrl("https://jobcenter.mv/en/jobs?filter%5Bsearch%5D={q}", q) },
   { site:"Career Maldives", listUrl:"https://career-maldives.com/jobs/", base:"https://career-maldives.com", linkPattern:/\/jobs\/[a-z0-9-]+\/?$/i },
-  { site:"Job Maldives", listUrl:"https://www.job-maldives.com/", base:"https://www.job-maldives.com", linkPattern:/^\/\d{4}\/\d{2}\/[a-z0-9_-]+\.html$/i },
+  { site:"Job Maldives", listUrl:"https://www.job-maldives.com/", base:"https://www.job-maldives.com", linkPattern:/^\/\d{4}\/\d{2}\/[a-z0-9_-]+\.html$/i,
+    searchUrl: q => buildSiteSearchUrl("https://www.job-maldives.com/search?q={q}", q) },
 ];
 
 const AREA_LIST = [
@@ -919,9 +1107,10 @@ function extractJobsFromMarkdown(text, source){
   return jobs.slice(0, 40);
 }
 
-async function scrapeSource(source, attempt = 1){
+async function scrapeSource(source, attempt = 1, overrideUrl = null){
+  const targetUrl = overrideUrl || source.listUrl;
   try{
-    const { content, mode, via } = await fetchViaProxy(source.listUrl);
+    const { content, mode, via } = await fetchViaProxy(targetUrl);
     const jobs = mode === 'text'
       ? extractJobsFromMarkdown(content, source)
       : extractJobsFromHTML(content, source);
@@ -934,15 +1123,15 @@ async function scrapeSource(source, attempt = 1){
       // one retry with a short backoff — proxy timeouts/rate limits are
       // often transient, so a single retry recovers a lot of failures
       await new Promise(r => setTimeout(r, 1200));
-      return scrapeSource(source, attempt + 1);
+      return scrapeSource(source, attempt + 1, overrideUrl);
     }
-    console.warn('Live scrape failed for', source.site, err);
+    console.warn('Live scrape failed for', source.site, targetUrl, err);
     return { site: source.site, jobs: [], error: (err && err.message) || 'fetch failed' };
   }
 }
 
 async function scrapeAllJobs(){
-  const perSource = await Promise.all(SOURCES.map(scrapeSource));
+  const perSource = await Promise.all(SOURCES.map(s => scrapeSource(s)));
   return {
     jobs: perSource.flatMap(r => r.jobs),
     statuses: perSource.map(r => ({ site: r.site, count: r.jobs.length, error: r.error })),
@@ -1247,6 +1436,8 @@ async function askSkillsStep(){
   document.getElementById('chat-skills-done').addEventListener('click', ()=>{
     if(input.value.trim()) addSkill(input.value);
     chatAnswers.skills = localSkills;
+    const matched = extractKeywords(localSkills.join(' ')); // scan whatever was typed for known keywords
+    keywordJobTitles = scoreCareersFromKeywords(matched).slice(0, 8);
     goNext();
   });
   input.focus();
@@ -1272,6 +1463,80 @@ function skillsRelate(a, b){
   if(a === b) return true;
   const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   return new RegExp(`\\b${esc(a)}\\b`).test(b) || new RegExp(`\\b${esc(b)}\\b`).test(a);
+}
+
+// Turns the skills the person picked into a short list of plausible job
+// titles to actually type into each site's search bar — e.g. "Customer
+// service" + "Excel" might expand to ["customer service", "front office",
+// "reception"]. SKILL_KEYWORDS already maps title-fragments to skill tags,
+// so this just walks it in reverse.
+function buildSearchQueries(){
+  // if the keyword scan against the career database already ranked some
+  // job titles from what was typed, use those directly
+  if(keywordJobTitles && keywordJobTitles.length){
+    return keywordJobTitles.slice(0, 5);
+  }
+
+  const skills = chatAnswers.skills.map(normSkill).filter(Boolean);
+  const queries = new Set();
+
+  if(chatAnswers.title && chatAnswers.title.trim()) queries.add(chatAnswers.title.trim());
+
+  Object.entries(SKILL_KEYWORDS).forEach(([titleFragment, tags])=>{
+    const tagsNorm = tags.map(normSkill);
+    if(skills.some(us => tagsNorm.some(t => skillsRelate(us, t)))){
+      queries.add(titleFragment.trim());
+    }
+  });
+
+  // nothing matched a known title fragment — just search the skills as typed
+  if(queries.size === 0){
+    chatAnswers.skills.forEach(sk => queries.add(sk));
+  }
+
+  // cap the list so we're not firing off dozens of proxy requests per site
+  return [...queries].slice(0, 5);
+}
+
+// Runs each generated job-title query through the sites that expose a real
+// search bar (see searchUrl on SOURCES), on top of whatever the general
+// listing scrape already found, and merges any newly discovered jobs into
+// the shared JOBS list, de-duplicated by URL.
+async function deepenSearch(queries){
+  if(!queries.length) return { added: 0, statuses: [] };
+  const searchableSources = SOURCES.filter(s => typeof s.searchUrl === 'function');
+  if(!searchableSources.length) return { added: 0, statuses: [] };
+
+  const tasks = [];
+  searchableSources.forEach(source=>{
+    queries.forEach(q=>{
+      tasks.push(
+        scrapeSource(source, 1, source.searchUrl(q))
+          .then(r => ({ ...r, query: q }))
+      );
+    });
+  });
+  const results = await Promise.all(tasks);
+
+  const existingUrls = new Set(JOBS.map(j => j.url));
+  let added = 0;
+  results.forEach(r=>{
+    r.jobs.forEach(job=>{
+      if(!existingUrls.has(job.url)){
+        JOBS.push(job);
+        existingUrls.add(job.url);
+        added++;
+      }
+    });
+  });
+
+  ALL_SKILLS = [...new Set(JOBS.flatMap(j=>j.skills))].sort();
+  ALL_TITLES = [...new Set(JOBS.map(j=>j.title))].sort();
+
+  return {
+    added,
+    statuses: results.map(r => ({ site: r.site, query: r.query, count: r.jobs.length, error: r.error })),
+  };
 }
 
 function scoreJobs(){
@@ -1352,6 +1617,25 @@ function scoreJobs(){
       return r.titleMatchRatio > 0;
     });
   }
+
+  // Re-check each remaining job on its own, separately, against the hours
+  // and work-mode the person actually picked — this is checked independently
+  // from the skill/title relevance above, not folded into one combined score.
+  const wantsHours = hours !== "Any";
+  const wantsMode = mode !== "Any";
+  if(wantsHours || wantsMode){
+    const attributeChecked = filtered.filter(r=>{
+      const hoursOk = !wantsHours || r.job.type === hours;
+      const modeOk = !wantsMode || r.job.mode === mode;
+      return hoursOk && modeOk;
+    });
+    // scraped hours/mode are best-effort guesses from nearby text, so only
+    // apply the strict filter if it still leaves a reasonable set to choose
+    // from — otherwise a couple of misread listings could wipe out everything
+    if(attributeChecked.length >= Math.min(3, filtered.length)){
+      filtered = attributeChecked;
+    }
+  }
   // Safety net: if that leaves too little to choose from (patchy source data,
   // an unusual title, etc.), fall back to the best-scoring jobs overall
   // rather than showing an empty results screen.
@@ -1368,7 +1652,9 @@ function scoreJobs(){
 }
 
 function finishChat(){
-  showStepTyping(()=>{
+  showStepTyping(async ()=>{
+    const queries = buildSearchQueries();
+    await deepenSearch(queries); // search each site's own search bar with candidate job titles
     lastResults = scoreJobs();
     askPlayGameStep();
   }, 600);
@@ -1654,6 +1940,7 @@ async function renderGameResults(){
 function restartChat(){
   chatAnswers.skills = []; chatAnswers.years = 2; chatAnswers.title = '';
   chatAnswers.area = 'Any'; chatAnswers.hours = 'Any'; chatAnswers.mode = 'Any';
+  keywordJobTitles = null;
   chatIndex = 0;
   isRestart = true;
   askStep(0);
