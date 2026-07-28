@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vazeefaa AI</title>
+<title>Vazee AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800;900&family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Baloo+2:wght@600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0" />
 <style>
   :root{
@@ -47,7 +47,7 @@
   body{
     background:var(--cloud);
     color:var(--ink);
-    font-family:'Inter',sans-serif;
+    font-family:'Montserrat',sans-serif;
     -webkit-font-smoothing:antialiased;
     overflow-x:hidden;
     font-weight:600;
@@ -56,7 +56,7 @@
     font-family:'Material Symbols Outlined';
     font-weight:400;
     font-style:normal;
-    font-size:24px;
+    font-size:20px;
     line-height:1;
     display:inline-block;
     vertical-align:middle;
@@ -78,6 +78,14 @@
   }
   a{color:inherit;}
   button{font-family:inherit;}
+
+  /* Logo header */
+  .app-header{
+    text-align:center; padding:20px 0 3px; position:relative; z-index:3;
+  }
+  .app-header img{
+    height:20px; width:auto; display:inline-block;
+  }
 
   .ambient{
     position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none;
@@ -160,6 +168,7 @@
     background:transparent; color:var(--ink);
     border-radius:0; padding:0; line-height:1.5; font-size:1.2rem; font-weight:700;
     box-shadow:none;
+    font-family:'Montserrat',sans-serif;
   }
   .msg.user .msg-bubble{ background:var(--ink); color:#0D0D10; border-radius:18px 18px 4px 18px; padding:13px 17px; font-size:0.95rem; font-weight:700; box-shadow:none; }
 
@@ -283,6 +292,7 @@
   .btn{
     border:none; border-radius:999px; padding:13px 24px; font-weight:800; font-size:0.95rem;
     cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all .25s cubic-bezier(.22,1,.36,1);
+    font-family:'Montserrat',sans-serif;
   }
 
   .btn-primary{ background:var(--ink); color:#0D0D10; }
@@ -347,6 +357,7 @@
     width:100%; border:none; border-radius:14px; padding:14px; font-weight:800; font-size:0.95rem;
     background:#FFFFFF; color:#0D0D10; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
     position:relative; overflow:hidden; transition:transform .15s; z-index:1;
+    font-family:'Montserrat',sans-serif;
   }
   .apply-btn:active{ transform:scale(0.97); }
   .apply-btn .fill-anim{
@@ -354,8 +365,8 @@
   }
   .apply-btn span, .apply-btn .msym{ position:relative; z-index:1; }
   .apply-btn.launching .fill-anim{ width:100%; }
+  .apply-btn.view-details-btn .fill-anim{ background:#2C948D; }
 
-  /* Plain color cards (no gradient) */
   .job-card.c-mint{ background:#1A4733; border-color:rgba(161,240,208,0.15); }
   .job-card.c-mint .source-tag{ color:var(--mint-ink); border-color:rgba(161,240,208,0.2); }
   .job-card.c-sky{ background:#1A314A; border-color:rgba(143,203,255,0.15); }
@@ -368,11 +379,9 @@
   .job-card.c-blush .source-tag{ color:var(--blush-ink); border-color:rgba(255,165,181,0.2); }
   .job-card .match-ring .fg{ stroke:#FFFFFF; }
 
-  /* All job icons white */
   .job-card .job-icon{
     font-size:28px; margin-bottom:6px; display:block; color:#FFFFFF !important; opacity:0.9;
   }
-  /* override any previous icon colors */
   .job-card[data-icon="brush"] .job-icon,
   .job-card[data-icon="code"] .job-icon,
   .job-card[data-icon="restaurant"] .job-icon,
@@ -393,8 +402,8 @@
   .empty-state .msym{ font-size:52px; color:var(--line); margin-bottom:14px; }
 
   footer{
-    display:none; text-align:center; padding:20px 6vw 50px; color:var(--ink-soft); font-size:0.8rem;
-    position:relative; z-index:2;
+    display:none; text-align:center; padding:20px 6vw 50px; color:var(--ink-soft); font-size:0.75rem;
+    position:relative; z-index:2; font-weight:500;
   }
   footer.show{ display:block; animation:msgIn .4s ease; }
 
@@ -411,6 +420,7 @@
     background:#1A1A1E; color:#fff; padding:14px 22px; border-radius:14px; font-size:0.88rem;
     display:flex; align-items:center; gap:10px; opacity:0; transition:all .35s; z-index:1000; font-weight:700;
     box-shadow:var(--shadow-lg); border:1px solid rgba(255,255,255,0.06);
+    font-family:'Montserrat',sans-serif;
   }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   .toast .msym{ color:#4FD1C5; }
@@ -435,6 +445,10 @@
   </div>
 </div>
 
+<div class="app-header">
+  <img src="vazee.svg" alt="Vazee AI" onerror="this.style.display='none'">
+</div>
+
 <section id="chat-section">
   <div class="chat-shell">
     <div class="chat-window" id="chat-window"></div>
@@ -443,7 +457,7 @@
 </section>
 
 <footer id="page-footer">
-  Vazeefaa is a AI and can make mistakes. Please double-check responses.
+  Vazee AI is an AI and can make mistakes. Please double-check responses.
 </footer>
 
 <div class="toast" id="toast"><span class="msym">check_circle</span><span id="toast-text"></span></div>
@@ -520,6 +534,58 @@ const KEYWORD_CATEGORIES = {
     "guitar","piano","drums","dj","filmmaking","acting","theatre","poetry",
     "storytelling","blogging","vlogging","sculpting","animation",
   ],
+  medicalFields: [
+    "medicine","nursing","surgery","dentistry","pharmacy","physiotherapy","radiology",
+    "midwifery","psychology","counseling","paramedic","laboratory","optometry","nutrition",
+    "veterinary","dermatology","pediatrics","first aid",
+  ],
+  legalFields: [
+    "law","legal","paralegal","contracts","compliance","litigation","justice","policy",
+  ],
+  hospitalityTourism: [
+    "hospitality","tourism","front office","concierge","guest relations","event planning",
+    "bartending","tour guiding","diving","housekeeping supervision","butler service",
+  ],
+  transportLogistics: [
+    "driving","logistics","shipping","warehousing","supply chain","piloting",
+    "air traffic control","seafaring","boat handling","ferry operations",
+  ],
+  financeBanking: [
+    "banking","insurance","loans","real estate","property management","underwriting",
+  ],
+  languagesCommunication: [
+    "translation","interpreting","multilingual","dhivehi","arabic","foreign languages",
+  ],
+  socialGovernment: [
+    "social work","community service","government","civil service","ngo","volunteering",
+    "religious studies","public policy","diplomacy",
+  ],
+  retailCustomer: [
+    "retail","cashiering","merchandising","stock management","point of sale","inventory",
+  ],
+  environmentalMarine: [
+    "marine conservation","environmental science","coral reef","sustainability",
+    "fisheries management","climate","oceanography",
+  ],
+  jobTitleWords: [
+    "doctor","nurse","surgeon","dentist","pharmacist","physiotherapist","midwife",
+    "psychologist","counselor","paramedic","optometrist","nutritionist","vet","veterinarian",
+    "lawyer","paralegal","judge",
+    "driver","pilot","captain","sailor","seafarer",
+    "engineer","architect","surveyor",
+    "accountant","auditor","banker","underwriter",
+    "teacher","tutor","lecturer","professor",
+    "police","soldier","security guard",
+    "electrician","plumber","carpenter","welder","mason","painter",
+    "farmer","fisherman","gardener",
+    "developer","programmer","designer",
+    "photographer","artist","musician","dancer","actor","singer","writer","journalist",
+    "waiter","waitress","receptionist","housekeeper","cashier","salesperson",
+    "translator","interpreter","social worker","imam","priest",
+    "chemist","physicist","biologist","hairdresser",
+    "dermatologist","pediatrician","oceanographer","realtor",
+    "military","security",
+  ],
 };
 const ALL_KEYWORDS = [...new Set(Object.values(KEYWORD_CATEGORIES).flat())];
 
@@ -532,10 +598,10 @@ const CAREER_KEYWORDS = {
   "Restaurant Manager":    { chef:2, cooking:2, leadership:5, organized:4, "customer service":5, "time management":3 },
   "Baker":                 { baking:10, chef:3, cooking:3, "detail-oriented":3 },
 
-  "Software Engineer":     { coding:8, programming:8, "computer science":6, technology:3, "problem solver":4, analytical:3 },
-  "Web Developer":         { coding:6, "web development":8, programming:5, design:3, technology:3, creative:2 },
-  "Mobile App Developer":  { coding:6, programming:6, "computer science":4, technology:3, creative:2, "problem solver":3 },
-  "Backend Developer":     { coding:6, programming:7, "computer science":5, networking:3, analytical:3 },
+  "Software Engineer":     { coding:8, programming:8, "computer science":6, technology:3, "problem solver":4, analytical:3, developer:4, programmer:5, engineer:3 },
+  "Web Developer":         { coding:6, "web development":8, programming:5, design:3, technology:3, creative:2, developer:6 },
+  "Mobile App Developer":  { coding:6, programming:6, "computer science":4, technology:3, creative:2, "problem solver":3, developer:6 },
+  "Backend Developer":     { coding:6, programming:7, "computer science":5, networking:3, analytical:3, developer:6, programmer:5 },
   "Data Analyst":          { "data analysis":9, excel:5, math:4, analytical:5, "critical thinking":3 },
   "Cybersecurity Analyst": { cybersecurity:10, networking:5, technology:3, analytical:4, "problem solver":3 },
   "AI / Machine Learning Engineer": { ai:8, "machine learning":9, coding:5, math:4, analytical:4 },
@@ -544,23 +610,23 @@ const CAREER_KEYWORDS = {
   "Game Developer":        { gaming:6, coding:6, programming:6, creative:3, "problem solver":3 },
   "Game Designer":         { gaming:6, design:5, creative:5, art:3, storytelling:2 },
 
-  "Teacher":               { "good communicator":4, patient:4, leadership:3, education:5, friendly:3 },
-  "Tutor":                 { patient:5, "good communicator":4, education:5, "detail-oriented":2 },
-  "Lecturer":              { education:5, "public speaking":5, "good communicator":4, leadership:2 },
+  "Teacher":               { "good communicator":4, patient:4, leadership:3, education:5, friendly:3, teacher:6 },
+  "Tutor":                 { patient:5, "good communicator":4, education:5, "detail-oriented":2, tutor:6 },
+  "Lecturer":              { education:5, "public speaking":5, "good communicator":4, leadership:2, lecturer:6, professor:5 },
   "Teaching Assistant":    { patient:4, education:4, friendly:3, organized:2, responsible:2 },
   "Librarian":             { reading:7, organized:4, helpful:4, "detail-oriented":3 },
 
-  "Nurse":                 { healthcare:6, biology:4, patient:4, responsible:4, empathetic:4 },
+  "Nurse":                 { healthcare:6, biology:4, patient:4, responsible:4, empathetic:4, nurse:8 },
   "Healthcare Assistant":  { healthcare:6, empathetic:4, responsible:3, patient:3 },
   "Medical Technician":    { healthcare:5, biology:4, chemistry:3, "detail-oriented":4, analytical:3 },
-  "Veterinarian":          { animals:8, biology:6, science:4, empathetic:4, responsible:3 },
+  "Veterinarian":          { animals:8, biology:6, science:4, empathetic:4, responsible:3, vet:8, veterinarian:9 },
 
-  "Police Officer":        { leadership:4, responsible:4, honest:4, "team player":3, confident:3 },
-  "Security Officer":      { responsible:4, honest:3, reliable:4, calm:3, confident:2 },
-  "Military":              { leadership:4, responsible:3, "team player":4, hardworking:3, confident:3 },
+  "Police Officer":        { leadership:4, responsible:4, honest:4, "team player":3, confident:3, police:8 },
+  "Security Officer":      { responsible:4, honest:3, reliable:4, calm:3, confident:2, "security guard":7 },
+  "Military":              { leadership:4, responsible:3, "team player":4, hardworking:3, confident:3, soldier:7, military:8 },
 
-  "Accountant":            { math:5, accounting:9, excel:4, "detail-oriented":4, organized:3 },
-  "Auditor":               { accounting:8, "detail-oriented":5, analytical:4, organized:3, honest:3 },
+  "Accountant":            { math:5, accounting:9, excel:4, "detail-oriented":4, organized:3, accountant:8 },
+  "Auditor":               { accounting:8, "detail-oriented":5, analytical:4, organized:3, honest:3, auditor:8 },
   "Financial Analyst":     { finance:8, accounting:5, math:5, analytical:5, excel:4 },
   "Bookkeeper":            { bookkeeping:9, accounting:6, excel:4, organized:4, "detail-oriented":4 },
   "Economist":             { economics:8, finance:5, math:4, analytical:5 },
@@ -570,57 +636,120 @@ const CAREER_KEYWORDS = {
   "Brand Manager":         { marketing:6, business:4, creative:3, "good communicator":3, leadership:3 },
   "Social Media Manager":  { "social media":9, marketing:5, creative:4, writing:3, "good communicator":3 },
   "Blogger / Vlogger":     { blogging:7, vlogging:7, writing:4, "social media":5, creative:4 },
-  "Sales Executive":       { sales:9, "good communicator":5, persuasive:5, "customer service":4, negotiation:4 },
+  "Sales Executive":       { sales:9, "good communicator":5, persuasive:5, "customer service":4, negotiation:4, salesperson:6 },
   "Business Owner / Entrepreneur": { leadership:5, business:6, finance:3, ambitious:5, creative:3 },
 
-  "Mechanical Engineer":   { math:4, physics:5, "problem solver":4, analytical:4, technology:3 },
-  "Civil Engineer":        { math:4, physics:4, construction:6, "problem solver":4, analytical:3 },
-  "Electrical Engineer":   { math:4, physics:5, "electrical work":5, technology:4, analytical:3 },
-  "Aerospace Engineer":    { math:5, physics:6, aviation:5, analytical:4, "problem solver":3 },
-  "Architect":             { design:6, math:3, cad:5, autocad:5, creative:4 },
-  "Interior Designer":     { design:7, creative:6, art:3, "detail-oriented":3, fashion:2 },
+  "Mechanical Engineer":   { math:4, physics:5, "problem solver":4, analytical:4, technology:3, engineer:4 },
+  "Civil Engineer":        { math:4, physics:4, construction:6, "problem solver":4, analytical:3, engineer:4 },
+  "Electrical Engineer":   { math:4, physics:5, "electrical work":5, technology:4, analytical:3, engineer:4 },
+  "Aerospace Engineer":    { math:5, physics:6, aviation:5, analytical:4, "problem solver":3, engineer:4 },
+  "Architect":             { design:6, math:3, cad:5, autocad:5, creative:4, architect:8 },
+  "Surveyor":              { surveyor:9, math:4, "detail-oriented":4, analytical:3, construction:2 },
+  "Interior Designer":     { design:7, creative:6, art:3, "detail-oriented":3, fashion:2, designer:5 },
 
-  "Electrician":           { "electrical work":9, mechanic:2, "detail-oriented":3, "problem solver":3 },
-  "Plumber":               { plumbing:9, mechanic:2, "problem solver":3, reliable:2 },
-  "Carpenter":             { carpentry:9, "detail-oriented":3, creative:2, reliable:2 },
+  "Electrician":           { "electrical work":9, mechanic:2, "detail-oriented":3, "problem solver":3, electrician:7 },
+  "Plumber":               { plumbing:9, mechanic:2, "problem solver":3, reliable:2, plumber:7 },
+  "Carpenter":             { carpentry:9, "detail-oriented":3, creative:2, reliable:2, carpenter:7 },
   "Mechanic":              { mechanic:9, cars:5, "problem solver":4, "detail-oriented":3 },
-  "Welder":                { welding:9, construction:3, "detail-oriented":3, reliable:2 },
-  "Farmer":                { farming:9, nature:4, hardworking:3, independent:2 },
-  "Fisheries Worker":      { fishing:9, nature:4, hardworking:3, independent:2 },
-  "Hairdresser":           { hairdressing:9, creative:4, "customer service":3, fashion:3 },
+  "Welder":                { welding:9, construction:3, "detail-oriented":3, reliable:2, welder:7 },
+  "Mason / Construction Worker": { mason:8, construction:6, hardworking:4, reliable:3 },
+  "Painter (Construction/Decorator)": { painter:8, painting:4, "detail-oriented":3, reliable:2 },
+  "Farmer":                { farming:9, nature:4, hardworking:3, independent:2, farmer:7 },
+  "Gardener / Landscaper": { gardener:9, nature:4, hardworking:3, creative:2 },
+  "Fisheries Worker":      { fishing:9, nature:4, hardworking:3, independent:2, fisherman:6 },
+  "Hairdresser":           { hairdressing:9, creative:4, "customer service":3, fashion:3, hairdresser:7 },
 
   "Fitness Trainer":       { fitness:9, sports:5, "good communicator":3, confident:3, patient:2 },
-  "Pilot":                 { aviation:9, confident:3, calm:3, "decision making":4, analytical:2 },
+  "Pilot":                 { aviation:9, confident:3, calm:3, "decision making":4, analytical:2, pilot:8 },
   "Flight Attendant":      { aviation:6, "customer service":5, friendly:4, calm:3, "good communicator":3 },
 
   "Dive Instructor":       { nature:5, fitness:4, patient:4, "customer service":4, confident:3 },
   "Tour Guide":            { travel:7, "good communicator":5, friendly:4, "public speaking":3, outgoing:3 },
   "Marine Biologist":      { nature:6, biology:6, science:5, animals:4, curious:3 },
-  "Biologist":             { biology:9, science:5, nature:4, curious:3 },
-  "Chemist":               { chemistry:9, science:5, analytical:4, "detail-oriented":3 },
-  "Physicist":             { physics:9, math:5, analytical:5, curious:3 },
-  "Front Office / Guest Relations Officer": { "customer service":6, friendly:5, "good communicator":4, organized:3, patient:2 },
-  "Housekeeping Supervisor": { organized:6, "detail-oriented":5, reliable:4, "time management":3 },
+  "Biologist":             { biology:9, science:5, nature:4, curious:3, biologist:7 },
+  "Chemist":               { chemistry:9, science:5, analytical:4, "detail-oriented":3, chemist:7 },
+  "Physicist":             { physics:9, math:5, analytical:5, curious:3, physicist:7 },
+  "Front Office / Guest Relations Officer": { "customer service":6, friendly:5, "good communicator":4, organized:3, patient:2, receptionist:6 },
+  "Housekeeping Supervisor": { organized:6, "detail-oriented":5, reliable:4, "time management":3, housekeeper:6 },
+  "Waiter / Waitress":     { waiter:9, waitress:9, "customer service":5, "team player":3, "time management":2 },
   "Spa Therapist":         { patient:3, "customer service":4, calm:3, fitness:2, empathetic:3 },
 
-  "Graphic Designer":      { art:5, photoshop:6, illustrator:6, creative:6, design:5 },
-  "UI/UX Designer":        { design:6, figma:6, creative:4, "problem solver":3, technology:3 },
-  "Artist / Illustrator":  { art:8, drawing:8, sketching:6, creative:6, painting:4 },
-  "Photographer":          { photography:10, art:3, creative:4, "detail-oriented":3 },
+  "Graphic Designer":      { art:5, photoshop:6, illustrator:6, creative:6, design:5, designer:5 },
+  "UI/UX Designer":        { design:6, figma:6, creative:4, "problem solver":3, technology:3, designer:5 },
+  "Artist / Illustrator":  { art:8, drawing:8, sketching:6, creative:6, painting:4, artist:6 },
+  "Photographer":          { photography:10, art:3, creative:4, "detail-oriented":3, photographer:7 },
   "Video Editor":          { "video editing":10, creative:4, "detail-oriented":3, photography:2 },
   "Filmmaker / Video Producer": { filmmaking:8, "video editing":6, creative:5, photography:3, storytelling:4 },
-  "Fashion Designer":      { fashion:9, design:6, creative:6, art:3, sewing:3 },
+  "Fashion Designer":      { fashion:9, design:6, creative:6, art:3, sewing:3, designer:4 },
 
-  "Musician":              { music:9, instrument:6, guitar:4, piano:4, drums:4, creative:5 },
-  "Singer":                { music:8, singing:9, confident:4, creative:4, "public speaking":2 },
+  "Musician":              { music:9, instrument:6, guitar:4, piano:4, drums:4, creative:5, musician:7 },
+  "Singer":                { music:8, singing:9, confident:4, creative:4, "public speaking":2, singer:6 },
   "DJ":                    { music:8, dj:9, creative:4, outgoing:3 },
-  "Actor":                 { acting:9, theatre:6, confident:5, creative:4, "public speaking":3 },
-  "Dancer":                { dancing:9, fitness:4, creative:4, confident:3 },
+  "Actor":                 { acting:9, theatre:6, confident:5, creative:4, "public speaking":3, actor:6 },
+  "Dancer":                { dancing:9, fitness:4, creative:4, confident:3, dancer:6 },
 
-  "Writer / Author":       { writing:9, reading:5, creative:5, storytelling:6, "critical thinking":2 },
-  "Journalist":            { writing:7, "public speaking":3, curious:4, "critical thinking":4, "good communicator":4 },
+  "Writer / Author":       { writing:9, reading:5, creative:5, storytelling:6, "critical thinking":2, writer:6 },
+  "Journalist":            { writing:7, "public speaking":3, curious:4, "critical thinking":4, "good communicator":4, journalist:8 },
   "Editor":                { writing:6, reading:5, "detail-oriented":5, "critical thinking":3 },
   "Historian":             { history:8, writing:4, curious:4, "critical thinking":3 },
+
+  "Doctor / General Practitioner": { medicine:9, biology:5, healthcare:5, empathetic:4, "problem solver":3, doctor:8 },
+  "Surgeon":               { surgery:10, medicine:6, "detail-oriented":5, calm:4, confident:3, surgeon:7 },
+  "Dentist":               { dentistry:10, medicine:4, "detail-oriented":4, "customer service":2, dentist:7 },
+  "Pharmacist":            { pharmacy:10, chemistry:5, "detail-oriented":4, "customer service":3, pharmacist:7 },
+  "Physiotherapist":       { physiotherapy:10, fitness:4, healthcare:4, patient:4, empathetic:3, physiotherapist:7 },
+  "Radiologist / Lab Technician": { laboratory:8, radiology:6, biology:4, "detail-oriented":5, analytical:4 },
+  "Midwife":               { midwifery:10, healthcare:5, empathetic:5, patient:4, calm:3, midwife:7 },
+  "Psychologist / Counselor": { psychology:9, counseling:8, empathetic:5, "good communicator":4, patient:3, psychologist:7, counselor:7 },
+  "Paramedic":             { paramedic:10, healthcare:5, calm:4, "decision making":4, confident:3 },
+  "Optometrist":           { optometry:10, healthcare:4, "detail-oriented":4, optometrist:6 },
+  "Nutritionist / Dietitian": { nutrition:9, healthcare:4, science:3, "good communicator":3, nutritionist:6 },
+  "Veterinary Nurse":      { veterinary:9, animals:6, empathetic:4, patient:3 },
+  "Dermatologist":         { dermatology:10, medicine:5, "detail-oriented":4, dermatologist:7 },
+  "Pediatrician":          { pediatrics:10, medicine:5, patient:5, empathetic:4, pediatrician:7 },
+  "First Responder":       { "first aid":9, calm:4, responsible:4, "decision making":4 },
+
+  "Lawyer":                { law:10, legal:6, "critical thinking":5, "public speaking":4, persuasive:4, lawyer:8 },
+  "Judge / Magistrate":    { judge:10, law:5, "critical thinking":5, honest:4, confident:3 },
+  "Paralegal / Legal Assistant": { paralegal:9, legal:6, "detail-oriented":4, organized:3 },
+  "Compliance Officer":   { compliance:9, legal:4, "detail-oriented":5, analytical:3, honest:3 },
+  "Policy Analyst":       { policy:9, "critical thinking":5, analytical:4, writing:3 },
+
+  "Event / Wedding Planner": { "event planning":9, organized:5, creative:4, "customer service":4 },
+  "Bartender":             { bartending:9, "customer service":5, friendly:4, "team player":3 },
+  "Butler / Guest Services Officer": { "butler service":8, "guest relations":6, "customer service":6, organized:4, friendly:4 },
+  "Resort General Manager": { leadership:6, hospitality:6, "customer service":4, organized:4, business:3 },
+  "Lifeguard":             { fitness:5, calm:5, responsible:5, confident:3 },
+  "Concierge":             { concierge:9, "customer service":5, friendly:4, organized:3 },
+
+  "Truck / Delivery Driver": { driving:9, reliable:4, "time management":3, independent:3, driver:6 },
+  "Logistics / Warehouse Coordinator": { logistics:9, warehousing:6, "supply chain":4, organized:5, "detail-oriented":3 },
+  "Ferry / Boat Captain":  { "boat handling":8, seafaring:6, "ferry operations":5, leadership:4, calm:3, responsible:3, captain:7, sailor:5, seafarer:5 },
+  "Air Traffic Controller": { "air traffic control":10, analytical:5, calm:5, "decision making":5 },
+  "Customs / Immigration Officer": { government:5, "detail-oriented":5, honest:4, responsible:3 },
+  "Shipping Coordinator":  { shipping:9, logistics:6, "supply chain":4, organized:4, "detail-oriented":3 },
+
+  "Bank Teller / Loan Officer": { banking:9, loans:6, "customer service":5, "detail-oriented":4, honest:3, banker:6 },
+  "Insurance Agent / Underwriter": { insurance:9, underwriting:6, sales:5, "customer service":4, persuasive:3 },
+  "Real Estate Agent":     { "real estate":9, sales:6, "good communicator":4, persuasive:4, realtor:6 },
+  "Property Manager":     { "property management":9, organized:5, "customer service":4, "detail-oriented":3 },
+
+  "Translator / Interpreter": { translation:10, interpreting:9, multilingual:6, dhivehi:3, arabic:3, "detail-oriented":3, "good communicator":3 },
+
+  "Social Worker":         { "social work":10, empathetic:6, "community service":5, patient:4, helpful:4, "social worker":8 },
+  "NGO / Program Officer": { ngo:9, "community service":6, volunteering:3, organized:4, leadership:3, empathetic:3 },
+  "Civil Servant / Government Officer": { government:8, "civil service":7, "public policy":3, organized:4, responsible:4 },
+  "Diplomat / Foreign Affairs Officer": { diplomacy:9, "public policy":5, multilingual:4, "good communicator":4 },
+  "Religious Teacher / Imam": { "religious studies":9, education:4, "public speaking":3, patient:3, imam:7, priest:6 },
+
+  "Marine Conservation Officer": { "marine conservation":10, "coral reef":6, nature:5, biology:4, sustainability:3 },
+  "Environmental Scientist": { "environmental science":10, science:5, sustainability:5, analytical:4, nature:3, climate:3 },
+  "Fisheries Officer":     { "fisheries management":9, fishing:5, nature:4, responsible:3, sustainability:3 },
+  "Oceanographer":         { oceanography:10, science:5, analytical:4, nature:4, curious:3, oceanographer:7 },
+
+  "Retail Sales Associate": { retail:8, sales:5, "customer service":5, friendly:3, salesperson:5 },
+  "Store / Merchandising Manager": { merchandising:8, retail:6, organized:5, leadership:4, inventory:3 },
+  "Cashier":               { cashiering:9, "point of sale":6, inventory:2, "detail-oriented":3, "customer service":3, cashier:6 },
 };
 
 function extractKeywords(text){
@@ -684,7 +813,7 @@ const CATEGORY_FOLLOWUPS = {
         ]},
     ]},
   technology: {
-    trigger: ['coding','programming','technology','web development','ai','machine learning'],
+    trigger: ['coding','programming','technology','web development','ai','machine learning','developer','programmer'],
     questions: [
       { text:"Do you have a Computer Science degree or any coding certifications?",
         options:[
@@ -701,7 +830,7 @@ const CATEGORY_FOLLOWUPS = {
         ]},
     ]},
   design: {
-    trigger: ['graphic design','photoshop','illustrator','figma','art','design'],
+    trigger: ['graphic design','photoshop','illustrator','figma','art','design','designer'],
     questions: [
       { text:"Do you have a design portfolio you could show employers?",
         options:[
@@ -733,7 +862,7 @@ const CATEGORY_FOLLOWUPS = {
         ]},
     ]},
   education: {
-    trigger: ['education'],
+    trigger: ['education','teacher','tutor','lecturer','professor'],
     questions: [
       { text:"Do you have a teaching qualification?",
         options:[
@@ -749,7 +878,7 @@ const CATEGORY_FOLLOWUPS = {
         ]},
     ]},
   finance: {
-    trigger: ['accounting','finance','bookkeeping'],
+    trigger: ['accounting','finance','bookkeeping','accountant','auditor'],
     questions: [
       { text:"Do you have an accounting qualification, like ACCA or CPA?",
         options:[
@@ -765,7 +894,7 @@ const CATEGORY_FOLLOWUPS = {
         ]},
     ]},
   engineering: {
-    trigger: ['physics','math','cad','autocad'],
+    trigger: ['physics','math','cad','autocad','engineer','architect','surveyor'],
     questions: [
       { text:"Do you have (or are you working toward) an engineering degree?",
         options:[
@@ -781,7 +910,7 @@ const CATEGORY_FOLLOWUPS = {
         ]},
     ]},
   construction: {
-    trigger: ['construction','carpentry','welding'],
+    trigger: ['construction','carpentry','welding','electrician','plumber','carpenter','welder','mason','painter'],
     questions: [
       { text:"Do you have any trade certifications?",
         options:[
@@ -813,7 +942,7 @@ const CATEGORY_FOLLOWUPS = {
         ]},
     ]},
   aviation: {
-    trigger: ['aviation'],
+    trigger: ['aviation','pilot'],
     questions: [
       { text:"Do you have a pilot's license, or are you working toward one?",
         options:[
@@ -829,7 +958,7 @@ const CATEGORY_FOLLOWUPS = {
         ]},
     ]},
   agriculture: {
-    trigger: ['farming','nature','animals'],
+    trigger: ['farming','nature','animals','farmer','fisherman','gardener'],
     questions: [
       { text:"Have you worked on a farm before, or had any agricultural training?",
         options:[
@@ -845,7 +974,7 @@ const CATEGORY_FOLLOWUPS = {
         ]},
     ]},
   music: {
-    trigger: ['music','video editing','photography','filmmaking'],
+    trigger: ['music','video editing','photography','filmmaking','photographer','artist','musician','dancer','actor','singer'],
     questions: [
       { text:"Do you have a portfolio or demo reel you could show?",
         options:[
@@ -862,7 +991,7 @@ const CATEGORY_FOLLOWUPS = {
         ]},
     ]},
   marketing: {
-    trigger: ['social media','marketing','writing'],
+    trigger: ['social media','marketing'],
     questions: [
       { text:"Have you managed social media accounts for a business, or run ads before?",
         options:[
@@ -925,15 +1054,239 @@ const CATEGORY_FOLLOWUPS = {
           {label:'Prefer behind-the-scenes', value:'behind', icon:'inventory', bonus:['organized']},
         ]},
     ]},
+  medical: {
+    trigger: ['medicine','nursing','surgery','dentistry','pharmacy','physiotherapy','radiology',
+      'midwifery','psychology','counseling','paramedic','laboratory','optometry','nutrition',
+      'veterinary','dermatology','pediatrics','first aid',
+      'doctor','nurse','surgeon','dentist','pharmacist','physiotherapist','midwife',
+      'psychologist','counselor','optometrist','nutritionist','vet','veterinarian',
+      'dermatologist','pediatrician'],
+    questions: [
+      { text:"Do you have a medical, nursing, or allied-health qualification?",
+        options:[
+          {label:'Yes, qualified', value:'qual_yes', icon:'medical_services', bonus:['medicine']},
+          {label:'Currently studying', value:'studying', icon:'school', bonus:['healthcare']},
+          {label:'No, but interested', value:'no', icon:'auto_awesome', bonus:[]},
+        ]},
+      { text:"Which area of healthcare pulls you in most?",
+        options:[
+          {label:'Clinical / patient care', value:'clinical', icon:'healing', bonus:['medicine','empathetic']},
+          {label:'Surgery / specialist care', value:'surgery', icon:'medical_information', bonus:['surgery']},
+          {label:'Lab / diagnostics', value:'lab', icon:'biotech', bonus:['laboratory']},
+          {label:'Mental health / counseling', value:'mental', icon:'psychology', bonus:['psychology','counseling']},
+        ]},
+    ]},
+  legal: {
+    trigger: ['law','legal','paralegal','contracts','compliance','litigation','justice','policy','lawyer','judge'],
+    questions: [
+      { text:"Do you have a law degree or paralegal qualification?",
+        options:[
+          {label:'Yes, qualified lawyer', value:'lawyer', icon:'gavel', bonus:['law']},
+          {label:'Paralegal / legal assistant training', value:'paralegal', icon:'description', bonus:['paralegal']},
+          {label:'No formal qualification yet', value:'no', icon:'auto_awesome', bonus:[]},
+        ]},
+      { text:"More drawn to courtroom / litigation work, or contracts & compliance?",
+        options:[
+          {label:'Litigation / courtroom', value:'litigation', icon:'balance', bonus:['litigation']},
+          {label:'Contracts & compliance', value:'compliance', icon:'fact_check', bonus:['compliance']},
+          {label:'Either works', value:'either', icon:'all_inclusive', bonus:[]},
+        ]},
+    ]},
+  tourism: {
+    trigger: ['hospitality','tourism','front office','concierge','guest relations','event planning',
+      'bartending','tour guiding','housekeeping supervision','butler service',
+      'waiter','waitress','receptionist','housekeeper','hairdresser'],
+    questions: [
+      { text:"Have you worked in a resort, hotel, or guesthouse before?",
+        options:[
+          {label:'Yes, resort/hotel experience', value:'exp', icon:'hotel', bonus:['hospitality']},
+          {label:'Some tourism-related work', value:'some', icon:'luggage', bonus:['tourism']},
+          {label:'Not yet, but interested', value:'no', icon:'auto_awesome', bonus:[]},
+        ]},
+      { text:"Which side of hospitality suits you best?",
+        options:[
+          {label:'Guest-facing / front office', value:'front', icon:'support_agent', bonus:['front office','guest relations']},
+          {label:'Events & planning', value:'events', icon:'event', bonus:['event planning']},
+          {label:'Food & beverage', value:'fnb', icon:'local_bar', bonus:['bartending']},
+          {label:'Tours & excursions', value:'tours', icon:'tour', bonus:['tour guiding']},
+        ]},
+    ]},
+  transport: {
+    trigger: ['driving','logistics','shipping','warehousing','supply chain','seafaring',
+      'boat handling','ferry operations','air traffic control','driver','captain','sailor','seafarer'],
+    questions: [
+      { text:"Do you have a relevant license or certification (driving, seafaring, ATC, etc.)?",
+        options:[
+          {label:'Yes, licensed/certified', value:'cert_yes', icon:'badge', bonus:['driving']},
+          {label:'Working toward one', value:'working', icon:'school', bonus:[]},
+          {label:'No, but experienced', value:'exp', icon:'build', bonus:[]},
+        ]},
+      { text:"Which best describes the work you're after?",
+        options:[
+          {label:'On the road', value:'road', icon:'local_shipping', bonus:['driving']},
+          {label:'On the water', value:'water', icon:'directions_boat', bonus:['seafaring','boat handling']},
+          {label:'Warehouse / logistics coordination', value:'warehouse', icon:'inventory_2', bonus:['warehousing','logistics']},
+          {label:'Air traffic / airport ops', value:'air', icon:'flight_takeoff', bonus:['air traffic control']},
+        ]},
+    ]},
+  banking: {
+    trigger: ['banking','insurance','loans','real estate','property management','underwriting','banker','realtor'],
+    questions: [
+      { text:"Do you have any banking, insurance, or real estate certifications?",
+        options:[
+          {label:'Yes, certified', value:'cert_yes', icon:'workspace_premium', bonus:['banking']},
+          {label:'Studying toward one', value:'studying', icon:'school', bonus:[]},
+          {label:'No formal qualification', value:'no', icon:'auto_awesome', bonus:[]},
+        ]},
+      { text:"Which interests you more?",
+        options:[
+          {label:'Banking / loans', value:'banking', icon:'account_balance', bonus:['banking','loans']},
+          {label:'Insurance', value:'insurance', icon:'shield', bonus:['insurance']},
+          {label:'Real estate / property', value:'realestate', icon:'home_work', bonus:['real estate','property management']},
+        ]},
+    ]},
+  socialgov: {
+    trigger: ['social work','community service','government','civil service','ngo','volunteering',
+      'religious studies','public policy','diplomacy','social worker','imam','priest'],
+    questions: [
+      { text:"Do you have experience in social work, government, or NGO settings?",
+        options:[
+          {label:'Yes, direct experience', value:'exp', icon:'volunteer_activism', bonus:['social work']},
+          {label:'Volunteered informally', value:'volunteer', icon:'diversity_3', bonus:['volunteering']},
+          {label:'Not yet, but motivated', value:'no', icon:'auto_awesome', bonus:[]},
+        ]},
+      { text:"Which setting appeals to you most?",
+        options:[
+          {label:'Government / civil service', value:'gov', icon:'account_balance', bonus:['government','civil service']},
+          {label:'NGO / community programs', value:'ngo', icon:'diversity_3', bonus:['ngo']},
+          {label:'Religious / community education', value:'religious', icon:'mosque', bonus:['religious studies']},
+        ]},
+    ]},
+  environmental: {
+    trigger: ['marine conservation','environmental science','coral reef','sustainability',
+      'fisheries management','climate','oceanography','oceanographer'],
+    questions: [
+      { text:"Do you have a background in marine biology, environmental science, or diving?",
+        options:[
+          {label:'Yes, relevant degree/training', value:'qual_yes', icon:'school', bonus:['environmental science']},
+          {label:'Diving certified', value:'diving', icon:'scuba_diving', bonus:['coral reef']},
+          {label:'No formal background, but passionate', value:'no', icon:'auto_awesome', bonus:[]},
+        ]},
+      { text:"Which area interests you most?",
+        options:[
+          {label:'Coral reef / marine conservation', value:'reef', icon:'water', bonus:['marine conservation','coral reef']},
+          {label:'Fisheries management', value:'fisheries', icon:'set_meal', bonus:['fisheries management']},
+          {label:'Sustainability / climate policy', value:'sustainability', icon:'eco', bonus:['sustainability','climate']},
+        ]},
+    ]},
+  retail: {
+    trigger: ['retail','cashiering','merchandising','stock management','point of sale','inventory','cashier'],
+    questions: [
+      { text:"Have you worked in retail or customer-facing sales before?",
+        options:[
+          {label:'Yes, retail experience', value:'exp', icon:'storefront', bonus:['retail']},
+          {label:'Some customer service work', value:'some', icon:'support_agent', bonus:[]},
+          {label:'Not yet, but interested', value:'no', icon:'auto_awesome', bonus:[]},
+        ]},
+      { text:"Which part of retail suits you best?",
+        options:[
+          {label:'Sales floor / customers', value:'sales', icon:'point_of_sale', bonus:['cashiering','point of sale']},
+          {label:'Merchandising / displays', value:'merch', icon:'shelves', bonus:['merchandising']},
+          {label:'Stock / inventory', value:'stock', icon:'inventory', bonus:['stock management','inventory']},
+        ]},
+    ]},
+  languages: {
+    trigger: ['translation','interpreting','multilingual'],
+    questions: [
+      { text:"Which languages are you fluent in, beyond Dhivehi/English?",
+        options:[
+          {label:'Arabic', value:'arabic', icon:'translate', bonus:['arabic','multilingual']},
+          {label:'Other South Asian languages', value:'sasian', icon:'translate', bonus:['multilingual']},
+          {label:'Other / several languages', value:'other', icon:'translate', bonus:['multilingual']},
+        ]},
+      { text:"Do you prefer written translation, or live interpreting?",
+        options:[
+          {label:'Written translation', value:'written', icon:'edit_document', bonus:['translation']},
+          {label:'Live interpreting', value:'live', icon:'record_voice_over', bonus:['interpreting']},
+          {label:'Both', value:'both', icon:'all_inclusive', bonus:[]},
+        ]},
+    ]},
+  publicsafety: {
+    trigger: ['police','soldier','security guard','military','security'],
+    questions: [
+      { text:"Have you had any police, military, or security training?",
+        options:[
+          {label:'Yes, trained/serving', value:'trained', icon:'military_tech', bonus:['police']},
+          {label:'Some security work experience', value:'exp', icon:'shield', bonus:['security guard']},
+          {label:'Not yet, but interested', value:'no', icon:'auto_awesome', bonus:[]},
+        ]},
+      { text:"Which appeals to you more?",
+        options:[
+          {label:'Police / law enforcement', value:'police', icon:'local_police', bonus:['police']},
+          {label:'Military / defense', value:'military', icon:'military_tech', bonus:['soldier']},
+          {label:'Private security', value:'private', icon:'shield', bonus:['security guard']},
+        ]},
+    ]},
+  writing: {
+    trigger: ['writing','reading','storytelling','writer','journalist','history'],
+    questions: [
+      { text:"Do you have a portfolio of published writing — articles, stories, or a blog?",
+        options:[
+          {label:'Yes, published work', value:'published', icon:'menu_book', bonus:['writer']},
+          {label:'Some personal writing', value:'some', icon:'edit_note', bonus:['writing']},
+          {label:'Not yet, but I write a lot', value:'no', icon:'auto_awesome', bonus:[]},
+        ]},
+      { text:"Which kind of writing interests you most?",
+        options:[
+          {label:'Journalism / news', value:'journalism', icon:'newspaper', bonus:['journalist']},
+          {label:'Creative writing / fiction', value:'creative', icon:'auto_stories', bonus:['storytelling']},
+          {label:'Editing & proofreading', value:'editing', icon:'fact_check', bonus:['detail-oriented']},
+          {label:'Research & history', value:'research', icon:'history_edu', bonus:['history']},
+        ]},
+    ]},
+  sales: {
+    trigger: ['sales','negotiation','persuasive','salesperson'],
+    questions: [
+      { text:"Have you worked in a sales role with a commission or target-based structure before?",
+        options:[
+          {label:'Yes, hit targets regularly', value:'exp', icon:'trending_up', bonus:['sales']},
+          {label:'Some sales experience', value:'some', icon:'point_of_sale', bonus:['salesperson']},
+          {label:'Not yet, but I enjoy persuading people', value:'no', icon:'auto_awesome', bonus:[]},
+        ]},
+      { text:"Do you prefer selling directly to customers (retail), or business-to-business deals?",
+        options:[
+          {label:'Retail / customer-facing', value:'retail', icon:'storefront', bonus:['retail']},
+          {label:'B2B / corporate sales', value:'b2b', icon:'business_center', bonus:['negotiation']},
+          {label:'Either works', value:'either', icon:'all_inclusive', bonus:[]},
+        ]},
+    ]},
+  science: {
+    trigger: ['chemistry','chemist','physicist','biologist'],
+    questions: [
+      { text:"Do you have a science degree (chemistry, physics, or biology)?",
+        options:[
+          {label:'Yes, qualified', value:'qual_yes', icon:'school', bonus:['science']},
+          {label:'Currently studying', value:'studying', icon:'menu_book', bonus:[]},
+          {label:'No formal degree, but curious', value:'no', icon:'auto_awesome', bonus:['curious']},
+        ]},
+      { text:"Which field pulls you in most?",
+        options:[
+          {label:'Chemistry / lab work', value:'chem', icon:'science', bonus:['chemistry','chemist']},
+          {label:'Physics / engineering-adjacent', value:'phys', icon:'bolt', bonus:['physics','physicist']},
+          {label:'Biology / life sciences', value:'bio', icon:'biotech', bonus:['biology','biologist']},
+        ]},
+    ]},
 };
 
 // order matters — first category (top to bottom) whose trigger keywords
 // were matched wins, so more specific fields are checked before broader,
 // more generic ones like "business" or "hospitality"
 const CATEGORY_PRIORITY = [
-  'cooking','cybersecurity','technology','design','healthcare','education',
-  'finance','engineering','construction','automotive','aviation','agriculture',
-  'music','marketing','fitness','business','hospitality',
+  'cooking','cybersecurity','technology','design','medical','legal','publicsafety',
+  'science','healthcare','education','finance','banking','engineering','construction',
+  'automotive','aviation','transport','agriculture','environmental','music','writing',
+  'marketing','sales','retail','languages','socialgov','tourism','fitness','business',
+  'hospitality',
 ];
 
 function detectCategory(matchedKeywords){
@@ -994,11 +1347,35 @@ function buildSiteSearchUrl(template, q){
 
 const SOURCES = [
   { site:"Jobsicle", listUrl:"https://jobsicle.mv/", base:"https://jobsicle.mv", linkPattern:/^\/job\//i },
+  // detailView:true here too — Job Center's own job pages render fine (they're
+  // plain server HTML, no client-side app), but routing through the in-app
+  // details page gives a consistent look and reuses the company/area/type/
+  // mode/skills we already scraped on the listing pass instead of asking the
+  // person to go dig that back out of the source page themselves.
   { site:"Job Center Maldives", listUrl:"https://jobcenter.mv/en/jobs", base:"https://jobcenter.mv", linkPattern:/^\/en\/jobs\/[a-z0-9-]+$/i,
-    searchUrl: q => buildSiteSearchUrl("https://jobcenter.mv/en/jobs?filter%5Bsearch%5D={q}", q) },
+    searchUrl: q => buildSiteSearchUrl("https://jobcenter.mv/en/jobs?filter%5Bsearch%5D={q}", q), detailView:true },
   { site:"Career Maldives", listUrl:"https://career-maldives.com/jobs/", base:"https://career-maldives.com", linkPattern:/\/jobs\/[a-z0-9-]+\/?$/i },
+  // Job Maldives posts are plain Blogger pages, so the live scraper reads
+  // them fine — same reasoning as Job Center above, route through the
+  // in-app details page and carry the post-labels-derived skills along.
   { site:"Job Maldives", listUrl:"https://www.job-maldives.com/", base:"https://www.job-maldives.com", linkPattern:/^\/\d{4}\/\d{2}\/[a-z0-9_-]+\.html$/i,
-    searchUrl: q => buildSiteSearchUrl("https://www.job-maldives.com/search?q={q}", q) },
+    searchUrl: q => buildSiteSearchUrl("https://www.job-maldives.com/search?q={q}", q), detailView:true },
+
+  // ---- Career.mv: this is a client-side-rendered app — fetching its raw
+  // HTML returns an empty shell with no job links in it (confirmed by
+  // hand, no job data present in the initial document). The html-mode
+  // CORS proxies (allorigins, codetabs, thingproxy, corsproxy.io) will
+  // therefore likely return 0 jobs for this source specifically. It's
+  // kept in the race anyway because the r.jina.ai reader proxy above
+  // executes JS before handing back content, so it has a real shot at
+  // pulling job links out of pages like this where the others can't.
+  // linkPattern below is a best guess at the job URL shape (/jobs/{slug})
+  // and WILL need adjusting once real markup is confirmed — if this
+  // source keeps showing 0 with no fetch error, that's the first thing
+  // to check. detailView:true routes its cards to the in-app "View
+  // Details" page instead of linking straight out.
+  { site:"Career.mv", listUrl:"https://career.mv/jobs", base:"https://career.mv",
+    linkPattern:/\/jobs\/[a-z0-9-]+\/?$/i, detailView:true },
 ];
 
 const AREA_LIST = [
@@ -1024,6 +1401,27 @@ const SKILL_KEYWORDS = {
   "security":["Security","Vigilance"], "driver":["Driving","Time management"],
   "construction":["Construction","Physical stamina"], "captain":["Marine operations","Leadership"],
   "manager":["Leadership","Planning"], "customer service":["Customer service","Communication"],
+  "doctor":["Clinical care","Diagnosis"], "nurse":["Patient care","Clinical support"],
+  "dentist":["Dental care","Patient care"], "pharmacist":["Pharmaceutical knowledge","Dispensing"],
+  "physiotherapist":["Rehabilitation","Patient care"], "lab":["Lab testing","Attention to detail"],
+  "midwife":["Maternal care","Patient care"], "counselor":["Counselling","Active listening"],
+  "psychologist":["Counselling","Assessment"], "paramedic":["Emergency response","First aid"],
+  "lawyer":["Legal research","Advocacy"], "legal":["Legal research","Contract review"],
+  "paralegal":["Legal research","Documentation"], "compliance":["Regulatory compliance","Risk assessment"],
+  "translator":["Translation","Language proficiency"], "interpreter":["Interpreting","Language proficiency"],
+  "social worker":["Case management","Community outreach"], "ngo":["Program coordination","Community outreach"],
+  "banker":["Banking operations","Customer service"], "loan":["Loan processing","Financial analysis"],
+  "insurance":["Insurance policy knowledge","Customer service"], "real estate":["Property sales","Negotiation"],
+  "property":["Property management","Organisation"], "retail":["Retail sales","Customer service"],
+  "cashier":["Cash handling","Customer service"], "merchandiser":["Merchandising","Visual display"],
+  "marine":["Marine operations","Environmental awareness"], "fisheries":["Fisheries management","Sustainability"],
+  "environment":["Environmental monitoring","Sustainability"], "pilot":["Flight operations","Navigation"],
+  "cabin crew":["Customer service","Safety procedures"], "air traffic":["Air traffic control","Decision making"],
+  "customs":["Customs regulations","Attention to detail"], "immigration":["Immigration regulations","Documentation"],
+  "shipping":["Shipping coordination","Logistics"], "boat":["Marine navigation","Safety procedures"],
+  "ferry":["Marine navigation","Passenger safety"], "civil servant":["Public administration","Policy implementation"],
+  "government":["Public administration","Policy implementation"], "imam":["Religious guidance","Public speaking"],
+  "veterinarian":["Animal care","Diagnosis"], "vet":["Animal care","Diagnosis"],
 };
 
 function guessArea(text){
@@ -1078,7 +1476,8 @@ async function fetchViaProxy(url){
 
   const attempt = (proxy) => (async () => {
     try{
-      const res = await fetch(proxy.build(url), { signal: AbortSignal.timeout(15000) });
+      const timeoutMs = proxy.mode === 'text' ? 25000 : 15000; // reader proxy gets more room to render JS
+      const res = await fetch(proxy.build(url), { signal: AbortSignal.timeout(timeoutMs) });
       if(!res.ok){
         const e = new Error(`${proxy.name}: HTTP ${res.status}`);
         console.warn(`[${proxy.name}] HTTP ${res.status} for`, url);
@@ -1179,6 +1578,7 @@ function parseJobsicleHTML(doc, source){
       area: guessArea(context), type: guessType(context), mode: guessMode(context),
       minYears: 0, skills: guessSkills(title),
       site: source.site, url: href, posted: guessPosted(context),
+      detailView: !!source.detailView,
     });
   });
 
@@ -1227,6 +1627,7 @@ function parseJobCenterHTML(doc, source){
       area: guessArea(context), type: guessType(context), mode: guessMode(context),
       minYears: 0, skills: guessSkills(title),
       site: source.site, url: href, posted: guessPosted(context),
+      detailView: !!source.detailView,
     });
   });
 
@@ -1276,14 +1677,18 @@ function parseJobMaldivesHTML(doc, source){
       minYears: 0,
       skills: tags.length ? tags : guessSkills(title),
       site: source.site, url: href, posted: guessPosted(context),
+      detailView: !!source.detailView,
     });
   });
 
   return jobs.slice(0, 40);
 }
 
-// ---- Career Maldives: no confirmed DOM details yet, so this stays on the
-// generic href + surrounding-text heuristic until we know its real markup.
+// ---- Career Maldives / Career.mv (and any other unrecognized source):
+// no confirmed DOM details, so this stays on the generic href +
+// surrounding-text heuristic. Also carries `detailView` through onto each
+// job so sources like Career.mv that opted into the in-app details page
+// (rather than linking straight out) get routed correctly by the card UI.
 function parseGenericHTML(doc, source){
   const jobs = [];
 
@@ -1324,6 +1729,7 @@ function parseGenericHTML(doc, source){
       site: source.site,
       url: href,
       posted: guessPosted(context),
+      detailView: !!source.detailView,
     });
   });
 
@@ -1387,6 +1793,7 @@ function extractJobsFromMarkdown(text, source){
       site: source.site,
       url: href,
       posted: guessPosted(context),
+      detailView: !!source.detailView,
     });
   }
   return jobs.slice(0, 40);
@@ -1637,14 +2044,14 @@ const SKILLS_INTROS = [
   "To kick things off, tell me what you're good at. Add each skill one at a time — either tap a suggestion or type your own — and I'll use all of them together to rank what I find for you.",
 ];
 const GREETING_LINES = [
-  "Hi, I'm Vazeefaa. I'll ask you a handful of quick questions about your skills, experience, and preferences, then go dig through live Maldives job boards to pull back the openings that actually fit you.",
-  "Hey there — I'm Vazeefaa. Give me a few minutes and a few honest answers, and I'll go check Jobsicle, Job Center Maldives, Career Maldives, and Job Maldives for real postings that match what you're after.",
-  "Welcome! I'm Vazeefaa, here to make job hunting in the Maldives a little less painful. I just need a few quick answers from you first, then I'll go find and rank real listings against them.",
+  "Hi, I'm Vazee. I'll ask you a few quick questions, then dig through live Maldives job boards for openings that fit you.",
+  "Hey there — I'm Vazee. Give me a few honest answers, and I'll go find real job postings that match what you're after.",
+  "Welcome! I'm Vazee. A few quick questions, then I'll find and rank real listings against your skills and preferences.",
 ];
 const RESTART_LINES = [
-  "Let's go again — I'll ask through the same questions in case anything about your situation has changed since last time, then run a fresh search against the current listings.",
-  "Round two — same questions as before, but I'll pull a completely fresh set of results, since the boards may have changed since you last asked.",
-  "Sure thing, let's redo this from the top. Answer through the same handful of questions and I'll head off to re-check every board for anything new that fits.",
+  "Let's go again — I'll ask the same questions and run a fresh search against the current listings.",
+  "Round two — same questions, fresh results from the boards.",
+  "Sure thing, let's redo this from the top. Answer the same questions and I'll re-check everything for you.",
 ];
 
 
@@ -1948,6 +2355,13 @@ async function renderResultsInChat(){
   pageFooter.classList.add('show');
 }
 
+// escapes a value for safe use inside an HTML attribute (job titles/company
+// names/skills are scraped free text and can contain quotes, &, etc.)
+function attrEsc(str){
+  return String(str == null ? '' : str)
+    .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 function renderCards(grid, items){
   items.forEach((r, i)=>{
     const card = document.createElement('div');
@@ -1980,11 +2394,19 @@ function renderCards(grid, items){
         <div class="meta-pill"><span class="msym">home_work</span> ${r.job.mode}</div>
       </div>
       <div class="skill-line"><b>Key skills</b>${r.job.skills.join(', ')}</div>
-      <button class="apply-btn" data-url="${r.job.url}" data-title="${r.job.title}">
+      ${r.job.detailView ? `
+      <button class="apply-btn view-details-btn" data-url="${attrEsc(r.job.url)}" data-title="${attrEsc(r.job.title)}" data-site="${attrEsc(r.job.site)}"
+        data-company="${attrEsc(r.job.company || '')}" data-area="${attrEsc(r.job.area)}" data-type="${attrEsc(r.job.type)}"
+        data-mode="${attrEsc(r.job.mode)}" data-skills="${attrEsc(r.job.skills.join('|'))}">
+        <div class="fill-anim"></div>
+        <span class="msym">open_in_new</span>
+        <span>View Details</span>
+      </button>` : `
+      <button class="apply-btn" data-url="${attrEsc(r.job.url)}" data-title="${attrEsc(r.job.title)}">
         <div class="fill-anim"></div>
         <span class="msym">rocket_launch</span>
         <span>Apply on ${r.job.site}</span>
-      </button>
+      </button>`}
     `;
     grid.appendChild(card);
 
@@ -1993,8 +2415,10 @@ function renderCards(grid, items){
       setTimeout(()=>{ fg.style.strokeDashoffset = offset; }, 80 + i*40);
     });
 
-    card.querySelector('.apply-btn').addEventListener('click', function(){
-      launchApply(this);
+    const actionBtn = card.querySelector('.apply-btn');
+    actionBtn.addEventListener('click', function(){
+      if(r.job.detailView) openDetailsPage(this);
+      else launchApply(this);
     });
   });
 }
@@ -2217,6 +2641,25 @@ function launchApply(btn){
       btn.innerHTML = originalHTML;
     }, 1800);
   }, 750);
+}
+
+/* Opens the standalone details.html page (same folder) in a new tab for
+   sources that opted into in-app detail viewing (currently Career.mv)
+   instead of linking straight out to the source site. That page live-
+   scrapes the individual job URL and renders whatever it can extract. */
+function openDetailsPage(btn){
+  const url = btn.dataset.url;
+  const title = btn.dataset.title || '';
+  const site = btn.dataset.site || '';
+  const company = btn.dataset.company || '';
+  const area = btn.dataset.area || '';
+  const type = btn.dataset.type || '';
+  const mode = btn.dataset.mode || '';
+  const skills = btn.dataset.skills || '';
+  const detailUrl = `details.html?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}&site=${encodeURIComponent(site)}`
+    + `&company=${encodeURIComponent(company)}&area=${encodeURIComponent(area)}&type=${encodeURIComponent(type)}`
+    + `&mode=${encodeURIComponent(mode)}&skills=${encodeURIComponent(skills)}`;
+  window.open(detailUrl, '_blank', 'noopener');
 }
 
 function burstConfetti(el){
