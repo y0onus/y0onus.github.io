@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Details — Vazee AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Baloo+2:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0" />
+<style>
+  :root{
+    --ink:#FFFFFF; --ink-soft:#B8B5C0; --cloud:#0D0D10;
+    --glass-border:rgba(255,255,255,0.08); --glass-shadow:0 8px 32px rgba(0,0,0,0.6);
+    --shadow-sm: 0 2px 12px rgba(0,0,0,0.5); --shadow-md: 0 10px 30px rgba(0,0,0,0.7);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--cloud); color:var(--ink); font-family:'Montserrat',sans-serif;
+    -webkit-font-smoothing:antialiased; font-weight:600; min-height:100vh;
+  }
+  .msym{
+    font-family:'Material Symbols Outlined'; font-weight:400; font-style:normal;
+    font-size:20px; line-height:1; display:inline-block; vertical-align:middle;
+    -webkit-font-smoothing:antialiased; white-space:nowrap; word-wrap:normal;
+    direction:ltr; letter-spacing:normal; text-transform:none;
+    font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+  }
+  h1,h2,h3{ font-family:'Baloo 2', sans-serif; font-weight:800; }
+
+  .ambient{ position:fixed; inset:0; z-index:-1; background:#0D0D10; overflow:hidden; }
+  .blob{ position:absolute; border-radius:50%; filter:blur(90px); opacity:0.6; mix-blend-mode:screen; }
+  .blob-a{ width:60vw; height:60vw; left:80%; top:-10%; background:radial-gradient(circle, rgba(255,140,90,0.22) 0%, rgba(255,140,90,0) 70%); }
+  .blob-b{ width:55vw; height:55vw; left:-10%; top:70%; background:radial-gradient(circle, rgba(90,210,200,0.2) 0%, rgba(90,210,200,0) 70%); }
+
+  .topbar{
+    display:flex; align-items:center; gap:12px; padding:18px 5vw;
+    position:sticky; top:0; z-index:10; background:rgba(13,13,16,0.85);
+    backdrop-filter:blur(10px); border-bottom:1px solid rgba(255,255,255,0.06);
+  }
+  .back-btn{
+    width:42px; height:42px; border-radius:50%; border:1.5px solid rgba(255,255,255,0.12);
+    background:rgba(255,255,255,0.05); color:var(--ink); display:flex; align-items:center;
+    justify-content:center; cursor:pointer; flex-shrink:0; transition:all .2s;
+  }
+  .back-btn:hover{ border-color:#fff; background:rgba(255,255,255,0.1); }
+  .topbar-title{ font-size:0.85rem; color:var(--ink-soft); font-weight:700; flex:1; }
+  .topbar-logo{ height:34px; width:34px; flex-shrink:0; border-radius:50%; box-shadow:0 4px 14px rgba(0,0,0,0.4); }
+
+  .wrap{ max-width:720px; margin:0 auto; padding:30px 5vw 80px; }
+
+  .loading-state{ text-align:center; padding:80px 20px; color:var(--ink-soft); }
+  .spinner{
+    width:38px; height:38px; border-radius:50%; margin:0 auto 20px;
+    border:3px solid rgba(255,255,255,0.12); border-top-color:#fff;
+    animation:spin 0.9s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .loading-state .msg{ font-size:0.95rem; font-weight:700; }
+  .loading-state .sub{ font-size:0.8rem; margin-top:8px; opacity:0.7; }
+
+  .detail-card{
+    border-radius:26px; padding:28px; background:rgba(20,20,26,0.7);
+    border:1px solid var(--glass-border); box-shadow:var(--glass-shadow);
+  }
+  .detail-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; margin-bottom:16px; }
+  .source-tag{
+    font-size:0.68rem; font-weight:800; letter-spacing:0.4px; text-transform:uppercase;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08);
+    padding:5px 12px; border-radius:999px; color:var(--ink-soft); white-space:nowrap;
+  }
+  .detail-title{ font-size:1.5rem; margin:0 0 8px; line-height:1.25; }
+  .detail-company{ font-size:0.95rem; color:var(--ink-soft); font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:6px; }
+  .meta-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px; }
+  .meta-pill{
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);
+    padding:6px 12px; border-radius:999px; font-size:0.75rem; font-weight:700;
+    display:flex; align-items:center; gap:5px; color:var(--ink-soft);
+  }
+  .meta-pill .msym{ font-size:15px; }
+
+  .section-label{
+    font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px; font-weight:800;
+    color:var(--ink-soft); margin:22px 0 10px;
+  }
+  .detail-body{
+    font-size:0.92rem; line-height:1.7; color:#E8E6ED; font-weight:500;
+    white-space:pre-wrap; word-wrap:break-word;
+  }
+  .skill-chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .skill-chip{
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08);
+    padding:6px 12px; border-radius:999px; font-size:0.78rem; font-weight:700; color:var(--ink);
+  }
+
+  .cta-row{ display:flex; gap:10px; margin-top:26px; flex-wrap:wrap; }
+  .btn{
+    border:none; border-radius:999px; padding:14px 24px; font-weight:800; font-size:0.92rem;
+    cursor:pointer; display:inline-flex; align-items:center; gap:8px; font-family:inherit;
+    transition:all .25s cubic-bezier(.22,1,.36,1); flex:1; justify-content:center; min-width:180px;
+  }
+  .btn-primary{ background:#FFFFFF; color:#0D0D10; box-shadow:0 10px 26px rgba(255,255,255,0.15); }
+  .btn-primary:hover{ background:#E8E8E8; transform:translateY(-2px); }
+  .btn-ghost{ background:transparent; color:var(--ink-soft); border:1px solid rgba(255,255,255,0.1); }
+  .btn-ghost:hover{ color:#fff; border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.05); }
+
+  .fallback-note{
+    display:flex; gap:10px; align-items:flex-start; background:rgba(255,158,128,0.08);
+    border:1px solid rgba(255,158,128,0.2); border-radius:16px; padding:14px 16px;
+    font-size:0.82rem; color:#FFC9A0; margin-top:18px; line-height:1.5; font-weight:600;
+  }
+  .fallback-note .msym{ color:#FF9E80; flex-shrink:0; margin-top:1px; }
+
+  .error-state{ text-align:center; padding:60px 20px; }
+  .error-state .msym{ font-size:48px; color:var(--ink-soft); margin-bottom:14px; }
+  .error-state h2{ font-size:1.15rem; margin:0 0 8px; }
+  .error-state p{ color:var(--ink-soft); font-size:0.88rem; margin:0 0 22px; }
+
+  footer{ text-align:center; padding:20px 5vw 40px; color:var(--ink-soft); font-size:0.75rem; }
+</style>
+</head>
+<body>
+
+<div class="ambient"><div class="blob blob-a"></div><div class="blob blob-b"></div></div>
+
+<div class="topbar">
+  <button class="back-btn" id="back-btn" title="Back"><span class="msym">arrow_back</span></button>
+  <div class="topbar-title" id="topbar-title">Job details</div>
+  <img class="topbar-logo" src="vazee.svg" alt="Vazee">
+</div>
+
+<div class="wrap" id="content-wrap">
+  <div class="loading-state" id="loading-state">
+    <div class="spinner"></div>
+    <div class="msg">Pulling the full listing…</div>
+    <div class="sub">Fetching directly from the source site</div>
+  </div>
+</div>
+
+<footer>Vazee AI is an AI and can make mistakes. Please double-check responses.</footer>
+
+<script>
+/* Same CORS-proxy race used in the main app — duplicated here since this
+   is a standalone page opened in a new tab. r.jina.ai is listed first
+   because it's the one that renders JS before returning content, which
+   matters most for a job page hosted on a client-rendered site like
+   career.mv; the others are plain HTML fetchers and will often come back
+   empty for that kind of page, but stay in the race for sites that don't
+   need JS rendering. */
+const CORS_PROXIES = [
+  { name:'r.jina.ai (reader)', mode:'text', build: url => `https://r.jina.ai/${url}` },
+  { name:'allorigins', mode:'html', build: url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` },
+  { name:'codetabs',   mode:'html', build: url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}` },
+  { name:'thingproxy', mode:'html', build: url => `https://thingproxy.freeboard.io/fetch/${url}` },
+  { name:'corsproxy.io', mode:'html', build: url => `https://corsproxy.io/?url=${encodeURIComponent(url)}` },
+];
+
+async function fetchViaProxy(url){
+  const attemptErrors = [];
+  const attempt = (proxy) => (async () => {
+    try{
+      const timeoutMs = proxy.mode === 'text' ? 25000 : 15000; // reader proxy gets more room to render JS
+      const res = await fetch(proxy.build(url), { signal: AbortSignal.timeout(timeoutMs) });
+      if(!res.ok) throw new Error(`${proxy.name}: HTTP ${res.status}`);
+      const text = await res.text();
+      if(!text || text.length < 80) throw new Error(`${proxy.name}: empty/short response`);
+      return { content: text, mode: proxy.mode, via: proxy.name };
+    }catch(err){
+      attemptErrors.push((err && err.message) || `${proxy.name}: network error`);
+      throw err;
+    }
+  })();
+  try{
+    return await Promise.any(CORS_PROXIES.map(attempt));
+  }catch(e){
+    throw new Error(attemptErrors.join('; ') || 'all proxies failed');
+  }
+}
+
+const params = new URLSearchParams(location.search);
+const jobUrl = params.get('url');
+const passedTitle = params.get('title') || '';
+const passedSite = params.get('site') || '';
+const passedCompany = params.get('company') || '';
+const passedArea = params.get('area') || '';
+const passedType = params.get('type') || '';
+const passedMode = params.get('mode') || '';
+const passedSkills = (params.get('skills') || '').split('|').map(s=>s.trim()).filter(Boolean);
+// true once we have anything worth showing even before/without a successful
+// live fetch — lets a failed scrape degrade to "here's what we already
+// know about this listing" instead of a bare error page.
+const hasPassedData = !!(passedTitle || passedCompany || passedArea || passedType || passedMode || passedSkills.length);
+
+document.getElementById('back-btn').addEventListener('click', ()=>{
+  if(window.history.length > 1) window.history.back();
+  else window.close();
+});
+document.getElementById('topbar-title').textContent = passedSite ? `${passedSite} listing` : 'Job details';
+
+/* ---- content extraction ----
+   For HTML-mode proxy results: strip script/style/nav/header/footer noise,
+   pull an og:title / <title> / first heading, then take the largest block
+   of readable text left as the "description". Best-effort, not a full
+   Readability port.
+   For text-mode (r.jina.ai) results: the reader already returns clean
+   markdown for the rendered page, so we lightly clean it and use it as-is —
+   this is the path most likely to actually work for career.mv. */
+
+function stripToText(html){
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('script,style,nav,header,footer,noscript,svg,form,button').forEach(el=>el.remove());
+  const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content');
+  const title = (ogTitle || doc.querySelector('h1')?.textContent || doc.title || '').replace(/\s+/g,' ').trim();
+  const ogDesc = doc.querySelector('meta[property="og:description"], meta[name="description"]')?.getAttribute('content');
+
+  // pick the element with the most text among likely content containers
+  let best = null, bestLen = 0;
+  doc.querySelectorAll('main, article, [class*="content"], [class*="description"], [class*="job"], body').forEach(el=>{
+    const len = el.textContent.trim().length;
+    if(len > bestLen){ bestLen = len; best = el; }
+  });
+  let body = (best ? best.textContent : doc.body.textContent) || '';
+  body = body.replace(/\n{3,}/g,'\n\n').replace(/[ \t]{2,}/g,' ').trim();
+  if(body.length < (ogDesc||'').length) body = ogDesc;
+
+  return { title, body: body.slice(0, 6000) };
+}
+
+function cleanMarkdown(md){
+  return md
+    .replace(/^Title:\s*/im, '')
+    .replace(/^URL Source:.*$/im, '')
+    .replace(/^Markdown Content:\s*/im, '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')          // strip images
+    .replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '$1')  // links -> plain text
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function extractFromMarkdown(text){
+  const titleMatch = text.match(/^Title:\s*(.+)$/im);
+  const title = titleMatch ? titleMatch[1].trim() : '';
+  const body = cleanMarkdown(text).slice(0, 8000);
+  return { title, body };
+}
+
+function guessSkillsFromText(text){
+  const known = ["Customer service","Excel","Sales","Housekeeping","Graphic design","Accounting",
+    "Cooking","Food safety","Teamwork","IT support","Networking","Software development",
+    "Problem solving","Leadership","Communication","Negotiation","Organisation","Driving",
+    "Marine operations","Recruitment","Digital marketing","SEO","Content writing","Inventory management",
+    "Patient care","Clinical support","Legal research","Translation","Interpreting","Case management",
+    "Loan processing","Property sales","Retail sales","Cash handling","Logistics","Fisheries management",
+    "Environmental monitoring","Flight operations","Customs regulations","Public administration",
+    "Front desk","Dental care","Rehabilitation","Emergency response","First aid","Contract review"];
+  const lower = text.toLowerCase();
+  return known.filter(k => lower.includes(k.toLowerCase())).slice(0, 8);
+}
+
+function render(data){
+  const { title, body, via, fallback } = data;
+  const displayTitle = title || passedTitle || 'Job listing';
+  const displayCompany = passedCompany || '';
+  const guessedSkills = guessSkillsFromText((title||'') + ' ' + body);
+  const skills = [...new Set([...passedSkills, ...guessedSkills])].slice(0, 10);
+  const metaFields = [
+    passedArea && passedArea !== 'Any' ? { icon:'location_on', val:passedArea } : null,
+    passedType ? { icon:'schedule', val:passedType } : null,
+    passedMode ? { icon:'home_work', val:passedMode } : null,
+  ].filter(Boolean);
+
+  document.getElementById('content-wrap').innerHTML = `
+    <div class="detail-card">
+      <div class="detail-top">
+        <div>
+          <h1 class="detail-title">${escapeHtml(displayTitle)}</h1>
+          ${displayCompany ? `<div class="detail-company"><span class="msym" style="font-size:16px">storefront</span>${escapeHtml(displayCompany)}</div>` : ''}
+        </div>
+        ${passedSite ? `<span class="source-tag">${escapeHtml(passedSite)}</span>` : ''}
+      </div>
+      ${metaFields.length ? `
+        <div class="meta-row">
+          ${metaFields.map(m=>`<div class="meta-pill"><span class="msym">${m.icon}</span> ${escapeHtml(m.val)}</div>`).join('')}
+        </div>
+      ` : ''}
+      ${skills.length ? `
+        <div class="section-label">Mentioned skills</div>
+        <div class="skill-chip-row">${skills.map(s=>`<span class="skill-chip">${escapeHtml(s)}</span>`).join('')}</div>
+      ` : ''}
+      <div class="section-label">Full listing</div>
+      <div class="detail-body">${escapeHtml(body || 'No readable content could be pulled from this page — see the details above, or open the original listing below.')}</div>
+
+      ${fallback ? `
+        <div class="fallback-note">
+          <span class="msym">info</span>
+          <span>${via
+            ? `This page didn't return much readable text through the live scraper (only ${escapeHtml(via)} responded, and only partially) — you're seeing whatever could be pulled, plus what was already known from the listing. For the complete description, open it directly on the source site below.`
+            : `The live scraper couldn't pull the full description for this listing — you're seeing what was already known from the listing itself. For the complete description, open it directly on the source site below.`}</span>
+        </div>` : ''}
+
+      <div class="cta-row">
+        <button class="btn btn-primary" id="apply-btn"><span class="msym">rocket_launch</span><span>Open on ${escapeHtml(passedSite || 'source site')}</span></button>
+        <button class="btn btn-ghost" id="copy-btn"><span class="msym">content_copy</span><span>Copy link</span></button>
+      </div>
+    </div>
+  `;
+  document.getElementById('apply-btn').addEventListener('click', ()=> window.open(jobUrl, '_blank', 'noopener'));
+  document.getElementById('copy-btn').addEventListener('click', (e)=>{
+    navigator.clipboard.writeText(jobUrl).then(()=>{
+      const btn = e.currentTarget;
+      const original = btn.innerHTML;
+      btn.innerHTML = '<span class="msym">check</span><span>Copied</span>';
+      setTimeout(()=>{ btn.innerHTML = original; }, 1600);
+    });
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+function renderError(message){
+  document.getElementById('content-wrap').innerHTML = `
+    <div class="error-state">
+      <span class="msym">cloud_off</span>
+      <h2>Couldn't load the full listing</h2>
+      <p>${escapeHtml(message)}</p>
+      <div class="cta-row" style="max-width:340px;margin:0 auto;">
+        <button class="btn btn-primary" id="apply-btn-err"><span class="msym">open_in_new</span><span>Open original listing</span></button>
+      </div>
+    </div>
+  `;
+  const btn = document.getElementById('apply-btn-err');
+  if(btn) btn.addEventListener('click', ()=> window.open(jobUrl, '_blank', 'noopener'));
+}
+
+async function init(){
+  if(!jobUrl){
+    if(hasPassedData){
+      render({ title: passedTitle, body: '', via: null, fallback: true });
+    } else {
+      renderError('No job URL was passed to this page.');
+    }
+    return;
+  }
+  try{
+    const { content, mode, via } = await fetchViaProxy(jobUrl);
+    const extracted = mode === 'text' ? extractFromMarkdown(content) : stripToText(content);
+    const isThin = !extracted.body || extracted.body.length < 200;
+    render({ title: extracted.title, body: extracted.body, via, fallback: isThin });
+  }catch(err){
+    // live scrape failed — if we already know the title/company/area/etc.
+    // from the listing pass, show that instead of a dead end. Only fall
+    // back to the full error state when there's genuinely nothing to show.
+    if(hasPassedData){
+      render({ title: passedTitle, body: '', via: (err && err.message) || 'no source', fallback: true });
+    } else {
+      renderError(`The live scraper couldn't reach this page (${(err && err.message) || 'unknown error'}). This can happen if the source site blocks the proxy, or if the page needs JavaScript the proxy couldn't render.`);
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>
