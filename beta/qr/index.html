@@ -505,11 +505,18 @@ function switchTab(which){
   $('receiveView').classList.toggle('active', !send);
   $('tabSendBtn').classList.toggle('active', send);
   $('tabRecvBtn').classList.toggle('active', !send);
+  
+  // If switching to receive tab, try to start camera
+  if (which === 'receive' && Receiver.cameraReady && !Receiver.scanning) {
+    setTimeout(() => startScan(), 500);
+  } else if (which === 'receive' && !Receiver.cameraReady) {
+    toast('Requesting camera access...', 'warn');
+    requestCameraPermission();
+  }
 }
 
 /* ==================================================================
    BUILT-IN QR CODE GENERATOR (No external library needed)
-   Simplified implementation for encoding text to QR code matrix
    ================================================================== */
 class QRCodeGenerator {
   static getRSBlocks(version, ecLevel) {
@@ -1019,18 +1026,50 @@ const Receiver = {
   cameraReady: false,
 };
 
-// Request camera permission and list cameras on page load
+// Get the back camera (environment-facing) specifically
+async function getBackCamera() {
+  try {
+    // First, enumerate all devices to find the back camera
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter(d => d.kind === 'videoinput');
+    
+    // Look for cameras with 'back', 'environment', or 'rear' in the label
+    const backCameras = videoDevices.filter(d => {
+      const label = d.label.toLowerCase();
+      return label.includes('back') || 
+             label.includes('environment') || 
+             label.includes('rear') ||
+             label.includes('camera 2');
+    });
+    
+    // If we found a back camera, use its deviceId
+    if (backCameras.length > 0) {
+      return { deviceId: { exact: backCameras[0].deviceId } };
+    }
+    
+    // If no back camera found, try using facingMode environment
+    return { facingMode: 'environment' };
+  } catch (e) {
+    // Fallback to environment facing mode
+    return { facingMode: 'environment' };
+  }
+}
+
 async function requestCameraPermission() {
   try {
     toast('Requesting camera access...', 'warn');
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-      video: { facingMode: 'environment' }, 
+    
+    // Try to get the back camera
+    const constraints = { 
+      video: await getBackCamera(),
       audio: false 
-    });
+    };
+    
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
     // Stop the stream immediately - we just need permission
     stream.getTracks().forEach(track => track.stop());
     
-    toast('Camera access granted!', 'ok');
+    toast('Camera access granted! Using back camera.', 'ok');
     await listCameras();
     Receiver.cameraReady = true;
     
@@ -1050,16 +1089,48 @@ async function listCameras(){
     const cams = devices.filter(d=>d.kind==='videoinput');
     const sel = $('cameraSelect');
     sel.innerHTML = '';
+    
+    // Sort cameras to put back cameras first
+    cams.sort((a, b) => {
+      const aLabel = a.label.toLowerCase();
+      const bLabel = b.label.toLowerCase();
+      const aIsBack = aLabel.includes('back') || aLabel.includes('environment') || aLabel.includes('rear');
+      const bIsBack = bLabel.includes('back') || bLabel.includes('environment') || bLabel.includes('rear');
+      if (aIsBack && !bIsBack) return -1;
+      if (!aIsBack && bIsBack) return 1;
+      return 0;
+    });
+    
     cams.forEach((c,i)=>{
       const opt = document.createElement('option');
       opt.value = c.deviceId;
-      opt.textContent = c.label || `Camera ${i+1}`;
+      let label = c.label || `Camera ${i+1}`;
+      // Add indicator for back camera
+      if (label.toLowerCase().includes('back') || 
+          label.toLowerCase().includes('environment') || 
+          label.toLowerCase().includes('rear')) {
+        label = '📷 ' + label + ' (back)';
+      } else if (label.toLowerCase().includes('front') || 
+                 label.toLowerCase().includes('user')) {
+        label = '🤳 ' + label + ' (front)';
+      }
+      opt.textContent = label;
       sel.appendChild(opt);
     });
+    
     if(cams.length === 0){
       const opt = document.createElement('option');
       opt.textContent = 'No camera found'; sel.appendChild(opt);
     }
+    
+    // Auto-select the first back camera if available
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].text.includes('(back)')) {
+        sel.selectedIndex = i;
+        break;
+      }
+    }
+    
     return cams.length > 0;
   }catch(e){ 
     return false; 
@@ -1081,10 +1152,22 @@ async function startScan(){
   }
   try{
     const deviceId = $('cameraSelect').value;
-    const constraints = { 
-      video: deviceId && deviceId !== 'No camera found' ? { deviceId: { exact: deviceId } } : { facingMode: 'environment' }, 
-      audio: false 
-    };
+    let constraints;
+    
+    if (deviceId && deviceId !== 'No camera found') {
+      // Use selected camera
+      constraints = { 
+        video: { deviceId: { exact: deviceId } },
+        audio: false 
+      };
+    } else {
+      // Try to get back camera
+      constraints = { 
+        video: await getBackCamera(),
+        audio: false 
+      };
+    }
+    
     Receiver.stream = await navigator.mediaDevices.getUserMedia(constraints);
     $('video').srcObject = Receiver.stream;
     await $('video').play();
@@ -1095,6 +1178,22 @@ async function startScan(){
     scanLoop();
   }catch(err){
     toast('Camera access failed: '+err.message, 'error');
+    // Try fallback to default camera
+    if (err.message.includes('facingMode') || err.message.includes('deviceId')) {
+      toast('Trying default camera...', 'warn');
+      try {
+        Receiver.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        $('video').srcObject = Receiver.stream;
+        await $('video').play();
+        Receiver.scanning = true;
+        $('scanToggleBtn').textContent = '⏸ Stop scanning';
+        $('camState').textContent = 'scanning';
+        Receiver.fpsWindow = []; Receiver.successWindow = [];
+        scanLoop();
+      } catch (fallbackErr) {
+        toast('Failed to access camera: ' + fallbackErr.message, 'error');
+      }
+    }
   }
 }
 
@@ -1342,7 +1441,7 @@ window.addEventListener('DOMContentLoaded', async ()=>{
     return;
   }
   
-  // Request camera permission on load
+  // Request camera permission with back camera preference
   await requestCameraPermission();
   
   if(typeof CompressionStream === 'undefined'){
@@ -1350,13 +1449,15 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   }
 });
 
-// Also request camera when switching to receive tab
+// Override switchTab to auto-start scanning
 const originalSwitchTab = switchTab;
 switchTab = function(which) {
   originalSwitchTab(which);
   if (which === 'receive' && !Receiver.cameraReady) {
     toast('Requesting camera access...', 'warn');
     requestCameraPermission();
+  } else if (which === 'receive' && Receiver.cameraReady && !Receiver.scanning) {
+    setTimeout(() => startScan(), 500);
   }
 };
 </script>
