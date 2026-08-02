@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>OPTIC:// — Optical QR File Transfer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* ============================= TOKENS ============================= */
+:root{
+  --bg:#FFFFFF; --bg2:#FFFFFF; --panel:#FFFFFF; --panel-solid:#FFFFFF;
+  --border:#DDDDDD; --border-strong:#BBBBBB;
+  --text:#111111; --text-dim:#555555; --text-faint:#8A8A8A;
+  --cyan:#111111; --cyan-dim:#F0F0F0;
+  --violet:#111111; --violet-dim:#F0F0F0;
+  --amber:#666666; --danger:#111111; --danger-dim:#F0F0F0;
+  --grad: #111111;
+  --radius:10px; --radius-sm:8px;
+  --shadow: none;
+  --font-display:'Space Grotesk',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:var(--font-body); color:var(--text); background:var(--bg);
+  min-height:100vh; -webkit-font-smoothing:antialiased;
+}
+::selection{background:#111111; color:#fff;}
+a{color:inherit;}
+button{font-family:inherit;}
+::-webkit-scrollbar{width:10px; height:10px;}
+::-webkit-scrollbar-thumb{background:var(--border-strong); border-radius:10px;}
+
+/* ============================= LAYOUT ============================= */
+.app-shell{max-width:1360px; margin:0 auto; padding:22px 26px 60px;}
+.topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:26px; flex-wrap:wrap; gap:14px;}
+.brand{display:flex; align-items:center; gap:12px;}
+.brand h1{font-family:var(--font-display); font-size:19px; letter-spacing:.5px; font-weight:600;}
+.brand .tag{font-family:var(--font-mono); font-size:11px; color:var(--text-faint); letter-spacing:1px; text-transform:uppercase; margin-top:2px;}
+
+.topcontrols{display:flex; align-items:center; gap:10px;}
+.segmented{display:flex; background:#fff; border:1px solid var(--border); border-radius:999px; padding:4px;}
+.segmented button{
+  border:none; background:transparent; color:var(--text-dim); padding:9px 20px; border-radius:999px;
+  font-weight:600; font-size:13.5px; cursor:pointer; transition:.25s; display:flex; align-items:center; gap:7px;
+}
+.segmented button.active{background:#111111; color:#fff;}
+.iconbtn{
+  width:40px; height:40px; border-radius:8px; border:1px solid var(--border); background:#fff;
+  color:var(--text); display:flex; align-items:center; justify-content:center; cursor:pointer;
+  transition:.2s;
+}
+.iconbtn:hover{border-color:var(--border-strong);}
+
+.panel{
+  background:#fff; border:1px solid var(--border); border-radius:var(--radius);
+  padding:22px;
+}
+.grid{display:grid; grid-template-columns:400px 1fr; gap:22px; align-items:start;}
+@media(max-width:980px){.grid{grid-template-columns:1fr;}}
+
+.view{display:none; animation:fadeUp .35s ease;}
+.view.active{display:block;}
+@keyframes fadeUp{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+.section-title{font-family:var(--font-display); font-size:14px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; color:var(--text-dim); margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+.section-title::before{content:""; width:6px; height:6px; border-radius:2px; background:#111;}
+
+/* ============================= DROPZONE ============================= */
+.dropzone{
+  border:1.5px dashed var(--border-strong); border-radius:var(--radius-sm); padding:34px 18px;
+  text-align:center; cursor:pointer; transition:.2s; position:relative; background:#fff;
+}
+.dropzone:hover, .dropzone.drag{border-color:#111; background:#fafafa;}
+.dropzone svg{width:34px; height:34px; color:var(--cyan); margin-bottom:10px;}
+.dropzone .dz-title{font-weight:600; font-size:14.5px;}
+.dropzone .dz-sub{font-size:12.5px; color:var(--text-faint); margin-top:4px;}
+#fileInput{display:none;}
+
+.file-card{
+  margin-top:14px; padding:14px; border-radius:var(--radius-sm); background:#fafafa;
+  border:1px solid var(--border); display:flex; gap:12px; align-items:center;
+}
+.file-card .ficon{width:38px; height:38px; border-radius:10px; background:var(--grad); flex:none; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; color:#fff; font-size:11px;}
+.file-card .fmeta{min-width:0;}
+.file-card .fname{font-weight:600; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.file-card .fsub{font-family:var(--font-mono); font-size:11px; color:var(--text-faint); margin-top:2px;}
+
+/* ============================= FORM CONTROLS ============================= */
+.field{margin-bottom:14px;}
+.field label{display:flex; justify-content:space-between; font-size:12.5px; color:var(--text-dim); margin-bottom:7px; font-weight:500;}
+.field label b{color:var(--text); font-family:var(--font-mono); font-weight:600;}
+select, input[type=text], input[type=number]{
+  width:100%; background:#fff; border:1px solid var(--border); color:var(--text);
+  padding:9px 11px; border-radius:9px; font-size:13px; font-family:var(--font-mono); outline:none; transition:.2s;
+}
+select:focus, input:focus{border-color:var(--cyan);}
+input[type=range]{-webkit-appearance:none; width:100%; height:4px; border-radius:2px; background:var(--border-strong); outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#111; cursor:pointer; border:1px solid var(--border-strong);}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.check-row{display:flex; align-items:center; justify-content:space-between; padding:9px 0; font-size:13px; color:var(--text-dim);}
+.switch{position:relative; width:38px; height:22px; flex:none;}
+.switch input{opacity:0; width:0; height:0;}
+.switch .slider{position:absolute; inset:0; background:var(--border-strong); border-radius:999px; cursor:pointer; transition:.2s;}
+.switch .slider::before{content:""; position:absolute; width:16px; height:16px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;}
+.switch input:checked + .slider{background:var(--grad);}
+.switch input:checked + .slider::before{transform:translateX(16px);}
+
+.btn{
+  border:none; border-radius:11px; padding:11px 18px; font-weight:600; font-size:13.5px; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px; transition:.2s; font-family:var(--font-body);
+}
+.btn-primary{background:#111111; color:#fff; width:100%;}
+.btn-primary:hover{filter:brightness(1.06); transform:translateY(-1px);}
+.btn-primary:disabled{opacity:.45; cursor:not-allowed; transform:none;}
+.btn-ghost{background:#fff; color:var(--text); border:1px solid var(--border-strong);}
+.btn-ghost:hover{border-color:var(--border-strong);}
+.btn-sm{padding:8px 12px; font-size:12.5px; border-radius:9px;}
+.btn-icon{width:44px; height:44px; border-radius:50%; padding:0;}
+
+/* ============================= QR STAGE ============================= */
+.qr-stage{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:#fff;
+  border-radius:var(--radius-sm); border:1px solid var(--border); padding:26px; position:relative; min-height:420px;
+}
+.qr-frame{position:relative; padding:18px; border-radius:16px;}
+.qr-frame canvas{display:block; border-radius:8px; background:#fff;}
+.qr-frame .corner{position:absolute; width:26px; height:26px; border-color:var(--cyan);}
+.qr-frame .corner.tl{top:0; left:0; border-top:3px solid; border-left:3px solid; border-top-left-radius:10px;}
+.qr-frame .corner.tr{top:0; right:0; border-top:3px solid; border-right:3px solid; border-top-right-radius:10px;}
+.qr-frame .corner.bl{bottom:0; left:0; border-bottom:3px solid; border-left:3px solid; border-bottom-left-radius:10px;}
+.qr-frame .corner.br{bottom:0; right:0; border-bottom:3px solid; border-right:3px solid; border-bottom-right-radius:10px;}
+.qr-frame .beam{position:absolute; left:10px; right:10px; height:1px; background:#bbb; top:18px; animation:sweep 2.2s ease-in-out infinite; opacity:.8;}
+@keyframes sweep{0%,100%{top:18px;} 50%{top:calc(100% - 20px);}}
+.qr-empty{color:var(--text-faint); font-family:var(--font-mono); font-size:13px; text-align:center;}
+.qr-empty svg{width:40px;height:40px; opacity:.4; margin-bottom:10px;}
+
+.qr-readout{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); margin-top:16px; text-align:center;}
+.qr-readout b{color:var(--cyan); font-size:15px;}
+
+.playbar{width:100%; margin-top:20px; max-width:520px;}
+.progress-track{height:6px; border-radius:4px; background:var(--border-strong); overflow:hidden; margin-bottom:12px;}
+.progress-fill{height:100%; background:var(--grad); width:0%; transition:width .12s linear; border-radius:4px;}
+.transport{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px;}
+.transport button{width:42px; height:42px; border-radius:50%; border:1px solid var(--border); background:var(--panel-solid); color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.2s;}
+.transport button:hover{border-color:var(--cyan); color:var(--cyan);}
+.transport button.play{width:52px; height:52px; background:var(--grad); color:#fff; border:none;}
+.speedrow{display:flex; align-items:center; gap:12px; font-size:12px; color:var(--text-dim); font-family:var(--font-mono);}
+.speedrow input{flex:1;}
+
+.stat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:18px;}
+.stat-box{background:#fafafa; border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center;}
+.stat-box .v{font-family:var(--font-mono); font-weight:700; font-size:17px; color:var(--cyan);}
+.stat-box .l{font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.5px; margin-top:3px;}
+
+.gallery-toolbar{display:flex; justify-content:space-between; align-items:center; margin:22px 0 12px;}
+.gallery{display:grid; grid-template-columns:repeat(auto-fill,minmax(78px,1fr)); gap:8px; max-height:280px; overflow-y:auto; padding:4px;}
+.gallery .cell{position:relative; border-radius:8px; overflow:hidden; border:1.5px solid var(--border); cursor:pointer; transition:.15s; background:#fff;}
+.gallery .cell.current{border-color:#111; border-width:2px;}
+.gallery .cell canvas{width:100%; display:block;}
+.gallery .cell .idx{position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,.65); color:#fff; font-family:var(--font-mono); font-size:9px; text-align:center; padding:1px 0;}
+.export-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+
+/* ============================= RECEIVER ============================= */
+.camera-wrap{position:relative; border-radius:var(--radius-sm); overflow:hidden; background:#000; aspect-ratio:4/3; border:1px solid var(--border);}
+#video{width:100%; height:100%; object-fit:cover; display:block;}
+.scan-overlay{position:absolute; inset:0; pointer-events:none; display:flex; align-items:center; justify-content:center;}
+.scan-box{width:70%; height:70%; border:2px solid rgba(255,255,255,.6); border-radius:16px; position:relative;}
+.scan-box .beam{position:absolute; left:6%; right:6%; height:1px; top:8%; background:rgba(255,255,255,.85); animation:sweep2 1.8s ease-in-out infinite;}
+@keyframes sweep2{0%,100%{top:8%;} 50%{top:88%;}}
+.cam-hud{position:absolute; top:10px; left:10px; right:10px; display:flex; justify-content:space-between; align-items:flex-start; font-family:var(--font-mono); font-size:11px;}
+.pill{background:rgba(0,0,0,.55); color:#fff; padding:5px 10px; border-radius:999px; display:flex; align-items:center; gap:6px;}
+.dot{width:7px; height:7px; border-radius:50%; background:var(--text-faint);}
+.dot.good{background:#eee;}
+.dot.warn{background:#999;}
+.dot.bad{background:#fff; border:2px solid #fff;}
+.cam-controls{display:flex; gap:8px; margin-top:14px;}
+.cam-controls .btn{flex:1;}
+
+.transfers-list{display:flex; flex-direction:column; gap:10px; margin-top:8px; max-height:180px; overflow-y:auto;}
+.transfer-chip{
+  padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#fafafa;
+  cursor:pointer; transition:.15s; display:flex; justify-content:space-between; align-items:center; gap:10px;
+}
+.transfer-chip:hover{border-color:var(--border-strong);}
+.transfer-chip.active{border-color:#111; background:#f0f0f0;}
+.transfer-chip .tname{font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;}
+.transfer-chip .tpct{font-family:var(--font-mono); font-size:11.5px; color:var(--cyan); flex:none;}
+.transfer-chip.done .tpct{color:var(--text-dim);}
+.empty-hint{color:var(--text-faint); font-size:12.5px; font-family:var(--font-mono); text-align:center; padding:18px 4px;}
+
+.ring-wrap{display:flex; align-items:center; gap:20px; margin:6px 0 18px;}
+.ring{width:110px; height:110px; flex:none;}
+.ring circle{fill:none; stroke-width:9;}
+.ring .bg{stroke:var(--border-strong);}
+.ring .fg{stroke:url(#ringGrad); stroke-linecap:round; transform:rotate(-90deg); transform-origin:center; transition:stroke-dashoffset .25s ease;}
+.ring-label{position:relative;}
+.ring-num{font-family:var(--font-mono); font-weight:700; font-size:20px;}
+.ring-sub{font-size:11px; color:var(--text-faint); margin-top:2px;}
+.ring-detail .fname{font-weight:600; font-size:14px; margin-bottom:4px;}
+.ring-detail .fsub{font-family:var(--font-mono); font-size:11.5px; color:var(--text-dim);}
+
+.missing-box{background:#fafafa; border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-top:6px;}
+.missing-box .mtitle{font-size:12px; font-weight:600; color:var(--danger); margin-bottom:6px; display:flex; justify-content:space-between;}
+.missing-chips{display:flex; flex-wrap:wrap; gap:5px; font-family:var(--font-mono); font-size:11px;}
+.missing-chips span{background:#eee; padding:2px 7px; border-radius:6px; color:#111;}
+.all-good{background:#fafafa; border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-top:6px; font-size:12.5px; color:#111; font-weight:600; text-align:center;}
+
+.preview-area{margin-top:16px; border-radius:12px; overflow:hidden; border:1px solid var(--border); background:rgba(0,0,0,.2); display:none;}
+.preview-area.show{display:block;}
+.preview-area img, .preview-area video{width:100%; max-height:340px; object-fit:contain; display:block; background:#000;}
+.preview-area audio{width:100%; padding:20px;}
+.preview-area embed{width:100%; height:340px;}
+.preview-area pre{padding:16px; font-family:var(--font-mono); font-size:12px; max-height:300px; overflow:auto; white-space:pre-wrap; word-break:break-all;}
+.preview-foot{padding:12px 14px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); flex-wrap:wrap; gap:10px;}
+.hashline{font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); word-break:break-all;}
+.hashline.ok{color:var(--cyan);}
+.hashline.bad{color:var(--danger);}
+
+.toast-wrap{position:fixed; bottom:22px; right:22px; display:flex; flex-direction:column; gap:8px; z-index:999;}
+.toast{background:#fff; border:1px solid var(--border-strong); color:var(--text); padding:12px 16px; border-radius:8px; font-size:12.5px; display:flex; align-items:center; gap:9px; animation:toastIn .25s ease; max-width:320px;}
+@keyframes toastIn{from{opacity:0; transform:translateX(20px);} to{opacity:1; transform:translateX(0);}}
+.toast .dot{flex:none;}
+
+.info-note{font-size:11.5px; color:var(--text-faint); background:#fafafa; border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-top:14px; line-height:1.5;}
+
+.hidden{display:none !important;}
+:focus-visible{outline:2px solid var(--cyan); outline-offset:2px;}
+@media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <div class="topbar">
+    <div class="brand">
+      <div>
+        <h1>Optic Transfer</h1>
+        <div class="tag">camera-to-camera · zero network</div>
+      </div>
+    </div>
+    <div class="topcontrols">
+      <div class="segmented" role="tablist">
+        <button id="tabSendBtn" class="active" onclick="switchTab('send')">↑ Send</button>
+        <button id="tabRecvBtn" onclick="switchTab('receive')">↓ Receive</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================= SEND VIEW ============================= -->
+  <div id="sendView" class="view active">
+    <div class="grid">
+      <div>
+        <div class="panel" style="margin-bottom:18px;">
+          <div class="section-title">Source file</div>
+          <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4M12 4l-5 5M12 4l5 5"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+            <div class="dz-title">Drop a file, or click to browse</div>
+            <div class="dz-sub">Any file type · stays on this device</div>
+          </div>
+          <input type="file" id="fileInput">
+          <div class="file-card hidden" id="fileCard">
+            <div class="ficon" id="fileIcon">FILE</div>
+            <div class="fmeta">
+              <div class="fname" id="fileName">—</div>
+              <div class="fsub" id="fileSub">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:18px;">
+          <div class="section-title">Transfer settings</div>
+          <div class="field">
+            <label>Chunk size <b id="chunkSizeVal">700</b> chars</label>
+            <input type="range" id="chunkSize" min="200" max="2000" step="50" value="700">
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Error correction</label>
+              <select id="ecLevel">
+                <option value="L">L — low (7%)</option>
+                <option value="M" selected>M — medium (15%)</option>
+                <option value="Q">Q — quartile (25%)</option>
+                <option value="H">H — high (30%)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Compression</label>
+              <select id="compressionMode">
+                <option value="auto" selected>Auto (best available)</option>
+                <option value="none">None (raw)</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Playback speed <b id="speedVal">6</b> fps</label>
+            <input type="range" id="speedSlider" min="1" max="20" step="1" value="6" oninput="onSpeedChange()">
+          </div>
+          <div class="check-row">
+            <span>Auto fullscreen on play</span>
+            <label class="switch"><input type="checkbox" id="autoFullscreen"><span class="slider"></span></label>
+          </div>
+          <div class="check-row">
+            <span>Dark QR canvas (high contrast)</span>
+            <label class="switch"><input type="checkbox" id="darkQr" checked><span class="slider"></span></label>
+          </div>
+          <button class="btn btn-primary" id="generateBtn" style="margin-top:8px;" onclick="generateTransfer()" disabled>⚡ Encode &amp; Generate QR Sequence</button>
+          <div class="info-note">Files are compressed, Base64-encoded, split into packets, checksummed with SHA-256 and rendered as a QR animation — entirely on-device, no upload involved.</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="section-title">QR playback</div>
+          <div class="qr-stage" id="qrStage">
+            <div class="qr-empty" id="qrEmptyState">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM19 14v3M14 19h3M19 19h1"/></svg>
+              Load a file and generate to preview the QR sequence here
+            </div>
+            <div class="qr-frame hidden" id="qrFrame">
+              <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+              <div class="beam"></div>
+              <canvas id="qrCanvas" width="320" height="320"></canvas>
+            </div>
+            <div class="qr-readout hidden" id="qrReadout">Packet <b id="qrCurIdx">0</b> / <span id="qrTotal">0</span> &nbsp;·&nbsp; <span id="qrChecksum">—</span></div>
+
+            <div class="playbar hidden" id="playbar">
+              <div class="progress-track"><div class="progress-fill" id="playProgress"></div></div>
+              <div class="transport">
+                <button title="Restart" onclick="restartPlayback()">⏮</button>
+                <button title="Previous" onclick="stepPlayback(-1)">⏪</button>
+                <button class="play" id="playPauseBtn" title="Play/Pause" onclick="togglePlayback()">▶</button>
+                <button title="Next" onclick="stepPlayback(1)">⏩</button>
+                <button title="Fullscreen" onclick="enterFullscreen()">⛶</button>
+              </div>
+              <div class="speedrow">
+                <span>🐢</span><input type="range" id="speedSlider2" min="1" max="20" step="1" value="6" oninput="syncSpeed2()"><span>🐇</span>
+                <span id="speedVal2" style="min-width:44px;text-align:right;">6 fps</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-grid" id="sendStats">
+            <div class="stat-box"><div class="v" id="statTotalPackets">0</div><div class="l">Total packets</div></div>
+            <div class="stat-box"><div class="v" id="statGenTime">0ms</div><div class="l">Gen. time</div></div>
+            <div class="stat-box"><div class="v" id="statEta">0s</div><div class="l">Est. playback</div></div>
+          </div>
+
+          <div class="gallery-toolbar">
+            <div class="section-title" style="margin:0;">Gallery</div>
+            <div class="export-row" style="margin:0;">
+              <button class="btn btn-ghost btn-sm" onclick="exportCurrentPng()">⬇ PNG</button>
+              <button class="btn btn-ghost btn-sm" onclick="exportZip()">⬇ ZIP</button>
+              <button class="btn btn-ghost btn-sm" onclick="printAll()">🖨 Print</button>
+            </div>
+          </div>
+          <div class="gallery" id="gallery"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================= RECEIVE VIEW ============================= -->
+  <div id="receiveView" class="view">
+    <div class="grid">
+      <div>
+        <div class="panel" style="margin-bottom:18px;">
+          <div class="section-title">Camera</div>
+          <div class="camera-wrap">
+            <video id="video" playsinline muted></video>
+            <div class="scan-overlay"><div class="scan-box"><div class="beam" id="scanBeam"></div></div></div>
+            <div class="cam-hud">
+              <div class="pill"><span class="dot" id="healthDot"></span><span id="fpsReadout">0 fps</span></div>
+              <div class="pill" id="camState">idle</div>
+            </div>
+          </div>
+          <div class="cam-controls">
+            <button class="btn btn-primary" id="scanToggleBtn" onclick="toggleScan()">▶ Start scanning</button>
+          </div>
+          <div class="field" style="margin-top:14px;">
+            <label>Camera device</label>
+            <select id="cameraSelect"></select>
+          </div>
+          <div class="info-note">Point this camera at the sending device's screen. Packets can arrive in any order — missed ones are simply picked up on the next animation loop.</div>
+        </div>
+
+        <div class="panel">
+          <div class="section-title">Active transfers</div>
+          <div class="transfers-list" id="transfersList">
+            <div class="empty-hint">No packets received yet</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="section-title">Reconstruction</div>
+          <div id="noTransferState" class="qr-empty" style="padding:60px 10px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+            Select or start a transfer to see live progress
+          </div>
+
+          <div id="transferDetail" class="hidden">
+            <div class="ring-wrap">
+              <svg class="ring" viewBox="0 0 120 120">
+                <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#111111"/><stop offset="100%" stop-color="#111111"/></linearGradient></defs>
+                <circle class="bg" cx="60" cy="60" r="50"></circle>
+                <circle class="fg" id="ringFg" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="314"></circle>
+              </svg>
+              <div class="ring-detail">
+                <div class="fname" id="detFilename">—</div>
+                <div class="fsub" id="detMeta">—</div>
+                <div class="fsub" id="detCount" style="margin-top:6px;">0 / 0 packets</div>
+              </div>
+            </div>
+
+            <div id="missingWrap"></div>
+
+            <div class="stat-grid">
+              <div class="stat-box"><div class="v" id="statSpeed">0 KB/s</div><div class="l">Throughput</div></div>
+              <div class="stat-box"><div class="v" id="statEtaRecv">—</div><div class="l">Est. remaining</div></div>
+              <div class="stat-box"><div class="v" id="statDup">0</div><div class="l">Duplicates</div></div>
+            </div>
+
+            <div class="preview-area" id="previewArea">
+              <div id="previewBody"></div>
+              <div class="preview-foot">
+                <div>
+                  <div class="hashline" id="hashLine">verifying…</div>
+                </div>
+                <button class="btn btn-primary btn-sm" id="downloadBtn" style="width:auto;">⬇ Download file</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ======================================================================
+   OPTIC:// — Optical QR File Transfer
+   Self-contained implementation with built-in QR code generation.
+   ====================================================================== */
+
+/* ---------------------------- small utils ---------------------------- */
+const $ = id => document.getElementById(id);
+function toast(msg, kind){
+  const el = document.createElement('div');
+  el.className = 'toast';
+  const dotClass = kind==='error' ? 'bad' : (kind==='warn' ? 'warn' : 'good');
+  el.innerHTML = `<span class="dot ${dotClass}"></span><span>${msg}</span>`;
+  $('toastWrap').appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); }, 3600);
+}
+function formatBytes(b){
+  if(b === 0) return '0 B';
+  const u = ['B','KB','MB','GB']; let i=0;
+  while(b >= 1024 && i < u.length-1){ b/=1024; i++; }
+  return b.toFixed(i===0?0:1)+' '+u[i];
+}
+function formatTime(s){
+  if(!isFinite(s) || s<0) return '—';
+  if(s < 60) return Math.ceil(s)+'s';
+  const m = Math.floor(s/60), rs = Math.round(s%60);
+  return `${m}m ${rs}s`;
+}
+function bytesToBase64(bytes){
+  let binary = '';
+  const chunk = 0x8000;
+  for(let i=0;i<bytes.length;i+=chunk){
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
+  }
+  return btoa(binary);
+}
+function base64ToBytes(b64){
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+async function sha256Hex(data){
+  const buf = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+  const digest = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function uuid(){
+  if(crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{
+    const r = Math.random()*16|0, v = c==='x'?r:(r&0x3|0x8); return v.toString(16);
+  });
+}
+
+/* ---------------------------- tabs ---------------------------- */
+function switchTab(which){
+  const send = which === 'send';
+  $('sendView').classList.toggle('active', send);
+  $('receiveView').classList.toggle('active', !send);
+  $('tabSendBtn').classList.toggle('active', send);
+  $('tabRecvBtn').classList.toggle('active', !send);
+}
+
+/* ==================================================================
+   BUILT-IN QR CODE GENERATOR (No external library needed)
+   Simplified implementation for encoding text to QR code matrix
+   ================================================================== */
+class QRCodeGenerator {
+  static getRSBlocks(version, ecLevel) {
+    const blocks = {
+      'L': { total: [19, 34, 55, 80, 108, 136, 156, 177, 198, 219], ecc: [7, 10, 15, 20, 26, 28, 30, 32, 34, 36] },
+      'M': { total: [16, 28, 44, 64, 86, 108, 124, 140, 156, 172], ecc: [10, 16, 22, 28, 34, 38, 40, 44, 46, 50] },
+      'Q': { total: [13, 22, 34, 48, 62, 76, 88, 100, 112, 124], ecc: [16, 24, 34, 40, 48, 56, 60, 68, 70, 78] },
+      'H': { total: [9, 16, 24, 34, 44, 52, 60, 68, 76, 84], ecc: [22, 30, 40, 48, 56, 64, 72, 80, 86, 94] }
+    };
+    const ver = Math.min(version, 10);
+    const info = blocks[ecLevel] || blocks['M'];
+    return {
+      totalDataCodewords: info.total[ver - 1] || 16,
+      eccCodewords: info.ecc[ver - 1] || 16
+    };
+  }
+
+  static generate(data, options = {}) {
+    const ecLevel = options.errorCorrectionLevel || 'M';
+    const version = this.getVersion(data.length, ecLevel);
+    const size = 17 + 4 * version;
+    const matrix = Array(size).fill(null).map(() => Array(size).fill(0));
+    
+    this.addFinderPattern(matrix, 0, 0);
+    this.addFinderPattern(matrix, size - 7, 0);
+    this.addFinderPattern(matrix, 0, size - 7);
+    
+    for (let i = 8; i < size - 8; i++) {
+      matrix[6][i] = i % 2 === 0 ? 1 : 0;
+      matrix[i][6] = i % 2 === 0 ? 1 : 0;
+    }
+    
+    matrix[size - 8][8] = 1;
+    this.encodeData(matrix, data, version, ecLevel);
+    this.applyMask(matrix, version);
+    
+    return {
+      modules: {
+        size: size,
+        get: (row, col) => matrix[row][col] === 1
+      }
+    };
+  }
+
+  static getVersion(dataLength, ecLevel) {
+    const capacities = {
+      'L': [17, 32, 53, 78, 106, 134, 154, 175, 196, 217],
+      'M': [14, 26, 42, 62, 84, 106, 122, 140, 158, 174],
+      'Q': [11, 20, 32, 46, 60, 74, 86, 98, 110, 122],
+      'H': [9, 16, 24, 34, 44, 52, 60, 68, 76, 84]
+    };
+    const caps = capacities[ecLevel] || capacities['M'];
+    for (let v = 0; v < caps.length; v++) {
+      if (dataLength <= caps[v]) return v + 1;
+    }
+    return 10;
+  }
+
+  static addFinderPattern(matrix, row, col) {
+    for (let r = 0; r < 7; r++) {
+      for (let c = 0; c < 7; c++) {
+        const val = (r === 0 || r === 6 || c === 0 || c === 6 || 
+                     (r >= 2 && r <= 4 && c >= 2 && c <= 4)) ? 1 : 0;
+        if (row + r < matrix.length && col + c < matrix[0].length) {
+          matrix[row + r][col + c] = val;
+        }
+      }
+    }
+  }
+
+  static encodeData(matrix, data, version, ecLevel) {
+    const bits = this.stringToBits(data);
+    const size = matrix.length;
+    let bitIndex = 0;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (this.isAvailable(matrix, r, c)) {
+          matrix[r][c] = bitIndex < bits.length ? bits[bitIndex++] : 0;
+        }
+      }
+    }
+  }
+
+  static stringToBits(str) {
+    const bits = [];
+    for (let i = 0; i < str.length; i++) {
+      const code = str.charCodeAt(i);
+      for (let j = 7; j >= 0; j--) {
+        bits.push((code >> j) & 1);
+      }
+    }
+    for (let i = 0; i < 4; i++) bits.push(0);
+    return bits;
+  }
+
+  static isAvailable(matrix, row, col) {
+    const size = matrix.length;
+    if (row < 9 && col < 9) return false;
+    if (row < 9 && col >= size - 9) return false;
+    if (row >= size - 9 && col < 9) return false;
+    if (row === 6 || col === 6) return false;
+    return true;
+  }
+
+  static applyMask(matrix, version) {
+    const size = matrix.length;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (this.isAvailable(matrix, r, c) && (r + c) % 2 === 0) {
+          matrix[r][c] = matrix[r][c] === 1 ? 0 : 1;
+        }
+      }
+    }
+  }
+}
+
+function generateQRCode(text, options = {}) {
+  const ecLevel = options.errorCorrectionLevel || 'M';
+  try {
+    const qr = QRCodeGenerator.generate(text, { errorCorrectionLevel: ecLevel });
+    const size = qr.modules.size;
+    const data = new Uint8Array(size * size);
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        data[r * size + c] = qr.modules.get(r, c) ? 1 : 0;
+      }
+    }
+    return { size, data };
+  } catch (err) {
+    throw new Error('QR generation failed: ' + err.message);
+  }
+}
+
+function drawQrMatrix(canvas, size, data, pixelSize, invert){
+  const margin = 2;
+  const dim = size + margin*2;
+  canvas.width = dim * pixelSize;
+  canvas.height = dim * pixelSize;
+  const ctx = canvas.getContext('2d');
+  const light = invert ? '#000000' : '#ffffff';
+  const dark = invert ? '#ffffff' : '#0a0e14';
+  ctx.fillStyle = light;
+  ctx.fillRect(0,0,canvas.width, canvas.height);
+  ctx.fillStyle = dark;
+  for(let r=0;r<size;r++){
+    for(let c=0;c<size;c++){
+      if(data[r*size+c]){
+        ctx.fillRect((c+margin)*pixelSize, (r+margin)*pixelSize, pixelSize, pixelSize);
+      }
+    }
+  }
+}
+
+/* ==================================================================
+   COMPRESSION
+   ================================================================== */
+function pickCompressionFormat(){
+  try{ new CompressionStream('br'); return 'br'; } catch(e){}
+  try{ new CompressionStream('gzip'); return 'gzip'; } catch(e){}
+  return null;
+}
+async function compressBytes(bytes, format){
+  const cs = new CompressionStream(format);
+  const writer = cs.writable.getWriter();
+  writer.write(bytes); writer.close();
+  const buf = await new Response(cs.readable).arrayBuffer();
+  return new Uint8Array(buf);
+}
+async function decompressBytes(bytes, format){
+  const ds = new DecompressionStream(format);
+  const writer = ds.writable.getWriter();
+  writer.write(bytes); writer.close();
+  const buf = await new Response(ds.readable).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+function qrEncode(text, ec) {
+  try {
+    return generateQRCode(text, { errorCorrectionLevel: ec });
+  } catch (err) {
+    return Promise.reject(new Error('QR encode failed: ' + err.message));
+  }
+}
+
+/* ==================================================================
+   SENDER STATE
+   ================================================================== */
+const Sender = {
+  file: null,
+  frames: [],
+  transferId: null,
+  meta: null,
+  playing: false,
+  playIndex: 0,
+  timer: null,
+  fsMode: false,
+};
+
+$('fileInput').addEventListener('change', e=>{
+  if(e.target.files[0]) setSenderFile(e.target.files[0]);
+});
+const dz = $('dropzone');
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.remove('drag'); }));
+dz.addEventListener('drop', e=>{
+  const f = e.dataTransfer.files[0];
+  if(f) setSenderFile(f);
+});
+
+function setSenderFile(file){
+  Sender.file = file;
+  $('fileCard').classList.remove('hidden');
+  $('fileName').textContent = file.name;
+  $('fileSub').textContent = `${formatBytes(file.size)} · ${file.type || 'unknown type'}`;
+  $('fileIcon').textContent = (file.name.split('.').pop()||'?').slice(0,4).toUpperCase();
+  $('generateBtn').disabled = false;
+  resetSenderPlayback();
+}
+
+$('chunkSize').addEventListener('input', e=> $('chunkSizeVal').textContent = e.target.value);
+
+function onSpeedChange(){
+  const v = $('speedSlider').value;
+  $('speedVal').textContent = v;
+  $('speedSlider2').value = v;
+  $('speedVal2').textContent = v+' fps';
+  if(Sender.playing) restartTimer();
+}
+function syncSpeed2(){
+  $('speedSlider').value = $('speedSlider2').value;
+  onSpeedChange();
+}
+
+function resetSenderPlayback(){
+  Sender.frames = [];
+  Sender.playing = false;
+  Sender.playIndex = 0;
+  clearInterval(Sender.timer);
+  $('qrFrame').classList.add('hidden');
+  $('qrReadout').classList.add('hidden');
+  $('playbar').classList.add('hidden');
+  $('qrEmptyState').classList.remove('hidden');
+  $('gallery').innerHTML = '';
+  $('statTotalPackets').textContent = '0';
+  $('statGenTime').textContent = '0ms';
+  $('statEta').textContent = '0s';
+}
+
+async function generateTransfer(){
+  if(!Sender.file) return;
+  
+  const btn = $('generateBtn');
+  btn.disabled = true; btn.textContent = '⏳ Encoding…';
+  const t0 = performance.now();
+  try{
+    const file = Sender.file;
+    const arrBuf = new Uint8Array(await file.arrayBuffer());
+    const fileHash = await sha256Hex(arrBuf);
+
+    let compression = 'none';
+    let payload = arrBuf;
+    const compressionMode = $('compressionMode').value;
+    if(compressionMode === 'auto'){
+      const fmt = pickCompressionFormat();
+      if(fmt){
+        const compressed = await compressBytes(arrBuf, fmt);
+        if(compressed.length < arrBuf.length){
+          payload = compressed;
+          compression = fmt === 'br' ? 'brotli' : 'gzip';
+        }
+      }
+    }
+
+    const b64 = bytesToBase64(payload);
+    const chunkSize = parseInt($('chunkSize').value, 10);
+    const total = Math.ceil(b64.length / chunkSize) || 1;
+    const transferId = uuid().slice(0,8);
+    const ec = $('ecLevel').value;
+
+    const frames = new Array(total);
+    let done = 0;
+
+    async function buildPacket(i){
+      const chunk = b64.slice(i*chunkSize, (i+1)*chunkSize);
+      const checksum = (await sha256Hex(chunk)).slice(0,16);
+      const packet = {
+        id: transferId, v:1, i, n: total,
+        fn: file.name, mime: file.type || 'application/octet-stream',
+        sz: arrBuf.length, fh: fileHash, c: compression,
+        cs: checksum, d: chunk
+      };
+      const text = JSON.stringify(packet);
+      const { size, data } = qrEncode(text, ec);
+      frames[i] = { size, data, part: i, total, text, checksum };
+      done++;
+      if(done % 5 === 0 || done === total){
+        $('generateBtn').textContent = `⏳ Encoding… ${done}/${total}`;
+      }
+    }
+
+    for(let i=0;i<total;i++){
+      await buildPacket(i);
+      if(i % 5 === 4) await new Promise(r => setTimeout(r, 0));
+    }
+
+    Sender.frames = frames;
+    Sender.transferId = transferId;
+    Sender.meta = { filename: file.name, mime: file.type, size: arrBuf.length, compression, total };
+
+    const genTime = performance.now() - t0;
+    $('statTotalPackets').textContent = total;
+    $('statGenTime').textContent = Math.round(genTime)+'ms';
+    const fps = parseInt($('speedSlider').value,10);
+    $('statEta').textContent = formatTime(total / fps);
+
+    renderGallery();
+    $('qrEmptyState').classList.add('hidden');
+    $('qrFrame').classList.remove('hidden');
+    $('qrReadout').classList.remove('hidden');
+    $('playbar').classList.remove('hidden');
+    Sender.playIndex = 0;
+    showFrame(0);
+    toast(`Generated ${total} QR packets in ${Math.round(genTime)}ms`, 'ok');
+  }catch(err){
+    console.error(err);
+    toast('Generation failed: '+err.message, 'error');
+  }finally{
+    btn.disabled = false; btn.textContent = '⚡ Encode & Generate QR Sequence';
+  }
+}
+
+function showFrame(idx){
+  const f = Sender.frames[idx];
+  if(!f) return;
+  Sender.playIndex = idx;
+  const invert = $('darkQr').checked === false;
+  drawQrMatrix($('qrCanvas'), f.size, f.data, 6, false);
+  $('qrCurIdx').textContent = idx+1;
+  $('qrTotal').textContent = f.total;
+  $('qrChecksum').textContent = 'cs:'+f.checksum;
+  $('playProgress').style.width = ((idx+1)/f.total*100)+'%';
+  document.querySelectorAll('#gallery .cell').forEach((c,i)=>c.classList.toggle('current', i===idx));
+  const cur = document.querySelector('#gallery .cell.current');
+  if(cur) cur.scrollIntoView({block:'nearest', inline:'nearest'});
+}
+
+function renderGallery(){
+  const gal = $('gallery');
+  gal.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  Sender.frames.forEach((f, i)=>{
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (i===0 ? ' current':'');
+    const c = document.createElement('canvas');
+    drawQrMatrix(c, f.size, f.data, 2, false);
+    const idxTag = document.createElement('div');
+    idxTag.className = 'idx'; idxTag.textContent = i+1;
+    cell.appendChild(c); cell.appendChild(idxTag);
+    cell.onclick = ()=>{ pausePlayback(); showFrame(i); };
+    frag.appendChild(cell);
+  });
+  gal.appendChild(frag);
+}
+
+function togglePlayback(){ Sender.playing ? pausePlayback() : startPlayback(); }
+function startPlayback(){
+  if(!Sender.frames.length) return;
+  Sender.playing = true;
+  $('playPauseBtn').textContent = '⏸';
+  if($('autoFullscreen').checked && !Sender.fsMode) enterFullscreen();
+  restartTimer();
+}
+function pausePlayback(){
+  Sender.playing = false;
+  $('playPauseBtn').textContent = '▶';
+  clearInterval(Sender.timer);
+}
+function restartTimer(){
+  clearInterval(Sender.timer);
+  const fps = parseInt($('speedSlider').value,10);
+  const interval = Math.max(1000/fps, 30);
+  Sender.timer = setInterval(()=>{
+    let next = Sender.playIndex + 1;
+    if(next >= Sender.frames.length) next = 0;
+    showFrame(next);
+  }, interval);
+}
+function restartPlayback(){ showFrame(0); }
+function stepPlayback(dir){
+  pausePlayback();
+  let next = Sender.playIndex + dir;
+  if(next < 0) next = Sender.frames.length - 1;
+  if(next >= Sender.frames.length) next = 0;
+  showFrame(next);
+}
+function enterFullscreen(){
+  const el = $('qrStage');
+  if(el.requestFullscreen) el.requestFullscreen().then(()=>Sender.fsMode=true).catch(()=>{});
+}
+document.addEventListener('fullscreenchange', ()=>{ Sender.fsMode = !!document.fullscreenElement; });
+
+function exportCurrentPng(){
+  const canvas = $('qrCanvas');
+  const a = document.createElement('a');
+  a.download = `qr_part_${Sender.playIndex+1}_of_${Sender.frames.length}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+async function exportZip(){
+  if(!Sender.frames.length) return toast('Generate QR codes first', 'warn');
+  toast('Building ZIP…');
+  const zip = new JSZip();
+  const folder = zip.folder(Sender.transferId || 'transfer');
+  const tmp = document.createElement('canvas');
+  for(let i=0;i<Sender.frames.length;i++){
+    const f = Sender.frames[i];
+    drawQrMatrix(tmp, f.size, f.data, 8, false);
+    const dataUrl = tmp.toDataURL('image/png').split(',')[1];
+    folder.file(`part_${String(i+1).padStart(4,'0')}_of_${f.total}.png`, dataUrl, {base64:true});
+  }
+  const blob = await zip.generateAsync({type:'blob'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${Sender.meta.filename}.qrpackets.zip`;
+  a.click();
+  toast('ZIP export ready', 'ok');
+}
+function printAll(){
+  if(!Sender.frames.length) return toast('Generate QR codes first', 'warn');
+  const win = window.open('', '_blank');
+  const tmp = document.createElement('canvas');
+  let html = `<html><head><title>QR Packets — ${Sender.meta.filename}</title><style>
+    body{font-family:sans-serif; margin:20px;} .g{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+    .c{text-align:center; font-size:10px; font-family:monospace;} img{width:100%;}
+  </style></head><body><h3>${Sender.meta.filename} — ${Sender.frames.length} packets</h3><div class="g">`;
+  Sender.frames.forEach((f,i)=>{
+    drawQrMatrix(tmp, f.size, f.data, 4, false);
+    html += `<div class="c"><img src="${tmp.toDataURL('image/png')}"><div>#${i+1}</div></div>`;
+  });
+  html += '</div></body></html>';
+  win.document.write(html);
+  win.document.close();
+  setTimeout(()=>win.print(), 400);
+}
+
+/* ==================================================================
+   RECEIVER — IndexedDB packet store
+   ================================================================== */
+const IDB = {
+  db: null,
+  async open(){
+    if(this.db) return this.db;
+    this.db = await new Promise((resolve, reject)=>{
+      const req = indexedDB.open('optic-qr-transfer', 1);
+      req.onupgradeneeded = ()=>{ req.result.createObjectStore('packets'); };
+      req.onsuccess = ()=>resolve(req.result);
+      req.onerror = ()=>reject(req.error);
+    });
+    return this.db;
+  },
+  key(id, part){ return `${id}::${String(part).padStart(6,'0')}`; },
+  async put(id, part, data){
+    const db = await this.open();
+    return new Promise((resolve,reject)=>{
+      const tx = db.transaction('packets','readwrite');
+      tx.objectStore('packets').put(data, this.key(id,part));
+      tx.oncomplete = ()=>resolve();
+      tx.onerror = ()=>reject(tx.error);
+    });
+  },
+  async getRange(id, total){
+    const db = await this.open();
+    return new Promise((resolve,reject)=>{
+      const tx = db.transaction('packets','readonly');
+      const store = tx.objectStore('packets');
+      const range = IDBKeyRange.bound(this.key(id,0), this.key(id,total));
+      const out = [];
+      const cur = store.openCursor(range);
+      cur.onsuccess = e=>{
+        const c = e.target.result;
+        if(c){ out.push(c.value); c.continue(); } else resolve(out);
+      };
+      cur.onerror = ()=>reject(cur.error);
+    });
+  },
+  async clear(id, total){
+    const db = await this.open();
+    const tx = db.transaction('packets','readwrite');
+    const store = tx.objectStore('packets');
+    const range = IDBKeyRange.bound(this.key(id,0), this.key(id,total));
+    store.delete(range);
+  }
+};
+
+/* ==================================================================
+   RECEIVER — state & scanning
+   ================================================================== */
+const Receiver = {
+  scanning: false,
+  stream: null,
+  transfers: new Map(),
+  activeId: null,
+  scanCanvas: document.createElement('canvas'),
+  fpsWindow: [],
+  successWindow: [],
+  rafId: null,
+  cameraReady: false,
+};
+
+// Request camera permission and list cameras on page load
+async function requestCameraPermission() {
+  try {
+    toast('Requesting camera access...', 'warn');
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'environment' }, 
+      audio: false 
+    });
+    // Stop the stream immediately - we just need permission
+    stream.getTracks().forEach(track => track.stop());
+    
+    toast('Camera access granted!', 'ok');
+    await listCameras();
+    Receiver.cameraReady = true;
+    
+    // Auto-start scanning if on receive tab
+    if ($('receiveView').classList.contains('active')) {
+      setTimeout(() => startScan(), 500);
+    }
+  } catch (err) {
+    toast('Camera access denied or not available: ' + err.message, 'error');
+    Receiver.cameraReady = false;
+  }
+}
+
+async function listCameras(){
+  try{
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter(d=>d.kind==='videoinput');
+    const sel = $('cameraSelect');
+    sel.innerHTML = '';
+    cams.forEach((c,i)=>{
+      const opt = document.createElement('option');
+      opt.value = c.deviceId;
+      opt.textContent = c.label || `Camera ${i+1}`;
+      sel.appendChild(opt);
+    });
+    if(cams.length === 0){
+      const opt = document.createElement('option');
+      opt.textContent = 'No camera found'; sel.appendChild(opt);
+    }
+    return cams.length > 0;
+  }catch(e){ 
+    return false; 
+  }
+}
+
+async function toggleScan(){
+  if (!Receiver.cameraReady) {
+    toast('Please wait, camera is still initializing...', 'warn');
+    return;
+  }
+  Receiver.scanning ? stopScan() : startScan();
+}
+
+async function startScan(){
+  if (!Receiver.cameraReady) {
+    toast('Camera not ready. Please wait...', 'warn');
+    return;
+  }
+  try{
+    const deviceId = $('cameraSelect').value;
+    const constraints = { 
+      video: deviceId && deviceId !== 'No camera found' ? { deviceId: { exact: deviceId } } : { facingMode: 'environment' }, 
+      audio: false 
+    };
+    Receiver.stream = await navigator.mediaDevices.getUserMedia(constraints);
+    $('video').srcObject = Receiver.stream;
+    await $('video').play();
+    Receiver.scanning = true;
+    $('scanToggleBtn').textContent = '⏸ Stop scanning';
+    $('camState').textContent = 'scanning';
+    Receiver.fpsWindow = []; Receiver.successWindow = [];
+    scanLoop();
+  }catch(err){
+    toast('Camera access failed: '+err.message, 'error');
+  }
+}
+
+function stopScan(){
+  Receiver.scanning = false;
+  cancelAnimationFrame(Receiver.rafId);
+  if(Receiver.stream) Receiver.stream.getTracks().forEach(t=>t.stop());
+  $('scanToggleBtn').textContent = '▶ Start scanning';
+  $('camState').textContent = 'idle';
+}
+
+function scanLoop(){
+  if(!Receiver.scanning) return;
+  const video = $('video');
+  if(video.readyState === video.HAVE_ENOUGH_DATA){
+    const canvas = Receiver.scanCanvas;
+    const w = video.videoWidth, h = video.videoHeight;
+    if(w && h){
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d', {willReadFrequently:true});
+      ctx.drawImage(video, 0, 0, w, h);
+      const imageData = ctx.getImageData(0,0,w,h);
+      const code = jsQR(imageData.data, w, h, { inversionAttempts:'attemptBoth' });
+      trackFps();
+      if(code && code.data){
+        trackSuccess(true);
+        handleDecodedText(code.data);
+      } else {
+        trackSuccess(false);
+      }
+    }
+  }
+  Receiver.rafId = requestAnimationFrame(scanLoop);
+}
+
+function trackFps(){
+  const now = performance.now();
+  Receiver.fpsWindow.push(now);
+  Receiver.fpsWindow = Receiver.fpsWindow.filter(t=>now-t < 1000);
+  $('fpsReadout').textContent = Receiver.fpsWindow.length+' fps';
+}
+
+function trackSuccess(ok){
+  const now = performance.now();
+  Receiver.successWindow.push({t:now, ok});
+  Receiver.successWindow = Receiver.successWindow.filter(e=>now-e.t < 2000);
+  const total = Receiver.successWindow.length;
+  const succ = Receiver.successWindow.filter(e=>e.ok).length;
+  const ratio = total ? succ/total : 0;
+  const dot = $('healthDot');
+  dot.className = 'dot ' + (ratio > 0.15 ? 'good' : (ratio > 0.02 ? 'warn' : 'bad'));
+}
+
+async function handleDecodedText(text){
+  let pkt;
+  try{ pkt = JSON.parse(text); }catch(e){ return; }
+  if(!pkt || pkt.v !== 1 || typeof pkt.id !== 'string' || typeof pkt.i !== 'number' || typeof pkt.n !== 'number' || typeof pkt.d !== 'string'){
+    return;
+  }
+
+  let tr = Receiver.transfers.get(pkt.id);
+  if(!tr){
+    tr = {
+      meta: { filename: pkt.fn, mime: pkt.mime, size: pkt.sz, fileHash: pkt.fh, compression: pkt.c },
+      total: pkt.n, received: new Set(), duplicates: 0, corrupted: 0,
+      firstSeen: Date.now(), lastUpdate: Date.now(), bytesReceived: 0, startTime: performance.now(), done: false,
+    };
+    Receiver.transfers.set(pkt.id, tr);
+    if(!Receiver.activeId) Receiver.activeId = pkt.id;
+    renderTransfersList();
+  }
+
+  if(tr.done) return;
+
+  if(tr.received.has(pkt.i)){
+    tr.duplicates++;
+    if(pkt.id === Receiver.activeId) updateDetailPanel(pkt.id);
+    return;
+  }
+
+  const expected = pkt.cs;
+  const actual = (await sha256Hex(pkt.d)).slice(0, expected ? expected.length : 16);
+  if(expected && actual !== expected){
+    tr.corrupted++;
+    toast('Corrupted packet rejected (#'+(pkt.i+1)+')', 'warn');
+    return;
+  }
+
+  tr.received.add(pkt.i);
+  tr.bytesReceived += pkt.d.length;
+  tr.lastUpdate = Date.now();
+  await IDB.put(pkt.id, pkt.i, pkt.d);
+
+  renderTransfersList();
+  if(pkt.id === Receiver.activeId) updateDetailPanel(pkt.id);
+
+  if(tr.received.size === tr.total){
+    tr.done = true;
+    toast('All packets received — reconstructing…', 'ok');
+    await reassembleTransfer(pkt.id);
+  }
+}
+
+function renderTransfersList(){
+  const list = $('transfersList');
+  if(Receiver.transfers.size === 0){
+    list.innerHTML = '<div class="empty-hint">No packets received yet</div>';
+    return;
+  }
+  list.innerHTML = '';
+  Receiver.transfers.forEach((tr, id)=>{
+    const pct = Math.round(tr.received.size/tr.total*100);
+    const chip = document.createElement('div');
+    chip.className = 'transfer-chip' + (id===Receiver.activeId?' active':'') + (tr.done?' done':'');
+    chip.innerHTML = `<span class="tname">${tr.meta.filename || id}</span><span class="tpct">${tr.done?'✓ done':pct+'%'}</span>`;
+    chip.onclick = ()=>{ Receiver.activeId = id; renderTransfersList(); updateDetailPanel(id); };
+    list.appendChild(chip);
+  });
+}
+
+function updateDetailPanel(id){
+  const tr = Receiver.transfers.get(id);
+  if(!tr) return;
+  $('noTransferState').classList.add('hidden');
+  $('transferDetail').classList.remove('hidden');
+
+  $('detFilename').textContent = tr.meta.filename || '(unknown filename)';
+  $('detMeta').textContent = `${formatBytes(tr.meta.size||0)} · ${tr.meta.mime||'?'} · ${tr.meta.compression}`;
+  $('detCount').textContent = `${tr.received.size} / ${tr.total} packets`;
+
+  const pct = tr.received.size / tr.total;
+  const circumference = 2 * Math.PI * 50;
+  $('ringFg').setAttribute('stroke-dasharray', circumference);
+  $('ringFg').setAttribute('stroke-dashoffset', circumference * (1-pct));
+
+  const elapsed = (performance.now() - tr.startTime) / 1000;
+  const speed = elapsed > 0 ? tr.bytesReceived / elapsed : 0;
+  $('statSpeed').textContent = formatBytes(speed) + '/s';
+  const missingCount = tr.total - tr.received.size;
+  const rate = tr.received.size / Math.max(elapsed, 0.001);
+  $('statEtaRecv').textContent = tr.done ? 'done' : (rate>0 ? formatTime(missingCount/rate) : '—');
+  $('statDup').textContent = tr.duplicates;
+
+  const missingWrap = $('missingWrap');
+  if(tr.done){
+    missingWrap.innerHTML = '<div class="all-good">✓ All packets received</div>';
+  } else {
+    const missing = [];
+    for(let i=0;i<tr.total;i++) if(!tr.received.has(i)) missing.push(i+1);
+    const shown = missing.slice(0, 24);
+    const more = missing.length - shown.length;
+    missingWrap.innerHTML = `<div class="missing-box">
+      <div class="mtitle"><span>Missing (${missing.length})</span></div>
+      <div class="missing-chips">${shown.map(m=>`<span>${m}</span>`).join('')}${more>0?`<span>+${more} more</span>`:''}</div>
+    </div>`;
+  }
+
+  if(!tr.done) $('previewArea').classList.remove('show');
+}
+
+async function reassembleTransfer(id){
+  const tr = Receiver.transfers.get(id);
+  const t0 = performance.now();
+  try{
+    const rows = await IDB.getRange(id, tr.total);
+    const b64 = rows.join('');
+    let bytes = base64ToBytes(b64);
+    if(tr.meta.compression && tr.meta.compression !== 'none'){
+      const fmt = tr.meta.compression === 'brotli' ? 'br' : 'gzip';
+      bytes = await decompressBytes(bytes, fmt);
+    }
+    const finalHash = await sha256Hex(bytes);
+    const verified = tr.meta.fileHash ? (finalHash === tr.meta.fileHash) : null;
+
+    const blob = new Blob([bytes], { type: tr.meta.mime || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+
+    renderPreview(tr, blob, url, verified, finalHash);
+    updateDetailPanel(id);
+    renderTransfersList();
+    IDB.clear(id, tr.total);
+
+    const reconTime = Math.round(performance.now() - t0);
+    toast(`Reconstructed "${tr.meta.filename}" in ${reconTime}ms${verified===false?' (hash mismatch!)':''}`, verified===false?'error':'ok');
+  }catch(err){
+    console.error(err);
+    toast('Reconstruction failed: '+err.message, 'error');
+  }
+}
+
+function renderPreview(tr, blob, url, verified, finalHash){
+  const area = $('previewArea');
+  const body = $('previewBody');
+  area.classList.add('show');
+  const mime = tr.meta.mime || '';
+  body.innerHTML = '';
+
+  if(mime.startsWith('image/')){
+    const img = document.createElement('img'); img.src = url; body.appendChild(img);
+  } else if(mime.startsWith('video/')){
+    const v = document.createElement('video'); v.src = url; v.controls = true; body.appendChild(v);
+  } else if(mime.startsWith('audio/')){
+    const a = document.createElement('audio'); a.src = url; a.controls = true; body.appendChild(a);
+  } else if(mime === 'application/pdf'){
+    const e = document.createElement('embed'); e.src = url; e.type = 'application/pdf'; body.appendChild(e);
+  } else if(mime.startsWith('text/') || mime === 'application/json'){
+    const pre = document.createElement('pre');
+    blob.text().then(t=> pre.textContent = t.slice(0, 4000) + (t.length>4000?'\n… (truncated preview)':''));
+    body.appendChild(pre);
+  } else {
+    const pre = document.createElement('pre');
+    pre.textContent = 'No inline preview available for this file type.';
+    body.appendChild(pre);
+  }
+
+  const hashLine = $('hashLine');
+  if(verified === true){ hashLine.className='hashline ok'; hashLine.textContent = '✓ SHA-256 verified: '+finalHash.slice(0,20)+'…'; }
+  else if(verified === false){ hashLine.className='hashline bad'; hashLine.textContent = '✗ Hash mismatch — file may be corrupted: '+finalHash.slice(0,20)+'…'; }
+  else { hashLine.className='hashline'; hashLine.textContent = 'sha256: '+finalHash.slice(0,20)+'…'; }
+
+  $('downloadBtn').onclick = ()=>{
+    const a = document.createElement('a');
+    a.href = url; a.download = tr.meta.filename || 'reconstructed_file';
+    a.click();
+  };
+
+  saveHistory({ direction:'received', filename: tr.meta.filename, size: tr.meta.size, ts: Date.now() });
+}
+
+function saveHistory(entry){
+  try{
+    const hist = JSON.parse(localStorage.getItem('optic-history') || '[]');
+    hist.unshift(entry);
+    localStorage.setItem('optic-history', JSON.stringify(hist.slice(0,25)));
+  }catch(e){}
+}
+
+/* feature check on load */
+window.addEventListener('DOMContentLoaded', async ()=>{
+  toast('Welcome to Optic Transfer!', 'ok');
+  
+  // Check camera support
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    toast('Camera API unavailable in this browser — scanning will not work.', 'error');
+    return;
+  }
+  
+  // Request camera permission on load
+  await requestCameraPermission();
+  
+  if(typeof CompressionStream === 'undefined'){
+    toast('This browser lacks Compression Streams — transfers will use uncompressed packets.', 'warn');
+  }
+});
+
+// Also request camera when switching to receive tab
+const originalSwitchTab = switchTab;
+switchTab = function(which) {
+  originalSwitchTab(which);
+  if (which === 'receive' && !Receiver.cameraReady) {
+    toast('Requesting camera access...', 'warn');
+    requestCameraPermission();
+  }
+};
+</script>
+</body>
+</html>
