@@ -1,0 +1,148 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f7"><title>Vote Tracker</title>
+<style>
+:root{--bg:#fff;--bg2:#f5f5f7;--t:#1d1d1f;--t2:#6e6e73;--ac:#0071e3;--card:#fff;--bd:rgba(0,0,0,.06);--sh:none;--g:#1a8f40;--gb:rgba(52,199,89,.17);--r:#d70015;--rb:rgba(255,59,48,.14);--fill:rgba(120,120,128,.12);color-scheme:light dark}
+@media(prefers-color-scheme:dark){:root{--bg:#000;--bg2:#000;--t:#f5f5f7;--t2:#98989d;--ac:#2997ff;--card:#1c1c1e;--bd:rgba(255,255,255,.08);--sh:none;--g:#30d158;--r:#ff453a;--gb:rgba(48,209,88,.2);--rb:rgba(255,69,58,.22)}}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg2);color:var(--t);font:400 17px/1.5 -apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+body{padding:env(safe-area-inset-top) 0 0}
+[hidden]{display:none!important}
+main{max-width:680px;margin:0 auto;padding:24px 16px calc(110px + env(safe-area-inset-bottom));}
+
+h1{font-weight:600;font-size:32px;line-height:1.2;letter-spacing:-.02em}h2{font-weight:600;font-size:20px;line-height:1.3;margin:32px 0 8px}
+.sub,.cap{color:var(--t2);font-size:13px;line-height:1.4;margin-top:4px}.cap{margin:8px 4px}
+.card{background:var(--card);border-radius:18px;border:1px solid var(--bd);box-shadow:var(--sh);padding:16px;margin-top:8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.g2 .card{margin:0}
+.tile span,.big span{font-size:13px;color:var(--t2);display:block}
+.tile b{font-weight:600;font-size:48px;line-height:1.1;letter-spacing:-.03em}.big b{font-weight:600;font-size:64px;line-height:1.05;letter-spacing:-.04em;display:block;margin:4px 0}.big em{font-style:normal;color:var(--t2);font-size:13px}
+.gr b{color:var(--g)}.rd b{color:var(--r)}.gr{background:linear-gradient(var(--gb),var(--gb)),var(--card)}.rd{background:linear-gradient(var(--rb),var(--rb)),var(--card)}
+.pr{display:flex;justify-content:space-between;align-items:baseline}.bar{height:10px;border-radius:9px;background:var(--fill);margin-top:12px;overflow:hidden}.bar i{display:block;height:100%;background:var(--g);border-radius:9px;}
+input,button{font:inherit;color:inherit}
+input[type=text],input[type=password],input[type=number],input[type=url]{width:100%;min-height:48px;border-radius:14px;border:1px solid var(--bd);background:var(--fill);padding:0 16px;outline:none;}
+input:focus{border-color:var(--ac);box-shadow:0 0 0 4px rgba(0,113,227,.18)}
+.btn{min-height:48px;padding:0 24px;border-radius:980px;border:0;background:var(--ac);color:#fff;font-weight:500;cursor:pointer;}.btn:hover{filter:brightness(1.1)}
+.btn.s{background:var(--fill);color:var(--ac)}.btn.d{background:var(--rb);color:var(--r)}.btn.w{width:100%}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:12px -16px;padding:0 16px;scrollbar-width:none}.chips button{min-height:44px;flex:none;padding:0 16px;border-radius:980px;border:0;background:var(--fill);font-size:15px;cursor:pointer}.chips .on{background:var(--ac);color:#fff}
+.row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;margin-top:8px;border:1px solid var(--bd);background:var(--card);}
+.row.yes{background:linear-gradient(var(--gb),var(--gb)),var(--bg2)}.row.no{background:linear-gradient(var(--rb),var(--rb)),var(--bg2)}
+.n{min-width:46px;font-weight:600;color:var(--t2);font-variant-numeric:tabular-nums}.info{flex:1;min-width:0}.info b{display:block;font-weight:600;font-size:16px;line-height:1.3}.info span{font-size:13px;color:var(--t2);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.info a{color:var(--ac);text-decoration:none}
+.seg{display:flex;background:var(--fill);border-radius:12px;padding:2px}.seg button{min-width:48px;min-height:44px;border:0;border-radius:10px;background:none;font-weight:500;cursor:pointer;}
+.seg .y.on{background:var(--g);color:#fff}.seg .n.on{background:var(--r);color:#fff}
+.tag{font-size:12px;font-weight:600;padding:2px 10px;border-radius:980px;display:inline-block;margin-top:2px}.yes .tag{background:var(--g);color:#fff}.no .tag,.un .tag{background:var(--r);color:#fff}
+.x{min-width:44px;min-height:44px;border:0;background:none;color:var(--t2);font-size:22px;cursor:pointer}
+#num{font-weight:600;font-size:34px;line-height:1;text-align:center;min-height:64px;letter-spacing:.02em}
+.res{margin-top:12px;border-radius:16px;padding:14px 16px;font-weight:500;}.res.good{background:var(--gb);color:var(--g)}.res.bad{background:var(--rb);color:var(--r)}.res.warn{background:var(--fill)}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:8px;background:var(--card);border-top:1px solid var(--bd);padding:6px 8px calc(6px + env(safe-area-inset-bottom));z-index:5}
+nav a{flex:1;max-width:140px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:var(--t2);text-decoration:none;border-radius:20px;}nav a.on{color:var(--ac);background:var(--fill)}
+nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#login{position:fixed;inset:0;background:var(--bg2);display:flex;align-items:center;justify-content:center;padding:24px;z-index:10}
+#login form{width:100%;max-width:340px;text-align:center;}#login h1{margin:8px 0 4px}#login .btn{margin-top:12px}
+
+#toast{display:none;position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translateX(-50%);background:var(--t);color:var(--bg);padding:12px 20px;border-radius:980px;font-size:15px;z-index:20;max-width:90%}#toast.on{display:block}
+.logo{width:72px;height:72px;margin:0 auto 16px;color:var(--t);display:flex;align-items:center;justify-content:center;font-size:64px;line-height:1}#top{max-width:680px;margin:0 auto;padding:8px 16px 0;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--t2)}#top button{min-height:44px;border:0;background:none;color:var(--ac);font-size:15px;cursor:pointer}#err{color:var(--r);min-height:20px}input[type=password]+input,input+input{margin-top:8px}.lk{display:flex;align-items:center;gap:4px;margin-top:8px;font-size:13px;word-break:break-all}.lk span{flex:1}
+</style></head><body>
+<div id="login"><form id="lf"><div class="logo">ވ</div><h1>Vote Tracker</h1><p class="sub" style="margin-bottom:24px">Sign in to continue</p><input id="em" type="text" inputmode="email" autocapitalize="off" autocomplete="off" placeholder="Email"><input id="pw" type="password" placeholder="Passcode" autocomplete="off"><p id="err" class="cap"></p><button class="btn w">Sign in</button></form></div>
+<div id="app" hidden><div id="top"></div><main id="main"></main><nav id="tabs"></nav></div>
+<div id="toast"></div>
+<script>
+const DB='https://votedata-default-rtdb.asia-southeast1.firebasedatabase.app',KEY_L='ec_vote_links',ALL=['dash','list','entries','settings'],P='123456',ACCOUNTS={'vadmin@yoz.lol':{pass:P,pages:ALL},'vcallcenter@yoz.lol':{pass:P,pages:['list']},'vmod@yoz.lol':{pass:P,pages:['entries']},'lol@yoz.lol':{pass:P,pages:ALL}},
+LABELS={dash:'Dashboard',list:'List',entries:'Entries',settings:'Settings'},
+ICONS={dash:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',entries:'<path d="M20 6 9 17l-5-5"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>'},LIMIT=150;
+let user=sessionStorage.getItem('user');const allowed=()=>(ACCOUNTS[user]||{pages:[]}).pages;
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// ---- state: VM/EM mirror the server, S is a sorted view of them ----
+const VM={},EM={};let S={voters:[],entries:[],links:[]},ready={voters:false,entries:false},conn='connecting',page='dash',q='',flt='all',last=null;
+try{S.links=JSON.parse(localStorage.getItem(KEY_L))||[]}catch(e){}
+const saveLinks=()=>{try{localStorage.setItem(KEY_L,JSON.stringify(S.links))}catch(e){}};
+const api=(p,m='GET',b)=>fetch(`${DB}/${p}.json`,{method:m,body:b===undefined?undefined:JSON.stringify(b)}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()});
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600)}
+const by=()=>new Map(S.voters.map(v=>[v.no,v]));
+const connText=()=>conn=='live'?'● Live':conn=='offline'?'○ Offline, retrying':'… Connecting';
+function setConn(c){conn=c;const el=$('#st');if(el)el.textContent=connText()}
+function applyEv(R,path,data,isPatch){const p=path.split('/').filter(Boolean);
+if(!p.length){if(isPatch){for(const k in data){if(data[k]==null)delete R[k];else R[k]=data[k]}}else{for(const k in R)delete R[k];const d=Array.isArray(data)?Object.fromEntries(data.map((x,i)=>[i,x]).filter(x=>x[1]!=null)):data||{};Object.assign(R,d)}return}
+const k=p[0];
+if(p.length==1){if(isPatch){const o=R[k]=R[k]||{};for(const f in data){if(data[f]==null)delete o[f];else o[f]=data[f]}}else if(data==null)delete R[k];else R[k]=data;return}
+const o=R[k]=R[k]||{};if(data==null)delete o[p[1]];else o[p[1]]=data}
+function listen(name,R){const es=new EventSource(`${DB}/${name}.json`);
+const h=isP=>e=>{let m;try{m=JSON.parse(e.data)}catch(x){return}applyEv(R,m.path,m.data,isP);if(m.path=='/'&&!isP)ready[name]=true;rebuild()};
+es.addEventListener('put',h(false));es.addEventListener('patch',h(true));es.onopen=()=>setConn('live');es.onerror=()=>setConn('offline')}
+let started=false;function connect(){if(started)return;started=true;listen('voters',VM);listen('entries',EM)}
+let rb;function rebuild(now){clearTimeout(rb);const run=()=>{S.voters=Object.keys(VM).map(k=>Object.assign({no:+k.slice(1),intent:''},VM[k])).sort((a,b)=>a.no-b.no);S.entries=Object.keys(EM).map(k=>({no:+k.slice(1),ts:(EM[k]&&EM[k].ts)||0})).sort((a,b)=>b.ts-a.ts);repaint()};now?run():rb=setTimeout(run,60)}
+function chips(){const s=stats(),n={all:['All',s.total],yes:['Yes',s.yes],no:['No',s.no],un:['Not asked',s.unset]};document.querySelectorAll('.chips button').forEach(x=>x.textContent=n[x.dataset.v].join(' '))}
+function repaint(){if($('#app').hidden)return;if(page=='list'){paintRows();chips()}else if(page=='entries')paintLog();else if(page=='dash')render()}
+function stats(){const v=S.voters,m=by(),yes=v.filter(x=>x.intent==='yes').length,no=v.filter(x=>x.intent==='no').length;let ver=0;for(const e of S.entries){const p=m.get(e.no);if(p&&p.intent==='yes')ver++}return{total:v.length,yes,no,unset:v.length-yes-no,voted:S.entries.length,ver,other:S.entries.length-ver}}
+const pages={
+dash(){const s=stats(),pc=s.yes?Math.round(s.ver/s.yes*100):0,to=s.total?Math.round(s.voted/s.total*100):0;
+return `<h1>Dashboard</h1><p class=sub>Live count · ${s.total} people on the list</p>
+<h2>Said they would vote</h2><div class=g2><div class="card tile gr"><span>Yes</span><b>${s.yes}</b></div><div class="card tile rd"><span>No</span><b>${s.no}</b></div></div>${s.unset?`<p class=cap>${s.unset} not asked yet</p>`:''}
+<h2>Actual</h2><div class="card big"><span>Voted so far</span><b>${s.voted}</b><em>${to}% of the list</em></div>
+<div class=g2 style="margin-top:8px"><div class="card tile gr"><span>Verified yes</span><b>${s.ver}</b></div><div class="card tile rd"><span>Voted, not a yes</span><b>${s.other}</b></div></div>
+<div class=card><div class=pr><span>Yes pledges delivered</span><b>${pc}%</b></div><div class=bar><i style="width:${Math.min(pc,100)}%"></i></div><p class=cap>${Math.max(s.yes-s.ver,0)} yes still to come</p></div>`},
+list(){const s=stats();const c=(k,l,n)=>`<button data-a=flt data-v=${k} class="${flt==k?'on':''}">${l} ${n}</button>`;
+return `<h1>List</h1><p class=sub>Mark who said they will vote</p><input type=text id=q placeholder="Search name, #, address, mobile" value="${esc(q)}" style="margin-top:16px"><div class=chips>${c('all','All',s.total)}${c('yes','Yes',s.yes)}${c('no','No',s.no)}${c('un','Not asked',s.unset)}</div><div id=rows></div>`},
+entries(){return `<h1>Entries</h1><p class=sub>Enter each number as it is announced at the hall</p><div class=card><input id=num type=number inputmode=numeric pattern="[0-9]*" placeholder="Number"><button class="btn w" data-a=add style="margin-top:12px">Add entry</button><div id=res></div></div><h2 id=cnt></h2><div id=elog></div>`},
+settings(){return `<h1>Settings</h1><p class=sub>Everything is shared live through the server</p>
+<h2>Upload list</h2><div class=card><button class="btn s w" data-a=pick>Choose .xlsx or .csv</button><input type=file id=file accept=".xlsx,.xls,.csv" hidden><p class=cap>People are matched by their # and new ones are added. Existing Yes/No marks on the server are kept.</p></div>
+<h2>Spreadsheet links</h2><div class=card><input type=url id=lnk placeholder="Paste Google Sheets or CSV link"><button class="btn w" data-a=addlink style="margin-top:12px">Add link</button><div id=lks></div><p class=cap>Sheets must be shared as “Anyone with the link”.</p></div>
+<h2>Backup</h2><div class=card><button class="btn s w" data-a=export>Export backup</button><button class="btn s w" data-a=pickb style="margin-top:8px">Restore backup to server</button><input type=file id=bfile accept=".json" hidden></div>
+<h2>Vote day</h2><div class=card><button class="btn d w" data-a=clear>Clear all entries</button></div>`}};
+function paintRows(){if(!S.voters.length){$('#rows').innerHTML=`<p class=cap>${ready.voters?'No list on the server yet. An admin can upload the spreadsheet in Settings.':'Loading…'}</p>`;return}
+const m=q.trim().toLowerCase();const a=S.voters.filter(v=>(flt=='all'||(flt=='un'?!v.intent:v.intent==flt))&&(!m||`${v.no} ${v.name} ${v.address} ${v.nid} ${v.mobile||''}`.toLowerCase().includes(m)));
+$('#rows').innerHTML=a.slice(0,LIMIT).map(v=>`<div class="row ${v.intent||''}"><div class=n>#${v.no}</div><div class=info><b>${esc(v.name)}</b><span>${esc(v.address)} · ${esc(v.island)}</span>${v.mobile?`<span><a href="tel:${esc(v.mobile)}">${esc(v.mobile)}</a></span>`:''}</div><div class=seg><button class="y ${v.intent=='yes'?'on':''}" data-a=set data-no=${v.no} data-v=yes>Yes</button><button class="n ${v.intent=='no'?'on':''}" data-a=set data-no=${v.no} data-v=no>No</button></div></div>`).join('')+(a.length>LIMIT?`<p class=cap>Showing ${LIMIT} of ${a.length}. Search to narrow down.</p>`:'')||'<p class=cap>No matches</p>'}
+function paintLog(){const m=by();$('#cnt').textContent=`${S.entries.length} entered`;
+$('#elog').innerHTML=S.entries.map(e=>{const p=m.get(e.no)||{},k=p.intent||'un';return `<div class="row ${k}"><div class=n>#${e.no}</div><div class=info><b>${esc(p.name)}</b><span>${esc(p.address)} · ${new Date(e.ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span><i class=tag>${k=='yes'?'Verified · said yes':k=='no'?'Said no':'Not asked'}</i></div><button class=x data-a=del data-no=${e.no} aria-label=Remove>×</button></div>`}).join('')||'<p class=cap>Nothing entered yet</p>';
+if(last){const r=$('#res');r.className='res '+last.c;r.textContent=last.m}}
+function flash(m,c){last={m,c};if(page=='entries')paintLog();toast(m)}
+function addEntry(){const i=$('#num'),n=parseInt(i.value,10);i.value='';i.focus();if(!n)return;const p=by().get(n),k='n'+n;
+if(!p)return flash(`#${n} is not on the list`,'bad');
+if(EM[k])return flash(`#${n} ${p.name} is already entered`,'warn');
+const ts=Date.now();EM[k]={ts};rebuild(true);
+api('entries/'+k,'PUT',{ts}).catch(()=>{delete EM[k];rebuild(true);toast('Not saved. Check your connection')});
+flash(p.intent=='yes'?`#${n} ${p.name} verified`:`#${n} ${p.name} voted (${p.intent=='no'?'said no':'not asked'})`,p.intent=='yes'?'good':'bad');if(navigator.vibrate)navigator.vibrate(30)}
+function render(){$('#main').innerHTML=pages[page]();const al=allowed();$('#tabs').hidden=al.length<2;$('#tabs').innerHTML=al.map(k=>`<a href="#${k}" class="${k==page?'on':''}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${LABELS[k]}</a>`).join('');
+$('#top').innerHTML=`<span>${esc(user)} · <span id=st>${connText()}</span></span><button data-a=out>Sign out</button>`;
+if(page=='list')paintRows();if(page=='entries')paintLog();if(page=='settings')paintLinks()}
+function paintLinks(){$('#lks').innerHTML=S.links.map((u,i)=>`<div class=lk><span>${esc(u)}</span><button class="btn s" data-a=load data-i=${i} style="min-height:44px;padding:0 14px">Load</button><button class=x data-a=rmlink data-i=${i}>×</button></div>`).join('')}
+// ---- importing (writes to the server) ----
+function parseCSV(t){const R=[];let r=[],c='',q=false;for(let i=0;i<t.length;i++){const h=t[i];if(q){if(h=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=h}else if(h=='"')q=true;else if(h==','){r.push(c);c=''}else if(h=='\n'||h=='\r'){if(h=='\r'&&t[i+1]=='\n')i++;r.push(c);R.push(r);r=[];c=''}else c+=h}if(c||r.length){r.push(c);R.push(r)}return R}
+function toCsv(u){const g=(u.match(/[#&?]gid=(\d+)/)||[])[1],gq=g?'&gid='+g:'';if(/\/d\/e\//.test(u))return u.split('?')[0].replace('pubhtml','pub')+'?output=csv'+gq;const m=u.match(/docs\.google\.com\/spreadsheets\/d\/([^/?#]+)/);return m?`https://docs.google.com/spreadsheets/d/${m[1]}/export?format=csv${gq}`:u}
+const norm=v=>/^\s*y/i.test(v)?'yes':/^\s*n/i.test(v)?'no':'';
+async function merge(rows){const hi=rows.findIndex(r=>r.some(c=>/^name$/i.test(String(c).trim())));if(hi<0)throw Error('No “Name” column found');
+const h=rows[hi].map(c=>String(c).trim().toLowerCase()),f=re=>h.findIndex(c=>re.test(c)),ix={no:f(/^(#|no\.?|number)$/),name:f(/^name$/),nid:f(/^nid$|national/),isl:f(/island|box/),adr:f(/address|house/),sex:f(/^sex|gender/),mob:f(/mobile|phone/),it:f(/^pledge$|intent|call|vote/)};
+if(ix.no<0)throw Error('No “#” column found');
+const g=(r,k)=>ix[k]<0?'':String(r[ix[k]]??'').trim();
+const patch={};let add=0,upd=0;
+for(const r of rows.slice(hi+1)){const no=Number(r[ix.no]),name=String(r[ix.name]||'').replace(/\s+/g,' ').trim();if(!no||!name)continue;
+const o={name,nid:g(r,'nid'),island:g(r,'isl'),address:g(r,'adr'),sex:g(r,'sex'),mobile:g(r,'mob'),intent:norm(g(r,'it'))},k='n'+no,p=VM[k];
+let rec;if(p){rec={name:o.name,nid:o.nid||p.nid||'',island:o.island||p.island||'',address:o.address||p.address||'',sex:o.sex||p.sex||'',mobile:o.mobile||p.mobile||'',intent:p.intent||o.intent};upd++}else{rec=o;add++}
+if(!rec.intent)delete rec.intent;patch[k]=rec}
+const ks=Object.keys(patch);for(let i=0;i<ks.length;i+=500){const c={};ks.slice(i,i+500).forEach(k=>c[k]=patch[k]);await api('voters','PATCH',c)}
+return`${add} added, ${upd} updated`}
+async function loadLink(i){toast('Loading…');try{const r=await fetch(toCsv(S.links[i]));if(!r.ok)throw Error('HTTP '+r.status);toast(await merge(parseCSV(await r.text())))}catch(e){toast('Could not load link ('+e.message+'). Make sure it is shared, or upload the file instead.')}}
+async function loadFile(f){try{let rows;if(/\.csv$/i.test(f.name))rows=parseCSV(await f.text());else{if(!window.XLSX)await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=ok;s.onerror=()=>no(Error('could not load the xlsx reader'));document.head.appendChild(s)});const wb=XLSX.read(await f.arrayBuffer());rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''})}toast('Uploading…');toast(await merge(rows))}catch(e){toast('Import failed: '+e.message)}}
+// ---- events ----
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,no=+b.dataset.no,i=+b.dataset.i;
+if(a=='set'){const k='n'+no,cur=VM[k];if(!cur)return;const old=cur.intent,v=b.dataset.v,nv=old==v?'':v;if(nv)cur.intent=nv;else delete cur.intent;rebuild(true);
+api(`voters/${k}/intent`,'PUT',nv||null).catch(()=>{if(old)cur.intent=old;else delete cur.intent;rebuild(true);toast('Not saved. Check your connection')})}
+else if(a=='flt'){flt=b.dataset.v;render()}
+else if(a=='add')addEntry();
+else if(a=='del'){if(confirm('Remove entry #'+no+'?')){const k='n'+no,old=EM[k];delete EM[k];rebuild(true);api('entries/'+k,'DELETE').catch(()=>{EM[k]=old;rebuild(true);toast('Not removed. Check your connection')})}}
+else if(a=='addlink'){const u=$('#lnk').value.trim();if(!/^https?:\/\//.test(u))return toast('Enter a full link starting with https://');if(!S.links.includes(u))S.links.push(u);saveLinks();$('#lnk').value='';paintLinks();loadLink(S.links.indexOf(u))}
+else if(a=='load')loadLink(i);
+else if(a=='rmlink'){S.links.splice(i,1);saveLinks();paintLinks()}
+else if(a=='pick')$('#file').click();else if(a=='pickb')$('#bfile').click();
+else if(a=='export'){const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([JSON.stringify({voters:S.voters,entries:S.entries})],{type:'application/json'}));l.download='vote-tracker-backup.json';l.click()}
+else if(a=='clear'){if(confirm('Clear ALL entries for everyone? This cannot be undone.')){api('entries','DELETE').then(()=>{last=null;toast('Entries cleared')}).catch(()=>toast('Not cleared. Check your connection'))}}
+else if(a=='out'){sessionStorage.removeItem('user');location.reload()}});
+document.addEventListener('input',e=>{if(e.target.id=='q'){q=e.target.value;paintRows()}});
+document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.id=='num'){e.preventDefault();addEntry()}});
+document.addEventListener('change',async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;if(e.target.id=='file')loadFile(f);
+if(e.target.id=='bfile'){try{const d=JSON.parse(await f.text());if(!Array.isArray(d.voters))throw 0;if(!confirm('Replace the data on the server with this backup?'))throw 1;const v={},en={};d.voters.forEach(x=>{const{no,...r}=x;if(!r.intent)delete r.intent;v['n'+no]=r});(d.entries||[]).forEach(x=>en['n'+x.no]={ts:x.ts});await api('voters','PUT',v);await api('entries','PUT',en);toast('Backup restored')}catch(x){if(x!==1)toast('Not a valid backup file')}}e.target.value=''});
+window.addEventListener('hashchange',route);
+function route(){const al=allowed(),h=location.hash.slice(1);page=al.includes(h)?h:al[0];if(h!==page)history.replaceState(null,'','#'+page);render()}
+function enter(){location.hash=location.hash;$('#login').hidden=true;$('#app').hidden=false;connect();route()}
+$('#lf').addEventListener('submit',e=>{e.preventDefault();const em=$('#em').value.trim().toLowerCase(),a=ACCOUNTS[em];if(a&&$('#pw').value===a.pass){user=em;sessionStorage.setItem('user',em);$('#err').textContent='';$('#pw').value='';enter()}else{$('#err').textContent='Incorrect email or passcode';$('#pw').value=''}});
+if(ACCOUNTS[user])enter();
+</script></body></html>
