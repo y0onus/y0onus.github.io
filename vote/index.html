@@ -252,7 +252,8 @@
       background: linear-gradient(var(--rb), var(--rb)), var(--card);
     }
     .row.called {
-      border-color: #b0b0b5;
+      border-color: var(--ac);
+      box-shadow: inset 0 0 0 1px var(--ac);
     }
     .n {
       min-width: 52px;
@@ -1184,13 +1185,14 @@
       const si = perm.seeIntent, ei = perm.editIntent;
       if (!S.voters.length) { el.innerHTML = `<p class=cap>${ready.voters ? 'No list yet. An admin can upload the spreadsheet in Settings.' : 'Loading…'}</p>${$('#rc').textContent = ''}`; return; }
       const m = q.trim().toLowerCase(), f = si ? flt : 'all';
-      const a = S.voters.filter(v => (f == 'all' || (f == 'un' ? !v.intent : v.intent == f)) && (!fb || v.island == fb) && (!fsx || v.sex == fsx) && (!fv || (fv == 'v' ? v.voted : !v.voted)) && (!m || `${v.no} ${v.name} ${v.address} ${v.nid} ${v.mobile || ''}`.toLowerCase().includes(m)));
-      $('#rc').textContent = `${a.length} of ${S.voters.length} people`;
+      // The key change: filter out voters who have voted (voted === true) from the list
+      const a = S.voters.filter(v => !v.voted && (f == 'all' || (f == 'un' ? !v.intent : v.intent == f)) && (!fb || v.island == fb) && (!fsx || v.sex == fsx) && (!fv || (fv == 'v' ? v.voted : !v.voted)) && (!m || `${v.no} ${v.name} ${v.address} ${v.nid} ${v.mobile || ''}`.toLowerCase().includes(m)));
+      $('#rc').textContent = `${a.length} of ${S.voters.length} people (excluding voted)`;
       el.innerHTML = a.slice(0, LIMIT).map(v => {
         const called = isCalled(v.no);
         const act = ei ? `<div class=seg><button class="y ${v.intent == 'yes' ? 'on' : ''}" data-a=set data-no=${v.no} data-v=yes>Yes</button><button class="no ${v.intent == 'no' ? 'on' : ''}" data-a=set data-no=${v.no} data-v=no>No</button></div>` : `<div class=act>${si && v.intent ? `<i class="tag t-${v.intent}">${v.intent == 'yes' ? 'Yes' : 'No'}</i>` : ''}${callBtn(v)}</div>`;
         return `<div class="row ${si ? v.intent || '' : ''} ${called ? 'called' : ''}"><div class=n>#${v.no}</div><div class=info><div class=nm><b>${esc(v.name)}</b><span>${esc(v.address)}</span></div><span class=bx>${esc(v.island)}</span><span class=mb>${v.mobile ? `<a href="tel:${esc(tel(v.mobile))}">${esc(v.mobile)}</a>` : ''}</span></div>${act}</div>`;
-      }).join('') + (a.length > LIMIT ? `<p class=cap>Showing ${LIMIT} of ${a.length}. Use search or filters to narrow down.</p>` : '') || '<p class=cap>No matches</p>';
+      }).join('') + (a.length > LIMIT ? `<p class=cap>Showing ${LIMIT} of ${a.length}. Use search or filters to narrow down.</p>` : '') || '<p class=cap>No matches (or all have voted)</p>';
     }
     const L5 = () => { try { return JSON.parse(localStorage.getItem('ec_l5_' + auth.uid)) || { list: [], count: 0 }; } catch (e) { return { list: [], count: 0 }; } };
     const saveL5 = o => { try { localStorage.setItem('ec_l5_' + auth.uid, JSON.stringify(o)); } catch (e) {} };
