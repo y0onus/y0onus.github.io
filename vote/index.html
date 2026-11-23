@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f5f5f7"><title>Vote Tracker</title>
+<meta name="theme-color" content="#f5f5f7"><title>Zero Day</title>
 <style>
 :root{--bg:#f5f5f7;--card:#fff;--t:#1d1d1f;--t2:#6e6e73;--ac:#0071e3;--bd:rgba(0,0,0,.08);--g:#1a8f40;--gb:rgba(52,199,89,.16);--r:#d70015;--rb:rgba(255,59,48,.12);--fill:rgba(120,120,128,.12);--sh:0 1px 2px rgba(0,0,0,.04),0 6px 18px rgba(0,0,0,.04);color-scheme:light}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
@@ -62,7 +62,7 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
 @media(min-width:900px){
  .shell{margin-left:236px}#app.solo .shell{margin-left:0}
  nav{top:0;bottom:0;right:auto;width:236px;flex-direction:column;justify-content:flex-start;gap:4px;padding:78px 12px 12px;border-top:0;border-right:1px solid var(--bd);background:#fff}
- nav::before{content:'ވ  Vote Tracker';position:absolute;top:24px;left:24px;font-weight:600;font-size:18px}
+ nav::before{content:'0 ZeroDay';position:absolute;top:24px;left:24px;font-weight:600;font-size:18px}
  nav a{flex:none;max-width:none;min-height:44px;flex-direction:row;justify-content:flex-start;gap:12px;padding:0 14px;font-size:15px;border-radius:12px}
  main{padding:20px 40px 60px}#top{padding:12px 40px 0}
  h1{font-size:36px}
@@ -75,7 +75,7 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.two>.card{margin-top:8px}
 }
 </style></head><body>
-<div id="login"><form id="lf"><div class="logo">ވ</div><h1>Vote Tracker</h1><p class="sub" style="margin-bottom:20px">Sign in to continue</p><input id="em" type="email" autocapitalize="off" autocomplete="username" placeholder="Email"><input id="pw" type="password" placeholder="Password" autocomplete="current-password"><p id="err" class="cap"></p><button class="btn w" id="lb">Sign in</button></form></div>
+<div id="login"><form id="lf"><div class="logo"0ވ</div><h1>ZeroDay</h1><p class="sub" style="margin-bottom:20px">Sign in to continue</p><input id="em" type="email" autocapitalize="off" autocomplete="username" placeholder="Email"><input id="pw" type="password" placeholder="Password" autocomplete="current-password"><p id="err" class="cap"></p><button class="btn w" id="lb">Sign in</button></form></div>
 <div id="app" hidden><nav id="tabs"></nav><div class="shell"><div id="top"></div><main id="main"></main></div></div>
 <div id="toast"></div>
 <script>
@@ -292,4 +292,3 @@ if(/^PASTE/.test(FB_KEY)){er.textContent='Add your Firebase Web API key at the t
 bt.disabled=true;try{const j=await post(IT+'signInWithPassword?key='+FB_KEY,{email:$('#em').value.trim().toLowerCase(),password:$('#pw').value,returnSecureToken:true});setAuth(j.idToken,j.refreshToken,j.localId,+j.expiresIn);$('#pw').value='';await afterAuth();enter()}catch(x){er.textContent=AE[x.message]||x.message}bt.disabled=false});
 (async()=>{let s;try{s=JSON.parse(localStorage.getItem('ec_auth'))}catch(e){}if(!s||!s.ref||/^PASTE/.test(FB_KEY))return;$('#err').textContent='Restoring session…';try{auth={ref:s.ref,exp:0};await refresh();await afterAuth();enter()}catch(e){auth=null;$('#err').textContent=AE[e.message]||e.message}})();
 </script></body></html>
-
