@@ -252,8 +252,7 @@
       background: linear-gradient(var(--rb), var(--rb)), var(--card);
     }
     .row.called {
-      border-color: var(--ac);
-      box-shadow: inset 0 0 0 1px var(--ac);
+      border-color: #b0b0b5;
     }
     .n {
       min-width: 52px;
@@ -377,6 +376,16 @@
     .tag.t-called {
       background: var(--ac);
       color: #fff;
+    }
+    .tag.t-voted {
+      background: var(--g);
+      color: #fff;
+    }
+    .nm .tag {
+      margin: 2px 0 0;
+    }
+    .row.voted {
+      border-color: var(--g);
     }
     .x {
       min-width: 44px;
@@ -906,8 +915,8 @@
       SESSION_EXPIRED: 'Session expired. Sign in again',
       API_KEY_INVALID: 'The Firebase API key in the file is wrong'
     };
-    const VM = {}, IM = {}, EM = {}, UM = {}, PM = {},
-          MAPS = { voters: VM, intents: IM, entries: EM, users: UM, presence: PM },
+    const VM = {}, IM = {}, EM = {}, UM = {}, PM = {}, VT = {},
+          MAPS = { voters: VM, intents: IM, entries: EM, users: UM, presence: PM, voted: VT },
           ready = {};
     let S = { voters: [], entries: [], map: new Map(), boxes: [], sexes: [], links: [] },
         page = 'dash', stab = 'general', q = '', flt = 'all', fb = '', fsx = '', fv = '', eq = '',
@@ -932,7 +941,8 @@
       intents: () => perm.seeIntent,
       entries: () => perm.allEntries,
       users: () => perm.users,
-      presence: () => perm.users
+      presence: () => perm.users,
+      voted: () => perm.list
     };
     const connText = () => ({ live: '● Live', offline: '○ Offline, retrying', denied: '✕ No access to some data' }[conn] || '… Connecting');
     function setConn(c) {
@@ -991,7 +1001,7 @@
     function rebuild(now) {
       clearTimeout(rb);
       const run = () => {
-        const V = Object.keys(VM).map(k => Object.assign({ no: +k.slice(1), intent: IM[k] || '', voted: !!EM[k] }, VM[k], { intent: IM[k] || '' })).sort((a, b) => a.no - b.no);
+        const V = Object.keys(VM).map(k => Object.assign({}, VM[k], { no: +k.slice(1), intent: IM[k] || '', voted: !!(EM[k] || VT[k]), vts: (EM[k] && +EM[k].ts) || 0 })).sort((a, b) => a.no - b.no);
         S.voters = V;
         S.map = new Map(V.map(v => [v.no, v]));
         S.entries = Object.keys(EM).map(k => ({ no: +k.slice(1), ts: (EM[k] && +EM[k].ts) || 0 })).sort((a, b) => b.ts - a.ts);
@@ -1185,14 +1195,14 @@
       const si = perm.seeIntent, ei = perm.editIntent;
       if (!S.voters.length) { el.innerHTML = `<p class=cap>${ready.voters ? 'No list yet. An admin can upload the spreadsheet in Settings.' : 'Loading…'}</p>${$('#rc').textContent = ''}`; return; }
       const m = q.trim().toLowerCase(), f = si ? flt : 'all';
-      // The key change: filter out voters who have voted (voted === true) from the list
-      const a = S.voters.filter(v => !v.voted && (f == 'all' || (f == 'un' ? !v.intent : v.intent == f)) && (!fb || v.island == fb) && (!fsx || v.sex == fsx) && (!fv || (fv == 'v' ? v.voted : !v.voted)) && (!m || `${v.no} ${v.name} ${v.address} ${v.nid} ${v.mobile || ''}`.toLowerCase().includes(m)));
-      $('#rc').textContent = `${a.length} of ${S.voters.length} people (excluding voted)`;
+      const base = perm.allEntries ? S.voters : S.voters.filter(v => !v.voted);
+      const a = base.filter(v => (f == 'all' || (f == 'un' ? !v.intent : v.intent == f)) && (!fb || v.island == fb) && (!fsx || v.sex == fsx) && (!fv || (fv == 'v' ? v.voted : !v.voted)) && (!m || `${v.no} ${v.name} ${v.address} ${v.nid} ${v.mobile || ''}`.toLowerCase().includes(m)));
+      $('#rc').textContent = `${a.length} of ${base.length} people` + (perm.allEntries ? ` · ${S.voters.length - base.length + base.filter(v => v.voted).length} voted` : '');
       el.innerHTML = a.slice(0, LIMIT).map(v => {
         const called = isCalled(v.no);
         const act = ei ? `<div class=seg><button class="y ${v.intent == 'yes' ? 'on' : ''}" data-a=set data-no=${v.no} data-v=yes>Yes</button><button class="no ${v.intent == 'no' ? 'on' : ''}" data-a=set data-no=${v.no} data-v=no>No</button></div>` : `<div class=act>${si && v.intent ? `<i class="tag t-${v.intent}">${v.intent == 'yes' ? 'Yes' : 'No'}</i>` : ''}${callBtn(v)}</div>`;
-        return `<div class="row ${si ? v.intent || '' : ''} ${called ? 'called' : ''}"><div class=n>#${v.no}</div><div class=info><div class=nm><b>${esc(v.name)}</b><span>${esc(v.address)}</span></div><span class=bx>${esc(v.island)}</span><span class=mb>${v.mobile ? `<a href="tel:${esc(tel(v.mobile))}">${esc(v.mobile)}</a>` : ''}</span></div>${act}</div>`;
-      }).join('') + (a.length > LIMIT ? `<p class=cap>Showing ${LIMIT} of ${a.length}. Use search or filters to narrow down.</p>` : '') || '<p class=cap>No matches (or all have voted)</p>';
+        return `<div class="row ${si ? v.intent || '' : ''} ${called ? 'called' : ''} ${perm.allEntries && v.voted ? 'voted' : ''}"><div class=n>#${v.no}</div><div class=info><div class=nm><b>${esc(v.name)}</b><span>${esc(v.address)}</span>${perm.allEntries ? (v.voted ? `<i class="tag t-voted">Voted${v.vts ? ' · ' + new Date(v.vts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</i>` : '<i class="tag">Not voted</i>') : ''}</div><span class=bx>${esc(v.island)}</span><span class=mb>${v.mobile ? `<a href="tel:${esc(tel(v.mobile))}">${esc(v.mobile)}</a>` : ''}</span></div>${act}</div>`;
+      }).join('') + (a.length > LIMIT ? `<p class=cap>Showing ${LIMIT} of ${a.length}. Use search or filters to narrow down.</p>` : '') || '<p class=cap>No matches</p>';
     }
     const L5 = () => { try { return JSON.parse(localStorage.getItem('ec_l5_' + auth.uid)) || { list: [], count: 0 }; } catch (e) { return { list: [], count: 0 }; } };
     const saveL5 = o => { try { localStorage.setItem('ec_l5_' + auth.uid, JSON.stringify(o)); } catch (e) {} };
@@ -1229,7 +1239,7 @@
         if (perm.allEntries && EM[k]) { const p = S.map.get(n); return flash(`#${n} ${p ? p.name : ''} is already entered`, 'warn'); }
         const [v, it] = await Promise.all([api('voters/' + k), api('intents/' + k).catch(() => null)]);
         if (!v) return flash(`#${n} is not on the list`, 'bad');
-        try { await api('entries/' + k, 'PUT', { ts: { '.sv': 'timestamp' }, by: auth.uid }); } catch (e) {
+        try { await api('', 'PATCH', { ['entries/' + k]: { ts: { '.sv': 'timestamp' }, by: auth.uid }, ['voted/' + k]: true }); } catch (e) {
           if (e.status == 401 || e.status == 403) return flash(`#${n} ${v.name} is already entered`, 'warn');
           throw e;
         }
@@ -1307,11 +1317,20 @@
         const b = await api('backups/' + k);
         await api('intents', 'PUT', b.intents || null);
         await api('entries', 'PUT', b.entries || null);
+        await api('voted', 'PUT', votedOf(b.entries));
         if (b.voters) await api('voters', 'PUT', b.voters);
         audit('Restored snapshot ' + k);
         toast('Restored');
         loadSnaps();
       } catch (e) { toast('Restore failed: ' + e.message); }
+    }
+    const votedOf = en => en && Object.keys(en).length ? Object.fromEntries(Object.keys(en).map(k => [k, true])) : null;
+    async function healVoted() {
+      if (!perm.upload || !perm.allEntries || !ready.entries || !ready.voted) return;
+      const p = {};
+      for (const k in EM) if (!VT[k]) p[k] = true;
+      for (const k in VT) if (!EM[k]) p[k] = null;
+      if (Object.keys(p).length) { try { await api('voted', 'PATCH', p); } catch (e) {} }
     }
     const dl = (n, blob) => { const l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = n; l.click(); };
     function exportCsv() {
@@ -1436,6 +1455,7 @@
         await api('voters', 'PUT', v);
         await api('intents', 'PUT', i);
         await api('entries', 'PUT', en);
+        await api('voted', 'PUT', votedOf(en));
         audit('Restored from backup file');
         toast('Backup restored');
       } catch (x) { toast('Not a valid backup file'); }
@@ -1480,7 +1500,7 @@
           const k = 'n' + no, old = EM[k];
           delete EM[k];
           rebuild(true);
-          api('entries/' + k, 'DELETE').then(() => audit('Removed entry #' + no)).catch(() => { EM[k] = old; rebuild(true); toast('Not removed. Check your connection'); });
+          api('', 'PATCH', { ['entries/' + k]: null, ['voted/' + k]: null }).then(() => audit('Removed entry #' + no)).catch(() => { EM[k] = old; rebuild(true); toast('Not removed. Check your connection'); });
         }
       } else if (a === 'stab') { stab = b.dataset.v; render(); }
       else if (a === 'uadd') addUser();
@@ -1509,7 +1529,7 @@
         if (confirm('Clear ALL entries for everyone? This cannot be undone.')) {
           try {
             await snapshot(true, 'before clear');
-            await api('entries', 'DELETE');
+            await api('', 'PATCH', { entries: null, voted: null });
             last = null;
             audit('Cleared all entries');
             toast('Entries cleared');
@@ -1577,7 +1597,7 @@
       setInterval(beat, 25000);
       setInterval(paintDevices, 15000);
       setInterval(async () => { try { await refresh(); Object.keys(MAPS).filter(n => want[n]()).forEach(open); } catch (e) {} }, 45 * 60000);
-      if (perm.upload) { setTimeout(autoSnap, 90000); setInterval(autoSnap, 600000); }
+      if (perm.upload) { setTimeout(autoSnap, 90000); setInterval(autoSnap, 600000); setTimeout(healVoted, 8000); setInterval(healVoted, 30000); }
     }
     $('#lf').addEventListener('submit', async e => {
       e.preventDefault();
