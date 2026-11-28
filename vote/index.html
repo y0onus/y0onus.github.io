@@ -377,16 +377,6 @@
       background: var(--ac);
       color: #fff;
     }
-    .tag.t-voted {
-      background: var(--g);
-      color: #fff;
-    }
-    .nm .tag {
-      margin: 2px 0 0;
-    }
-    .row.voted {
-      border-color: var(--g);
-    }
     .x {
       min-width: 44px;
       min-height: 44px;
@@ -832,7 +822,12 @@
   <script>
     const DB = 'https://votedata-default-rtdb.asia-southeast1.firebasedatabase.app',
           FB_KEY = 'AIzaSyArLukjEGjH-qZ0jPWyvQH9KFjTrr28OcE',
-          BOOT = 'voteadmin@yoz.lol';
+          BOOTS = { 'voteadmin@yoz.lol': 'main', 'voteadminthi@yoz.lol': 'thi' },
+          WSN = { main: 'Main', thi: 'Thi' };
+    // Workspaces: 'main' lives at the database root (existing data is untouched),
+    // 'thi' lives under ws/thi/. Every api() / stream path is prefixed with W.
+    const WPATH = { main: '', thi: 'ws/thi/' };
+    let WS = 'main', W = '';
     const IT = 'https://identitytoolkit.googleapis.com/v1/accounts:';
     const FLAGS = [
       ['dash', 'Dashboard', 'Totals and charts'],
@@ -901,7 +896,7 @@
     }
     async function api(p, m = 'GET', b, x = {}) {
       const t = await tok(), qs = new URLSearchParams(Object.assign({ auth: t }, x.q || {}));
-      const r = await fetch(`${DB}/${p}.json?${qs}`, { method: m, body: b === undefined ? undefined : JSON.stringify(b), keepalive: !!x.ka });
+      const r = await fetch(`${DB}/${W}${p}.json?${qs}`, { method: m, body: b === undefined ? undefined : JSON.stringify(b), keepalive: !!x.ka });
       if (!r.ok) throw Object.assign(Error('HTTP ' + r.status), { status: r.status });
       return r.json();
     }
@@ -915,14 +910,14 @@
       SESSION_EXPIRED: 'Session expired. Sign in again',
       API_KEY_INVALID: 'The Firebase API key in the file is wrong'
     };
-    const VM = {}, IM = {}, EM = {}, UM = {}, PM = {}, VT = {},
-          MAPS = { voters: VM, intents: IM, entries: EM, users: UM, presence: PM, voted: VT },
+    const VM = {}, IM = {}, EM = {}, UM = {}, PM = {},
+          MAPS = { voters: VM, intents: IM, entries: EM, users: UM, presence: PM },
           ready = {};
     let S = { voters: [], entries: [], map: new Map(), boxes: [], sexes: [], links: [] },
         page = 'dash', stab = 'general', q = '', flt = 'all', fb = '', fsx = '', fv = '', eq = '',
         last = null, conn = 'connecting', srvOff = 0, lastSnap = 0, lastSig = '';
-    try { S.links = JSON.parse(localStorage.getItem('ec_vote_links')) || []; } catch (e) {}
-    const saveLinks = () => { try { localStorage.setItem('ec_vote_links', JSON.stringify(S.links)); } catch (e) {} };
+    const LS = () => WS == 'main' ? '' : '_' + WS;
+    const saveLinks = () => { try { localStorage.setItem('ec_vote_links' + LS(), JSON.stringify(S.links)); } catch (e) {} };
     const DEV = (() => {
       let d = localStorage.getItem('ec_dev');
       if (!d) { d = Math.random().toString(36).slice(2, 10); try { localStorage.setItem('ec_dev', d); } catch (e) {} }
@@ -941,8 +936,7 @@
       intents: () => perm.seeIntent,
       entries: () => perm.allEntries,
       users: () => perm.users,
-      presence: () => perm.users,
-      voted: () => perm.list
+      presence: () => perm.users
     };
     const connText = () => ({ live: '● Live', offline: '○ Offline, retrying', denied: '✕ No access to some data' }[conn] || '… Connecting');
     function setConn(c) {
@@ -979,7 +973,7 @@
       clearTimeout(RT[name]);
       let t;
       try { t = await tok(); } catch (e) { return setConn('offline'); }
-      const es = ES[name] = new EventSource(`${DB}/${name}.json?auth=${encodeURIComponent(t)}`), R = MAPS[name];
+      const es = ES[name] = new EventSource(`${DB}/${W}${name}.json?auth=${encodeURIComponent(t)}`), R = MAPS[name];
       const h = isP => e => {
         let m;
         try { m = JSON.parse(e.data); } catch (x) { return; }
@@ -1001,7 +995,7 @@
     function rebuild(now) {
       clearTimeout(rb);
       const run = () => {
-        const V = Object.keys(VM).map(k => Object.assign({}, VM[k], { no: +k.slice(1), intent: IM[k] || '', voted: !!(EM[k] || VT[k]), vts: (EM[k] && +EM[k].ts) || 0 })).sort((a, b) => a.no - b.no);
+        const V = Object.keys(VM).map(k => Object.assign({ no: +k.slice(1), intent: IM[k] || '', voted: !!EM[k] }, VM[k], { intent: IM[k] || '' })).sort((a, b) => a.no - b.no);
         S.voters = V;
         S.map = new Map(V.map(v => [v.no, v]));
         S.entries = Object.keys(EM).map(k => ({ no: +k.slice(1), ts: (EM[k] && +EM[k].ts) || 0 })).sort((a, b) => b.ts - a.ts);
@@ -1088,8 +1082,11 @@
     const tel = m => /^\d{7}$/.test(m) ? '+960' + m : m;
     // ---- Called tracking ----
     let calledMap = {};
-    try { calledMap = JSON.parse(localStorage.getItem('ec_called') || '{}'); } catch (e) { calledMap = {}; }
-    const saveCalled = () => { try { localStorage.setItem('ec_called', JSON.stringify(calledMap)); } catch (e) {} };
+    const saveCalled = () => { try { localStorage.setItem('ec_called' + LS(), JSON.stringify(calledMap)); } catch (e) {} };
+    function loadLocal() {
+      try { S.links = JSON.parse(localStorage.getItem('ec_vote_links' + LS())) || []; } catch (e) { S.links = []; }
+      try { calledMap = JSON.parse(localStorage.getItem('ec_called' + LS()) || '{}'); } catch (e) { calledMap = {}; }
+    }
     const markCalled = (no) => { calledMap[no] = Date.now(); saveCalled(); };
     const isCalled = (no) => !!calledMap[no];
     const clearCalled = () => { calledMap = {}; saveCalled(); };
@@ -1150,8 +1147,8 @@
     const tabsHtml = {
       general() {
         return `<div id=gsum>${sumHtml()}</div><div class=two>
-          <div class=card><h3>Your account</h3><dl class=kv style="margin-top:12px"><dt>Email</dt><dd>${esc(profile.email)}</dd><dt>Name</dt><dd>${esc(profile.name || '-')}</dd><dt>Role</dt><dd>${esc(profile.role)}</dd><dt>Device ID</dt><dd>${DEV}</dd><dt>Device</dt><dd>${ua()}</dd></dl><div style="margin-top:12px">${FLAGS.map(f => `<span class="pill ${perm[f[0]] ? 'on' : ''}">${f[1]}</span>`).join('')}</div></div>
-          <div class=card><h3>System</h3><dl class=kv style="margin-top:12px"><dt>Connection</dt><dd id=cst>${connText()}</dd><dt>Database</dt><dd>${DB.replace('https://', '')}</dd><dt>Region</dt><dd>asia-southeast1</dd><dt>Auto backup</dt><dd id=abk>${perm.upload ? (lastSnap ? 'Last at ' + new Date(lastSnap).toLocaleTimeString() : 'Every 10 min while an admin has the app open') : 'Not available'}</dd><dt>Session</dt><dd>Signed in with Firebase. Renews automatically.</dd></dl><button class="btn d w" data-a=out style="margin-top:16px">Sign out of this device</button></div>
+          <div class=card><h3>Your account</h3><dl class=kv style="margin-top:12px"><dt>Email</dt><dd>${esc(profile.email)}</dd><dt>Name</dt><dd>${esc(profile.name || '-')}</dd><dt>Role</dt><dd>${esc(profile.role)}</dd><dt>Workspace</dt><dd>${WSN[WS]}</dd><dt>Device ID</dt><dd>${DEV}</dd><dt>Device</dt><dd>${ua()}</dd></dl><div style="margin-top:12px">${FLAGS.map(f => `<span class="pill ${perm[f[0]] ? 'on' : ''}">${f[1]}</span>`).join('')}</div></div>
+          <div class=card><h3>System</h3><dl class=kv style="margin-top:12px"><dt>Connection</dt><dd id=cst>${connText()}</dd><dt>Database</dt><dd>${DB.replace('https://', '')}${W ? '/' + W.slice(0, -1) : ''}</dd><dt>Region</dt><dd>asia-southeast1</dd><dt>Auto backup</dt><dd id=abk>${perm.upload ? (lastSnap ? 'Last at ' + new Date(lastSnap).toLocaleTimeString() : 'Every 10 min while an admin has the app open') : 'Not available'}</dd><dt>Session</dt><dd>Signed in with Firebase. Renews automatically.</dd></dl><button class="btn d w" data-a=out style="margin-top:16px">Sign out of this device</button></div>
         </div>`;
       },
       users() {
@@ -1172,7 +1169,8 @@
         return `<div class=two><div class=card><h3>Upload list</h3><p class=cap style="margin:4px 0 12px">Adds new people and updates details. Existing Yes/No marks are kept.</p><button class="btn s w" data-a=pick>Choose .xlsx or .csv</button><input type=file id=file accept=".xlsx,.xls,.csv" hidden>
           <div class=stack style="margin-top:16px"><input type=url id=lnk placeholder="Or paste a Google Sheets / CSV link"><button class="btn s w" data-a=addlink>Add link</button></div><div id=lks></div></div>
           <div class=card><h3>Export and restore</h3><p class=cap style="margin:4px 0 12px">Keep a copy off the server.</p><div class=stack><button class="btn s w" data-a=export>Download full backup (.json)</button><button class="btn s w" data-a=csv>Download list (.csv)</button><button class="btn s w" data-a=pickb>Restore from backup file</button></div><input type=file id=bfile accept=".json" hidden></div></div>
-          <h2>Vote day</h2><div class=card><button class="btn d w" data-a=clear>Clear all entries</button><p class=cap>A snapshot is taken first.</p></div>`;
+          <h2>Vote day</h2><div class=card><button class="btn d w" data-a=clear>Clear all entries</button><p class=cap>A snapshot is taken first.</p></div>
+          <h2>Start fresh</h2><div class=card><button class="btn d w" data-a=wipe>Clear all data</button><p class=cap>Deletes the list, Yes/No marks, entries, backups and activity log for ${WSN[WS]} only. Users and devices are kept. This cannot be undone.</p></div>`;
       }
     };
     function paintUsers() {
@@ -1195,13 +1193,12 @@
       const si = perm.seeIntent, ei = perm.editIntent;
       if (!S.voters.length) { el.innerHTML = `<p class=cap>${ready.voters ? 'No list yet. An admin can upload the spreadsheet in Settings.' : 'Loading…'}</p>${$('#rc').textContent = ''}`; return; }
       const m = q.trim().toLowerCase(), f = si ? flt : 'all';
-      const base = perm.allEntries ? S.voters : S.voters.filter(v => !v.voted);
-      const a = base.filter(v => (f == 'all' || (f == 'un' ? !v.intent : v.intent == f)) && (!fb || v.island == fb) && (!fsx || v.sex == fsx) && (!fv || (fv == 'v' ? v.voted : !v.voted)) && (!m || `${v.no} ${v.name} ${v.address} ${v.nid} ${v.mobile || ''}`.toLowerCase().includes(m)));
-      $('#rc').textContent = `${a.length} of ${base.length} people` + (perm.allEntries ? ` · ${S.voters.length - base.length + base.filter(v => v.voted).length} voted` : '');
+      const a = S.voters.filter(v => (f == 'all' || (f == 'un' ? !v.intent : v.intent == f)) && (!fb || v.island == fb) && (!fsx || v.sex == fsx) && (!fv || (fv == 'v' ? v.voted : !v.voted)) && (!m || `${v.no} ${v.name} ${v.address} ${v.nid} ${v.mobile || ''}`.toLowerCase().includes(m)));
+      $('#rc').textContent = `${a.length} of ${S.voters.length} people`;
       el.innerHTML = a.slice(0, LIMIT).map(v => {
         const called = isCalled(v.no);
         const act = ei ? `<div class=seg><button class="y ${v.intent == 'yes' ? 'on' : ''}" data-a=set data-no=${v.no} data-v=yes>Yes</button><button class="no ${v.intent == 'no' ? 'on' : ''}" data-a=set data-no=${v.no} data-v=no>No</button></div>` : `<div class=act>${si && v.intent ? `<i class="tag t-${v.intent}">${v.intent == 'yes' ? 'Yes' : 'No'}</i>` : ''}${callBtn(v)}</div>`;
-        return `<div class="row ${si ? v.intent || '' : ''} ${called ? 'called' : ''} ${perm.allEntries && v.voted ? 'voted' : ''}"><div class=n>#${v.no}</div><div class=info><div class=nm><b>${esc(v.name)}</b><span>${esc(v.address)}</span>${perm.allEntries ? (v.voted ? `<i class="tag t-voted">Voted${v.vts ? ' · ' + new Date(v.vts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</i>` : '<i class="tag">Not voted</i>') : ''}</div><span class=bx>${esc(v.island)}</span><span class=mb>${v.mobile ? `<a href="tel:${esc(tel(v.mobile))}">${esc(v.mobile)}</a>` : ''}</span></div>${act}</div>`;
+        return `<div class="row ${si ? v.intent || '' : ''} ${called ? 'called' : ''}"><div class=n>#${v.no}</div><div class=info><div class=nm><b>${esc(v.name)}</b><span>${esc(v.address)}</span></div><span class=bx>${esc(v.island)}</span><span class=mb>${v.mobile ? `<a href="tel:${esc(tel(v.mobile))}">${esc(v.mobile)}</a>` : ''}</span></div>${act}</div>`;
       }).join('') + (a.length > LIMIT ? `<p class=cap>Showing ${LIMIT} of ${a.length}. Use search or filters to narrow down.</p>` : '') || '<p class=cap>No matches</p>';
     }
     const L5 = () => { try { return JSON.parse(localStorage.getItem('ec_l5_' + auth.uid)) || { list: [], count: 0 }; } catch (e) { return { list: [], count: 0 }; } };
@@ -1239,7 +1236,7 @@
         if (perm.allEntries && EM[k]) { const p = S.map.get(n); return flash(`#${n} ${p ? p.name : ''} is already entered`, 'warn'); }
         const [v, it] = await Promise.all([api('voters/' + k), api('intents/' + k).catch(() => null)]);
         if (!v) return flash(`#${n} is not on the list`, 'bad');
-        try { await api('', 'PATCH', { ['entries/' + k]: { ts: { '.sv': 'timestamp' }, by: auth.uid }, ['voted/' + k]: true }); } catch (e) {
+        try { await api('entries/' + k, 'PUT', { ts: { '.sv': 'timestamp' }, by: auth.uid }); } catch (e) {
           if (e.status == 401 || e.status == 403) return flash(`#${n} ${v.name} is already entered`, 'warn');
           throw e;
         }
@@ -1261,7 +1258,7 @@
       const al = pg();
       $('#tabs').hidden = al.length < 2;
       $('#tabs').innerHTML = al.map(k => `<a href="#${k}" class="${k == page ? 'on' : ''}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${LABELS[k]}</a>`).join('');
-      $('#top').innerHTML = `<span>${esc(auth.email)} · <span id=st>${connText()}</span></span><button data-a=out>Sign out</button>`;
+      $('#top').innerHTML = `<span>${esc(auth.email)} · ${WSN[WS]} · <span id=st>${connText()}</span></span><button data-a=out>Sign out</button>`;
       if (page == 'list') { fillSel('#fb', S.boxes, fb); fillSel('#fs', S.sexes, fsx); paintRows(); }
       if (page == 'entries') paintLog();
       if (page == 'dash') paintDevices();
@@ -1317,20 +1314,11 @@
         const b = await api('backups/' + k);
         await api('intents', 'PUT', b.intents || null);
         await api('entries', 'PUT', b.entries || null);
-        await api('voted', 'PUT', votedOf(b.entries));
         if (b.voters) await api('voters', 'PUT', b.voters);
         audit('Restored snapshot ' + k);
         toast('Restored');
         loadSnaps();
       } catch (e) { toast('Restore failed: ' + e.message); }
-    }
-    const votedOf = en => en && Object.keys(en).length ? Object.fromEntries(Object.keys(en).map(k => [k, true])) : null;
-    async function healVoted() {
-      if (!perm.upload || !perm.allEntries || !ready.entries || !ready.voted) return;
-      const p = {};
-      for (const k in EM) if (!VT[k]) p[k] = true;
-      for (const k in VT) if (!EM[k]) p[k] = null;
-      if (Object.keys(p).length) { try { await api('voted', 'PATCH', p); } catch (e) {} }
     }
     const dl = (n, blob) => { const l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = n; l.click(); };
     function exportCsv() {
@@ -1376,6 +1364,7 @@
       const m = u.match(/docs\.google\.com\/spreadsheets\/d\/([^/?#]+)/);
       return m ? `https://docs.google.com/spreadsheets/d/${m[1]}/export?format=csv${gq}` : u;
     }
+    const cleanMob = m => { m = String(m ?? '').replace(/[\s\-().]/g, ''); return /^0*$/.test(m) ? '' : m; };
     const norm = v => /^\s*y/i.test(v) ? 'yes' : /^\s*n/i.test(v) ? 'no' : '';
     const chunk = async (path, obj) => {
       const ks = Object.keys(obj);
@@ -1398,9 +1387,9 @@
       for (const r of rows.slice(hi + 1)) {
         const no = Number(r[ix.no]), name = String(r[ix.name] || '').replace(/\s+/g, ' ').trim();
         if (!no || !name) continue;
-        const o = { name, nid: g(r, 'nid'), island: g(r, 'isl'), address: g(r, 'adr'), sex: g(r, 'sex'), mobile: g(r, 'mob') }, it = norm(g(r, 'it')), k = 'n' + no, p = VM[k];
+        const o = { name, nid: g(r, 'nid'), island: g(r, 'isl'), address: g(r, 'adr'), sex: g(r, 'sex'), mobile: cleanMob(g(r, 'mob')) }, it = norm(g(r, 'it')), k = 'n' + no, p = VM[k];
         if (p) {
-          vp[k] = { name: o.name, nid: o.nid || p.nid || '', island: o.island || p.island || '', address: o.address || p.address || '', sex: o.sex || p.sex || '', mobile: o.mobile || p.mobile || '' };
+          vp[k] = { name: o.name, nid: o.nid || p.nid || '', island: o.island || p.island || '', address: o.address || p.address || '', sex: o.sex || p.sex || '', mobile: o.mobile || cleanMob(p.mobile) };
           upd++;
           if (!IM[k] && (p.intent || it)) ip[k] = p.intent || it;
         } else {
@@ -1440,6 +1429,19 @@
         toast(await merge(rows));
       } catch (e) { toast('Import failed: ' + e.message); }
     }
+    async function wipeAll() {
+      const word = WSN[WS].toUpperCase();
+      if (prompt(`This permanently deletes the list, Yes/No marks, entries, backups and activity log for the ${WSN[WS]} workspace. Users and devices are kept.\n\nType ${word} to confirm.`) !== word) return toast('Cancelled');
+      toast('Clearing…');
+      try {
+        for (const p of ['entries', 'intents', 'voters', 'backups', 'log']) await api(p, 'DELETE');
+        clearCalled(); last = null; lastSnap = 0; lastSig = '';
+        try { localStorage.removeItem('ec_l5_' + auth.uid); } catch (e) {}
+        toast('All data cleared');
+        if (page == 'settings' && stab == 'backups') { loadSnaps(); loadLog(); }
+        repaint();
+      } catch (x) { toast('Not fully cleared: ' + x.message); }
+    }
     async function restoreFile(f) {
       try {
         const d = JSON.parse(await f.text());
@@ -1455,7 +1457,6 @@
         await api('voters', 'PUT', v);
         await api('intents', 'PUT', i);
         await api('entries', 'PUT', en);
-        await api('voted', 'PUT', votedOf(en));
         audit('Restored from backup file');
         toast('Backup restored');
       } catch (x) { toast('Not a valid backup file'); }
@@ -1500,7 +1501,7 @@
           const k = 'n' + no, old = EM[k];
           delete EM[k];
           rebuild(true);
-          api('', 'PATCH', { ['entries/' + k]: null, ['voted/' + k]: null }).then(() => audit('Removed entry #' + no)).catch(() => { EM[k] = old; rebuild(true); toast('Not removed. Check your connection'); });
+          api('entries/' + k, 'DELETE').then(() => audit('Removed entry #' + no)).catch(() => { EM[k] = old; rebuild(true); toast('Not removed. Check your connection'); });
         }
       } else if (a === 'stab') { stab = b.dataset.v; render(); }
       else if (a === 'uadd') addUser();
@@ -1529,13 +1530,14 @@
         if (confirm('Clear ALL entries for everyone? This cannot be undone.')) {
           try {
             await snapshot(true, 'before clear');
-            await api('', 'PATCH', { entries: null, voted: null });
+            await api('entries', 'DELETE');
             last = null;
             audit('Cleared all entries');
             toast('Entries cleared');
           } catch (x) { toast('Not cleared: ' + x.message); }
         }
-      } else if (a === 'out') signOut();
+      } else if (a === 'wipe') wipeAll();
+      else if (a === 'out') signOut();
     });
     document.addEventListener('input', e => {
       if (e.target.id == 'q') { q = e.target.value; paintRows(); }
@@ -1577,16 +1579,27 @@
       try { localStorage.removeItem('ec_auth'); } catch (e) {}
       location.reload();
     }
-    window.addEventListener('pagehide', () => { if (auth && profile) try { fetch(`${DB}/presence/${DEV}.json?auth=${auth.id}`, { method: 'DELETE', keepalive: true }); } catch (e) {} });
+    window.addEventListener('pagehide', () => { if (auth && profile) try { fetch(`${DB}/${W}presence/${DEV}.json?auth=${auth.id}`, { method: 'DELETE', keepalive: true }); } catch (e) {} });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) beat(); });
     async function afterAuth() {
-      let me = await api('users/' + auth.uid);
-      if (!me && auth.email == BOOT) {
-        try { me = { email: auth.email, name: 'Admin', role: 'admin', perm: mk(PRESETS.admin), off: false, created: { '.sv': 'timestamp' } }; await api('users/' + auth.uid, 'PUT', me); } catch (e) { me = null; }
+      let me = null;
+      // Find which workspace this account belongs to (each user lives in exactly one)
+      for (const k of Object.keys(WPATH)) {
+        W = WPATH[k]; WS = k;
+        try { me = await api('users/' + auth.uid); } catch (e) { me = null; }
+        if (me) break;
       }
-      if (!me || me.off) { try { localStorage.removeItem('ec_auth'); } catch (e) {} auth = null; throw Error(me ? 'This account is disabled' : 'No access yet. Ask an admin to add your account'); }
+      if (!me) {
+        const home = BOOTS[auth.email];
+        if (home) {
+          WS = home; W = WPATH[home];
+          try { me = { email: auth.email, name: 'Admin', role: 'admin', perm: mk(PRESETS.admin), off: false, created: { '.sv': 'timestamp' } }; await api('users/' + auth.uid, 'PUT', me); } catch (e) { me = null; }
+        }
+      }
+      if (!me || me.off) { try { localStorage.removeItem('ec_auth'); } catch (e) {} auth = null; W = ''; WS = 'main'; throw Error(me ? 'This account is disabled' : 'No access yet. Ask an admin to add your account'); }
       profile = me; perm = me.perm || {};
       if (!pg().length) { auth = null; throw Error('This account has no pages assigned'); }
+      loadLocal();
     }
     function enter() {
       $('#login').hidden = true;
@@ -1597,7 +1610,7 @@
       setInterval(beat, 25000);
       setInterval(paintDevices, 15000);
       setInterval(async () => { try { await refresh(); Object.keys(MAPS).filter(n => want[n]()).forEach(open); } catch (e) {} }, 45 * 60000);
-      if (perm.upload) { setTimeout(autoSnap, 90000); setInterval(autoSnap, 600000); setTimeout(healVoted, 8000); setInterval(healVoted, 30000); }
+      if (perm.upload) { setTimeout(autoSnap, 90000); setInterval(autoSnap, 600000); }
     }
     $('#lf').addEventListener('submit', async e => {
       e.preventDefault();
