@@ -682,6 +682,9 @@
     .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; justify-items: center; }
     .pad button { width: 72px; height: 72px; border-radius: 50%; border: 0; background: var(--fill); font-size: 28px; font-weight: 500; cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
     .pad button:active { background: rgba(120,120,128,.3); }
+    #pininp { text-align: center; font-size: 34px; letter-spacing: .35em; padding-left: .35em; min-height: 64px; margin-top: 20px; }
+    #pininp::placeholder { font-size: 20px; letter-spacing: .1em; }
+    #pininp.bad { animation: shake .35s; border-color: var(--r); }
     .pinv { font: 600 20px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; }
     #toast {
       display: none;
@@ -847,14 +850,8 @@
       <div class="logo">0</div>
       <h1>Enter PIN</h1>
       <p class="sub" id="pinsub">Type your box PIN</p>
-      <div class="pdots" id="pdots"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <input id="pininp" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="PIN" aria-label="PIN">
       <p class="cap" id="perr" style="min-height:20px;color:var(--r)"></p>
-      <div class="pad">
-        <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
-        <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
-        <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
-        <span></span><button type="button" data-k="0">0</button><button type="button" data-k="del" aria-label="Delete">⌫</button>
-      </div>
       <button class="btn s w" data-a="out" style="margin-top:16px">Sign out</button>
     </div>
   </div>
@@ -1729,7 +1726,7 @@
       loadLocal();
     }
     // ---- Box PIN for mods (Main workspace only) ----
-    let pinBuf = '', pinBusy = false, pinFails = 0, pinWait = 0;
+    let pinBusy = false, pinFails = 0, pinWait = 0;
     async function loadBox() {
       const d = (await api('voters', 'GET', undefined, { q: { orderBy: '"island"', equalTo: JSON.stringify(UB) } })) || {};
       for (const k in VM) delete VM[k];
@@ -1738,54 +1735,49 @@
       rebuild(true);
       setConn('live');
     }
-    function paintDots(bad) {
-      const el = $('#pdots');
-      el.querySelectorAll('i').forEach((d, i) => d.classList.toggle('on', i < pinBuf.length));
-      el.classList.toggle('bad', !!bad);
-    }
     function showPin() {
-      pinBuf = '';
+      pinBusy = false;
+      const i = $('#pininp');
+      i.value = '';
       $('#pinsub').textContent = 'Signed in as ' + auth.email;
       $('#perr').textContent = '';
       $('#pinwrap').hidden = false;
-      paintDots();
+      setTimeout(() => i.focus(), 60);
     }
-    async function pinKey(k) {
-      if (pinBusy) return;
-      if (Date.now() < pinWait) { $('#perr').textContent = 'Too many tries. Wait ' + Math.ceil((pinWait - Date.now()) / 1000) + 's'; return; }
-      if (k == 'del') pinBuf = pinBuf.slice(0, -1); else if (pinBuf.length < 6) pinBuf += k;
-      $('#perr').textContent = '';
-      paintDots();
-      if (pinBuf.length == 6) await submitPin();
-    }
-    async function submitPin() {
+    async function submitPin(pin) {
       pinBusy = true;
-      const pin = pinBuf;
+      const i = $('#pininp');
       try {
         const box = await api('pins/' + pin);
         if (!box) throw Object.assign(Error('wrong'), { wrong: true });
         await api('unlock/' + auth.uid, 'PUT', { pin });
         UB = box;
         await loadBox();
+        i.value = ''; i.blur();
         $('#pinwrap').hidden = true;
-        pinBuf = ''; pinFails = 0;
+        pinFails = 0;
         start();
       } catch (e) {
-        pinBuf = '';
-        paintDots(true);
-        setTimeout(() => paintDots(), 400);
+        i.value = '';
+        i.classList.add('bad');
+        setTimeout(() => i.classList.remove('bad'), 400);
         if (e.wrong || e.status == 401 || e.status == 403) {
           $('#perr').textContent = 'Wrong PIN';
           if (++pinFails >= 5) { pinFails = 0; pinWait = Date.now() + 30000; $('#perr').textContent = 'Too many tries. Wait 30s'; }
         } else $('#perr').textContent = 'Could not check the PIN. Check your connection';
+        i.focus();
       }
       pinBusy = false;
     }
-    document.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b && !$('#pinwrap').hidden) pinKey(b.dataset.k); });
-    document.addEventListener('keydown', e => {
-      if ($('#pinwrap').hidden) return;
-      if (/^\d$/.test(e.key)) pinKey(e.key); else if (e.key == 'Backspace') pinKey('del');
+    $('#pininp').addEventListener('input', e => {
+      const i = e.target;
+      i.value = i.value.replace(/\D/g, '').slice(0, 6);
+      if (pinBusy) return;
+      if (Date.now() < pinWait) { i.value = ''; $('#perr').textContent = 'Too many tries. Wait ' + Math.ceil((pinWait - Date.now()) / 1000) + 's'; return; }
+      $('#perr').textContent = '';
+      if (i.value.length == 6) submitPin(i.value);
     });
+    $('#pinwrap').addEventListener('click', e => { if (!e.target.closest('button')) $('#pininp').focus(); });
     function enter() {
       $('#login').hidden = true;
       if (boxLock) return showPin();
