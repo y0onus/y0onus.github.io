@@ -652,6 +652,37 @@
     #login .btn {
       margin-top: 12px;
     }
+    #pinwrap {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 10;
+      overflow: auto;
+    }
+    .pincard {
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+      background: var(--card);
+      padding: 28px 24px;
+      border-radius: 24px;
+      border: 1px solid var(--bd);
+      box-shadow: var(--sh);
+    }
+    .pincard h1 { margin: 8px 0 4px; }
+    .pdots { display: flex; justify-content: center; gap: 14px; margin: 22px 0 6px; }
+    .pdots i { width: 14px; height: 14px; border-radius: 50%; background: var(--fill); border: 1px solid var(--bd); }
+    .pdots i.on { background: var(--t); border-color: var(--t); }
+    .pdots.bad { animation: shake .35s; }
+    @keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+    .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; justify-items: center; }
+    .pad button { width: 72px; height: 72px; border-radius: 50%; border: 0; background: var(--fill); font-size: 28px; font-weight: 500; cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+    .pad button:active { background: rgba(120,120,128,.3); }
+    .pinv { font: 600 20px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; }
     #toast {
       display: none;
       position: fixed;
@@ -811,6 +842,22 @@
       <button class="btn w" id="lb">Sign in</button>
     </form>
   </div>
+  <div id="pinwrap" hidden>
+    <div class="pincard">
+      <div class="logo">0</div>
+      <h1>Enter PIN</h1>
+      <p class="sub" id="pinsub">Type your box PIN</p>
+      <div class="pdots" id="pdots"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <p class="cap" id="perr" style="min-height:20px;color:var(--r)"></p>
+      <div class="pad">
+        <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+        <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+        <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+        <span></span><button type="button" data-k="0">0</button><button type="button" data-k="del" aria-label="Delete">⌫</button>
+      </div>
+      <button class="btn s w" data-a="out" style="margin-top:16px">Sign out</button>
+    </div>
+  </div>
   <div id="app" hidden>
     <nav id="tabs"></nav>
     <div class="shell">
@@ -867,6 +914,7 @@
       tt = setTimeout(() => t.classList.remove('on'), 2800);
     }
     let auth = null, profile = null, perm = {};
+    let boxLock = false, UB = '', ebox = '';
     const post = (u, b) => fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(async r => {
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw Error(((j.error && j.error.message) || 'ERROR').split(' ')[0]);
@@ -1002,6 +1050,8 @@
         S.entries = Object.keys(EM).map(k => ({ no: +k.slice(1), ts: (EM[k] && +EM[k].ts) || 0 })).sort((a, b) => b.ts - a.ts);
         S.boxes = [...new Set(V.map(v => v.island).filter(Boolean))].sort();
         S.sexes = [...new Set(V.map(v => v.sex).filter(Boolean))].sort();
+        S.hasRef = V.some(v => v.ref != null);
+        S.refIdx = new Map(V.filter(v => v.ref != null).map(v => [(v.island || '') + '|' + v.ref, v.no]));
         repaint();
       };
       now ? run() : rb = setTimeout(run, 60);
@@ -1130,13 +1180,13 @@
       },
       entries() {
         const all = perm.allEntries;
-        return `<h1>Entries</h1><p class=sub>${all ? 'Every entry from every device' : 'Your last 5 entries on this device'}</p>
-          <div class=card><input id=num type=number inputmode=numeric pattern="[0-9]*" placeholder="Number"><button class="btn w" data-a=add style="margin-top:12px">Add entry</button><div id=res></div></div>
+        return `<h1>Entries</h1><p class=sub>${boxLock ? 'Box ' + esc(UB) + ' · ' : ''}${all ? 'Every entry from every device' : 'Your last 5 entries on this device'}</p>
+          <div class=card>${all ? '<select id=ebox data-a=ebox hidden style="margin-bottom:12px"><option value="">Choose box</option></select>' : ''}<input id=num type=number inputmode=numeric pattern="[0-9]*" placeholder="Number"><button class="btn w" data-a=add style="margin-top:12px">Add entry</button><div id=res></div></div>
           ${all ? '<input type=text id=eq placeholder="Search entries" style="margin-top:12px" value="' + esc(eq) + '">' : ''}
           <h2 id=cnt></h2><div id=elog></div>`;
       },
       settings() {
-        const tabs = [['general', 'General', 1], ['users', 'Users', perm.users], ['devices', 'Devices', perm.users], ['backups', 'Backups', perm.upload], ['data', 'Data', perm.upload]].filter(t => t[2]);
+        const tabs = [['general', 'General', 1], ['users', 'Users', perm.users], ['devices', 'Devices', perm.users], ['pins', 'Box PINs', perm.users && WS == 'main'], ['backups', 'Backups', perm.upload], ['data', 'Data', perm.upload]].filter(t => t[2]);
         if (!tabs.some(t => t[0] == stab)) stab = 'general';
         return `<h1>Settings</h1><p class=sub>Control panel · ${esc(profile.email)}</p>
           <div class=stabs>${tabs.map(t => `<button data-a=stab data-v=${t[0]} class="${stab == t[0] ? 'on' : ''}">${t[1]}</button>`).join('')}</div>
@@ -1161,6 +1211,10 @@
       },
       devices() {
         return `<div class=g4>${tile('Online now', online().length, 'devg')}</div><div class="card tw" style="margin-top:8px"><table class=tbl><tr><th>Status</th><th>User</th><th>Role</th><th>Device</th><th>Page</th><th>Last seen</th></tr><tbody id=devt></tbody></table></div><button class="btn s w" data-a=prune style="margin-top:8px">Remove stale devices</button><p class=cap>A device counts as online if it was active in the last 75 seconds.</p>`;
+      },
+      pins() {
+        return `<div class=card><h3>Box PINs</h3><p class=cap style="margin:4px 0 12px">Mods type a 6-digit PIN after signing in. The PIN opens one box: they only see and enter people from that box. A new PIN stops the old one working straight away.</p><div class=stack><button class="btn s w" data-a=pinall>Create PINs for boxes without one</button><button class="btn s w" data-a=pinimp>Import PIN file (.json)</button></div><input type=file id=pfile accept=".json" hidden></div>
+          <h2>Boxes</h2><div id=pinlist></div>`;
       },
       backups() {
         return `<div class=two><div class=card><h3>Snapshots</h3><p class=cap style="margin:4px 0 12px">Saved automatically every 10 minutes while data changes. Snapshots can't be edited or deleted from the app, so an attacker can't wipe them.</p><button class="btn w" data-a=snap>Back up everything now</button><div id=snaps style="margin-top:8px"></div></div>
@@ -1188,29 +1242,32 @@
       if (stab == 'general') { const g = $('#gsum'); if (g) g.innerHTML = sumHtml(); }
       if (stab == 'users') paintUsers();
       if (stab == 'devices') paintDevices();
+      if (stab == 'pins') paintPins();
     }
     function paintRows() {
       const el = $('#rows'); if (!el) return;
       const si = perm.seeIntent, ei = perm.editIntent;
       if (!S.voters.length) { el.innerHTML = `<p class=cap>${ready.voters ? 'No list yet. An admin can upload the spreadsheet in Settings.' : 'Loading…'}</p>${$('#rc').textContent = ''}`; return; }
       const m = q.trim().toLowerCase(), f = si ? flt : 'all';
-      const a = S.voters.filter(v => (f == 'all' || (f == 'un' ? !v.intent : v.intent == f)) && (!fb || v.island == fb) && (!fsx || v.sex == fsx) && (!fv || (fv == 'v' ? v.voted : !v.voted)) && (!m || `${v.no} ${v.name} ${v.address} ${v.nid} ${v.mobile || ''}`.toLowerCase().includes(m)));
+      const a = S.voters.filter(v => (f == 'all' || (f == 'un' ? !v.intent : v.intent == f)) && (!fb || v.island == fb) && (!fsx || v.sex == fsx) && (!fv || (fv == 'v' ? v.voted : !v.voted)) && (!m || `${v.ref ?? ''} ${v.no} ${v.name} ${v.address} ${v.nid} ${v.mobile || ''}`.toLowerCase().includes(m)));
       $('#rc').textContent = `${a.length} of ${S.voters.length} people`;
       el.innerHTML = a.slice(0, LIMIT).map(v => {
         const called = isCalled(v.no);
         const act = ei ? `<div class=seg><button class="y ${v.intent == 'yes' ? 'on' : ''}" data-a=set data-no=${v.no} data-v=yes>Yes</button><button class="no ${v.intent == 'no' ? 'on' : ''}" data-a=set data-no=${v.no} data-v=no>No</button></div>` : `<div class=act>${si && v.intent ? `<i class="tag t-${v.intent}">${v.intent == 'yes' ? 'Yes' : 'No'}</i>` : ''}${callBtn(v)}</div>`;
-        return `<div class="row ${si ? v.intent || '' : ''} ${called ? 'called' : ''}"><div class=n>#${v.no}</div><div class=info><div class=nm><b>${esc(v.name)}</b><span>${esc(v.address)}</span></div><span class=bx>${esc(v.island)}</span><span class=mb>${v.mobile ? `<a href="tel:${esc(tel(v.mobile))}">${esc(v.mobile)}</a>` : ''}</span></div>${act}</div>`;
+        return `<div class="row ${si ? v.intent || '' : ''} ${called ? 'called' : ''}"><div class=n>#${v.ref ?? v.no}</div><div class=info><div class=nm><b>${esc(v.name)}</b><span>${esc(v.address)}</span></div><span class=bx>${esc(v.island)}</span><span class=mb>${v.mobile ? `<a href="tel:${esc(tel(v.mobile))}">${esc(v.mobile)}</a>` : ''}</span></div>${act}</div>`;
       }).join('') + (a.length > LIMIT ? `<p class=cap>Showing ${LIMIT} of ${a.length}. Use search or filters to narrow down.</p>` : '') || '<p class=cap>No matches</p>';
     }
     const L5 = () => { try { return JSON.parse(localStorage.getItem('ec_l5_' + auth.uid)) || { list: [], count: 0 }; } catch (e) { return { list: [], count: 0 }; } };
     const saveL5 = o => { try { localStorage.setItem('ec_l5_' + auth.uid, JSON.stringify(o)); } catch (e) {} };
     function paintLog() {
       const el = $('#elog'); if (!el) return;
+      const sb = $('#ebox');
+      if (sb) { sb.hidden = !S.hasRef; if (sb.options.length - 1 != S.boxes.length) fillSel('#ebox', S.boxes, ebox); }
       const all = perm.allEntries, si = perm.seeIntent || !all;
       let items, n;
       if (all) {
         const m = eq.trim().toLowerCase();
-        items = S.entries.map(e => { const p = S.map.get(e.no) || {}; return { no: e.no, name: p.name, address: p.address, status: p.intent || 'un', ts: e.ts }; }).filter(x => !m || `${x.no} ${x.name || ''}`.toLowerCase().includes(m));
+        items = S.entries.map(e => { const p = S.map.get(e.no) || {}; return { no: e.no, ref: p.ref ?? e.no, name: p.name, address: p.address, status: p.intent || 'un', ts: e.ts }; }).filter(x => !m || `${x.ref} ${x.name || ''}`.toLowerCase().includes(m));
         n = `${S.entries.length} entered`;
         $('#cnt').textContent = n;
         items = items.slice(0, 200);
@@ -1221,7 +1278,7 @@
       }
       el.innerHTML = items.map(e => {
         const k = e.status;
-        return `<div class="row ${si ? k : ''}"><div class=n>#${e.no}</div><div class=info><b>${esc(e.name)}</b><span>${esc(e.address)} · ${new Date(e.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>${si ? `<i class=tag>${k == 'yes' ? 'Verified · said yes' : k == 'no' ? 'Said no' : 'Not asked'}</i>` : ''}</div>${all ? `<button class=x data-a=del data-no=${e.no} aria-label=Remove>×</button>` : ''}</div>`;
+        return `<div class="row ${si ? k : ''}"><div class=n>#${e.ref ?? e.no}</div><div class=info><b>${esc(e.name)}</b><span>${esc(e.address)} · ${new Date(e.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>${si ? `<i class=tag>${k == 'yes' ? 'Verified · said yes' : k == 'no' ? 'Said no' : 'Not asked'}</i>` : ''}</div>${all ? `<button class=x data-a=del data-no=${e.no} aria-label=Remove>×</button>` : ''}</div>`;
       }).join('') || '<p class=cap>Nothing entered yet</p>';
       if (last) { const r = $('#res'); if (r) { r.className = 'res ' + last.c; r.textContent = last.m; } }
     }
@@ -1231,14 +1288,26 @@
       const i = $('#num'), n = parseInt(i.value, 10);
       i.value = ''; i.focus();
       if (!n || busy) return;
-      const k = 'n' + n;
       busy = true;
       try {
-        if (perm.allEntries && EM[k]) { const p = S.map.get(n); return flash(`#${n} ${p ? p.name : ''} is already entered`, 'warn'); }
-        const [v, it] = await Promise.all([api('voters/' + k), api('intents/' + k).catch(() => null)]);
+        let no = n;
+        if (boxLock) {
+          const find = () => S.hasRef ? S.refIdx.get(UB + '|' + n) : (VM['n' + n] && VM['n' + n].island == UB ? n : 0);
+          no = find();
+          if (!no) { try { await loadBox(); } catch (e) {} no = find(); }
+          if (!no) return flash(`#${n} is not in box ${UB}`, 'bad');
+        } else if (S.hasRef) {
+          const bx = ($('#ebox') || {}).value;
+          if (!bx) return flash('Choose the box first', 'bad');
+          no = S.refIdx.get(bx + '|' + n);
+          if (!no) return flash(`#${n} is not in box ${bx}`, 'bad');
+        }
+        const k = 'n' + no;
+        if (perm.allEntries && EM[k]) { const p = S.map.get(no); return flash(`#${n} ${p ? p.name : ''} is already entered`, 'warn'); }
+        const [v, it] = boxLock ? [VM[k], await api('intents/' + k).catch(() => null)] : await Promise.all([api('voters/' + k), api('intents/' + k).catch(() => null)]);
         if (!v) return flash(`#${n} is not on the list`, 'bad');
         try { await api('entries/' + k, 'PUT', { ts: { '.sv': 'timestamp' }, by: auth.uid }); } catch (e) {
-          if (e.status == 401 || e.status == 403) return flash(`#${n} ${v.name} is already entered`, 'warn');
+          if (e.status == 401 || e.status == 403) return flash(boxLock ? `#${n} ${v.name} is already entered, or your PIN is no longer valid` : `#${n} ${v.name} is already entered`, 'warn');
           throw e;
         }
         const st = it || 'un', l = L5();
@@ -1259,7 +1328,7 @@
       const al = pg();
       $('#tabs').hidden = al.length < 2;
       $('#tabs').innerHTML = al.map(k => `<a href="#${k}" class="${k == page ? 'on' : ''}"><svg viewBox="0 0 24 24">${ICONS[k]}</svg>${LABELS[k]}</a>`).join('');
-      $('#top').innerHTML = `<span>${esc(auth.email)} · ${WSN[WS]} · <span id=st>${connText()}</span></span><button data-a=out>Sign out</button>`;
+      $('#top').innerHTML = `<span>${esc(auth.email)} · ${WSN[WS]}${boxLock ? ' · Box ' + esc(UB) : ''} · <span id=st>${connText()}</span></span><button data-a=out>Sign out</button>`;
       if (page == 'list') { fillSel('#fb', S.boxes, fb); fillSel('#fs', S.sexes, fsx); paintRows(); }
       if (page == 'entries') paintLog();
       if (page == 'dash') paintDevices();
@@ -1267,6 +1336,7 @@
         if (stab == 'data') paintLinks();
         if (stab == 'users') paintUsers();
         if (stab == 'devices') paintDevices();
+        if (stab == 'pins') loadPins();
         if (stab == 'backups') { loadSnaps(); loadLog(); }
       }
     }
@@ -1324,7 +1394,7 @@
     const dl = (n, blob) => { const l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = n; l.click(); };
     function exportCsv() {
       const c = s => '"' + String(s ?? '').replace(/"/g, '""') + '"';
-      dl('vote-list.csv', new Blob([[['#', 'Name', 'NID', 'Registered Box', 'House Name', 'Sex', 'Mobile', 'Pledge', 'Voted'].map(c).join(',')].concat(S.voters.map(v => [v.no, v.name, v.nid, v.island, v.address, v.sex, v.mobile, v.intent, v.voted ? 'yes' : ''].map(c).join(','))).join('\n')], { type: 'text/csv' }));
+      dl('vote-list.csv', new Blob([[['#', 'Name', 'NID', 'Registered Box', 'House Name', 'Sex', 'Mobile', 'Pledge', 'Voted'].map(c).join(',')].concat(S.voters.map(v => [v.ref ?? v.no, v.name, v.nid, v.island, v.address, v.sex, v.mobile, v.intent, v.voted ? 'yes' : ''].map(c).join(','))).join('\n')], { type: 'text/csv' }));
     }
     async function addUser() {
       const email = $('#nu_e').value.trim().toLowerCase(), pw = $('#nu_p').value, name = $('#nu_n').value.trim(), role = $('#nu_r').value, sel = [...document.querySelectorAll('.nuf:checked')].map(x => x.value);
@@ -1380,18 +1450,37 @@
       const hi = rows.findIndex(r => r.some(c => /^name$/i.test(String(c).trim())));
       if (hi < 0) throw Error('No “Name” column found');
       const h = rows[hi].map(c => String(c).trim().toLowerCase()), f = re => h.findIndex(c => re.test(c)), ix = {
-        no: f(/^(#|no\.?|number)$/), name: f(/^name$/), nid: f(/^nid$|national/), isl: f(/island|box/), adr: f(/address|house/), sex: f(/^sex|gender/), mob: f(/mobile|phone/), it: f(/^pledge$|intent|call|vote/)
+        no: f(/^(#|no\.?|number)$/), name: f(/^name$/), nid: f(/^nid$|national/), isl: f(/box/) >= 0 ? f(/box/) : f(/island/), adr: f(/address|house/), sex: f(/^sex|gender/), mob: f(/mobile|phone/), it: f(/^pledge$|intent|call|vote/)
       };
       if (ix.no < 0) throw Error('No “#” column found');
       const g = (r, k) => ix[k] < 0 ? '' : String(r[ix[k]] ?? '').trim();
+      const body = rows.slice(hi + 1).filter(r => Number(r[ix.no]) && String(r[ix.name] || '').trim());
+      // Some lists restart the numbering in every box. Then a person is identified by box + number.
+      const comp = new Set(body.map(r => Number(r[ix.no]))).size < body.length;
+      let mx = 0; const idx = new Map(), seenCk = new Set();
+      if (comp) {
+        if (ix.isl < 0) throw Error('Numbers repeat in this file, so it needs a “Registered Box” column');
+        if (Object.values(VM).some(p => p.ref == null) && !confirm('This list restarts its numbering in every box, but the people already on the server use a different numbering. They will be kept and the new list added next to them. Best to use “Clear all data” first. Continue?')) throw Error('Cancelled');
+        for (const k in VM) { mx = Math.max(mx, +k.slice(1) || 0); const p = VM[k]; if (p.ref != null) idx.set((p.island || '') + '|' + p.ref, k); }
+      }
       const vp = {}, ip = {};
       let add = 0, upd = 0;
-      for (const r of rows.slice(hi + 1)) {
-        const no = Number(r[ix.no]), name = String(r[ix.name] || '').replace(/\s+/g, ' ').trim();
-        if (!no || !name) continue;
-        const o = { name, nid: g(r, 'nid'), island: g(r, 'isl'), address: g(r, 'adr'), sex: g(r, 'sex'), mobile: cleanMob(g(r, 'mob')) }, it = norm(g(r, 'it')), k = 'n' + no, p = VM[k];
+      for (const r of body) {
+        const ref = Number(r[ix.no]), name = String(r[ix.name] || '').replace(/\s+/g, ' ').trim();
+        const o = { name, nid: g(r, 'nid'), island: g(r, 'isl'), address: g(r, 'adr'), sex: g(r, 'sex'), mobile: cleanMob(g(r, 'mob')) }, it = norm(g(r, 'it'));
+        let k;
+        if (comp) {
+          const ck = o.island + '|' + ref;
+          if (seenCk.has(ck)) throw Error(`#${ref} is listed twice in box ${o.island}`);
+          seenCk.add(ck);
+          k = idx.get(ck);
+          if (!k) { k = 'n' + (++mx); idx.set(ck, k); }
+          o.ref = ref;
+        } else k = 'n' + ref;
+        const p = VM[k];
         if (p) {
           vp[k] = { name: o.name, nid: o.nid || p.nid || '', island: o.island || p.island || '', address: o.address || p.address || '', sex: o.sex || p.sex || '', mobile: o.mobile || cleanMob(p.mobile) };
+          if (comp) vp[k].ref = ref;
           upd++;
           if (!IM[k] && (p.intent || it)) ip[k] = p.intent || it;
         } else {
@@ -1429,6 +1518,40 @@
         }
         toast('Uploading…');
         toast(await merge(rows));
+      } catch (e) { toast('Import failed: ' + e.message); }
+    }
+    // ---- Box PINs ----
+    let PIN = {}, pinBoxes = [];
+    const pinOf = box => Object.keys(PIN).filter(p => PIN[p] == box);
+    const rnd6 = () => { const a = new Uint32Array(1); crypto.getRandomValues(a); return String(100000 + a[0] % 900000); };
+    const weakPin = p => /^(\d)\1+$/.test(p) || '0123456789'.includes(p) || '9876543210'.includes(p);
+    function freshPin() { let p; do p = rnd6(); while (PIN[p] || weakPin(p)); return p; }
+    async function setPin(box, pin) {
+      for (const o of pinOf(box)) { await api('pins/' + o, 'DELETE'); delete PIN[o]; }
+      pin = pin || freshPin();
+      await api('pins/' + pin, 'PUT', box);
+      PIN[pin] = box;
+      return pin;
+    }
+    async function loadPins() {
+      try { PIN = (await api('pins')) || {}; } catch (e) { PIN = {}; toast('Could not load PINs'); }
+      paintPins();
+    }
+    function paintPins() {
+      const el = $('#pinlist'); if (!el) return;
+      pinBoxes = [...new Set([...S.boxes, ...Object.values(PIN)])].sort();
+      el.innerHTML = pinBoxes.map((b, i) => { const p = pinOf(b); return `<div class="card ucard"><div class=uh><div><b>${esc(b)}</b><span>${p.length ? 'PIN set' : 'No PIN yet'}</span></div><b class=pinv>${esc(p.join(' · '))}</b></div><div class=ub><button class="btn s sm" data-a=pinnew data-i=${i}>${p.length ? 'New PIN' : 'Create PIN'}</button>${p.length ? `<button class="btn d sm" data-a=pinrm data-i=${i}>Remove</button>` : ''}</div></div>`; }).join('') || '<p class=cap>No boxes yet. Upload the list first</p>';
+    }
+    async function importPins(f) {
+      try {
+        const d = JSON.parse(await f.text()), ent = Object.entries(d);
+        if (!ent.length) throw Error('empty');
+        for (const [b, p] of ent) {
+          if (!/^\d{6}$/.test(String(p))) throw Error('PIN for ' + b + ' must be 6 digits');
+          if (PIN[p] && PIN[p] != b) throw Error('PIN for ' + b + ' is already used by ' + PIN[p]);
+        }
+        for (const [b, p] of ent) await setPin(b, String(p));
+        audit('Imported box PINs'); toast(ent.length + ' PIN(s) imported'); paintPins();
       } catch (e) { toast('Import failed: ' + e.message); }
     }
     async function wipeAll() {
@@ -1538,7 +1661,11 @@
             toast('Entries cleared');
           } catch (x) { toast('Not cleared: ' + x.message); }
         }
-      } else if (a === 'wipe') wipeAll();
+      } else if (a === 'pinnew') { try { await setPin(pinBoxes[i]); audit('New PIN for box ' + pinBoxes[i]); paintPins(); } catch (x) { toast('Failed: ' + x.message); } }
+      else if (a === 'pinrm') { if (confirm('Remove the PIN for box ' + pinBoxes[i] + '? Mods using it lose access.')) { try { for (const p of pinOf(pinBoxes[i])) { await api('pins/' + p, 'DELETE'); delete PIN[p]; } audit('Removed PIN for box ' + pinBoxes[i]); paintPins(); } catch (x) { toast('Failed: ' + x.message); } } }
+      else if (a === 'pinall') { try { let n = 0; for (const b of pinBoxes) if (!pinOf(b).length) { await setPin(b); n++; } if (n) audit('Created PINs for ' + n + ' box(es)'); toast(n + ' PIN(s) created'); paintPins(); } catch (x) { toast('Failed: ' + x.message); } }
+      else if (a === 'pinimp') $('#pfile').click();
+      else if (a === 'wipe') wipeAll();
       else if (a === 'out') signOut();
     });
     document.addEventListener('input', e => {
@@ -1548,6 +1675,7 @@
     document.addEventListener('keydown', e => { if (e.key == 'Enter' && e.target.id == 'num') { e.preventDefault(); addEntry(); } });
     document.addEventListener('change', async e => {
       const t = e.target, a = t.dataset.a;
+      if (a == 'ebox') { ebox = t.value; return; }
       if (a == 'f') { if (t.id == 'fb') fb = t.value; if (t.id == 'fs') fsx = t.value; if (t.id == 'fv') fv = t.value; paintRows(); return; }
       if (a == 'nrole') { const p = PRESETS[t.value]; document.querySelectorAll('.nuf').forEach(c => c.checked = p.includes(c.value)); return; }
       if (a == 'urole') {
@@ -1566,6 +1694,7 @@
       if (!f) return;
       if (t.id == 'file') loadFile(f);
       if (t.id == 'bfile') restoreFile(f);
+      if (t.id == 'pfile') importPins(f);
       t.value = '';
     });
     window.addEventListener('hashchange', route);
@@ -1578,6 +1707,7 @@
     }
     async function signOut() {
       try { if (auth) await api('presence/' + DEV, 'DELETE'); } catch (e) {}
+      try { if (auth && boxLock) await api('unlock/' + auth.uid, 'DELETE'); } catch (e) {}
       try { localStorage.removeItem('ec_auth'); } catch (e) {}
       location.reload();
     }
@@ -1594,10 +1724,74 @@
       if (!me || me.off) fail(me ? 'This account is disabled' : 'No access yet. Ask the ' + WSN[WS] + ' admin to add your account');
       profile = me; perm = me.perm || {};
       if (!pg().length) { auth = null; throw Error('This account has no pages assigned'); }
+      boxLock = WS == 'main' && !!perm.entries && !perm.allEntries;
+      if (boxLock) { try { await api('unlock/' + auth.uid, 'DELETE'); } catch (e) {} }
       loadLocal();
     }
+    // ---- Box PIN for mods (Main workspace only) ----
+    let pinBuf = '', pinBusy = false, pinFails = 0, pinWait = 0;
+    async function loadBox() {
+      const d = (await api('voters', 'GET', undefined, { q: { orderBy: '"island"', equalTo: JSON.stringify(UB) } })) || {};
+      for (const k in VM) delete VM[k];
+      Object.assign(VM, d);
+      ready.voters = true;
+      rebuild(true);
+      setConn('live');
+    }
+    function paintDots(bad) {
+      const el = $('#pdots');
+      el.querySelectorAll('i').forEach((d, i) => d.classList.toggle('on', i < pinBuf.length));
+      el.classList.toggle('bad', !!bad);
+    }
+    function showPin() {
+      pinBuf = '';
+      $('#pinsub').textContent = 'Signed in as ' + auth.email;
+      $('#perr').textContent = '';
+      $('#pinwrap').hidden = false;
+      paintDots();
+    }
+    async function pinKey(k) {
+      if (pinBusy) return;
+      if (Date.now() < pinWait) { $('#perr').textContent = 'Too many tries. Wait ' + Math.ceil((pinWait - Date.now()) / 1000) + 's'; return; }
+      if (k == 'del') pinBuf = pinBuf.slice(0, -1); else if (pinBuf.length < 6) pinBuf += k;
+      $('#perr').textContent = '';
+      paintDots();
+      if (pinBuf.length == 6) await submitPin();
+    }
+    async function submitPin() {
+      pinBusy = true;
+      const pin = pinBuf;
+      try {
+        const box = await api('pins/' + pin);
+        if (!box) throw Object.assign(Error('wrong'), { wrong: true });
+        await api('unlock/' + auth.uid, 'PUT', { pin });
+        UB = box;
+        await loadBox();
+        $('#pinwrap').hidden = true;
+        pinBuf = ''; pinFails = 0;
+        start();
+      } catch (e) {
+        pinBuf = '';
+        paintDots(true);
+        setTimeout(() => paintDots(), 400);
+        if (e.wrong || e.status == 401 || e.status == 403) {
+          $('#perr').textContent = 'Wrong PIN';
+          if (++pinFails >= 5) { pinFails = 0; pinWait = Date.now() + 30000; $('#perr').textContent = 'Too many tries. Wait 30s'; }
+        } else $('#perr').textContent = 'Could not check the PIN. Check your connection';
+      }
+      pinBusy = false;
+    }
+    document.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b && !$('#pinwrap').hidden) pinKey(b.dataset.k); });
+    document.addEventListener('keydown', e => {
+      if ($('#pinwrap').hidden) return;
+      if (/^\d$/.test(e.key)) pinKey(e.key); else if (e.key == 'Backspace') pinKey('del');
+    });
     function enter() {
       $('#login').hidden = true;
+      if (boxLock) return showPin();
+      start();
+    }
+    function start() {
       $('#app').hidden = false;
       $('#app').classList.toggle('solo', pg().length < 2);
       connect();
