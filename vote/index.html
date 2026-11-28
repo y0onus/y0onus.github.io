@@ -897,7 +897,7 @@
     }
     async function api(p, m = 'GET', b, x = {}) {
       const t = await tok(), qs = new URLSearchParams(Object.assign({ auth: t }, x.q || {}));
-      const r = await fetch(`${DB}/${x.raw ? '' : W}${p}.json?${qs}`, { method: m, body: b === undefined ? undefined : JSON.stringify(b), keepalive: !!x.ka });
+      const r = await fetch(`${DB}/${W}${p}.json?${qs}`, { method: m, body: b === undefined ? undefined : JSON.stringify(b), keepalive: !!x.ka });
       if (!r.ok) throw Object.assign(Error('HTTP ' + r.status), { status: r.status });
       return r.json();
     }
@@ -1583,48 +1583,11 @@
     }
     window.addEventListener('pagehide', () => { if (auth && profile) try { fetch(`${DB}/${W}presence/${DEV}.json?auth=${auth.id}`, { method: 'DELETE', keepalive: true }); } catch (e) {} });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) beat(); });
-    let migNote = '';
-    // One-time move of the old shared data (database root) into ws/main. Only the Main admin does this.
-    async function migrateLegacy(L, me) {
-      $('#err').textContent = 'Moving your data into the Main workspace. Keep this page open…';
-      const RAW = { raw: true };
-      if (!me) {
-        me = { email: auth.email, name: 'Admin', role: 'admin', perm: mk(PRESETS.admin), off: false, created: { '.sv': 'timestamp' } };
-        await api('users/' + auth.uid, 'PUT', me);
-      }
-      const old = {};
-      for (const n of ['voters', 'intents', 'entries', 'log', 'backups']) old[n] = (await api(n, 'GET', undefined, RAW)) || {};
-      try { dl('vote-tracker-before-move.json', new Blob([JSON.stringify({ at: Date.now(), users: L, voters: old.voters, intents: old.intents, entries: old.entries })], { type: 'application/json' })); } catch (e) {}
-      await chunk('voters', old.voters);
-      await chunk('intents', old.intents);
-      await chunk('entries', old.entries);
-      const skipped = []; let moved = 0;
-      for (const [uid, u] of Object.entries(L)) {
-        if (uid == auth.uid || !u) continue;
-        if (HOME(u.email) != 'main') { skipped.push(u.email); continue; }
-        await api('users/' + uid, 'PUT', u); moved++;
-      }
-      const put = async (n, o) => { const ks = Object.keys(o); for (let i = 0; i < ks.length; i += 25) await Promise.all(ks.slice(i, i + 25).map(k => api(n + '/' + k, 'PUT', o[k]))); };
-      await put('log', old.log);
-      await put('backups', old.backups);
-      for (const n of ['voters', 'intents', 'entries']) {
-        const c = Object.keys((await api(n, 'GET', undefined, { q: { shallow: 'true' } })) || {}).length, w = Object.keys(old[n]).length;
-        if (c != w) throw Error(`copy check failed for ${n} (${c} of ${w}). Nothing was deleted`);
-      }
-      for (const n of ['voters', 'intents', 'entries', 'log', 'backups', 'presence', 'users']) await api(n, 'DELETE', undefined, RAW);
-      migNote = `Your data was moved into the Main workspace: ${Object.keys(old.voters).length} people, ${Object.keys(old.entries).length} entries, ${moved} other users. A backup file was also downloaded.` + (skipped.length ? `\n\nThese accounts belong to the Thi workspace and were NOT moved. Add them from the Thi admin:\n${skipped.join('\n')}` : '');
-      return await api('users/' + auth.uid);
-    }
     async function afterAuth() {
       WS = HOME(auth.email); W = WPATH[WS];
       let me = null;
       try { me = await api('users/' + auth.uid); } catch (e) { me = null; }
       const fail = m => { try { localStorage.removeItem('ec_auth'); } catch (e) {} auth = null; throw Error(m); };
-      if (WS == 'main' && BOOTS[auth.email] == 'main') {
-        let L = null;
-        try { L = await api('users', 'GET', undefined, { raw: true }); } catch (e) {}
-        if (L && L[auth.uid]) { try { me = await migrateLegacy(L, me); } catch (e) { fail('Could not move the old data: ' + e.message); } }
-      }
       if (!me && BOOTS[auth.email] == WS) {
         try { me = { email: auth.email, name: 'Admin', role: 'admin', perm: mk(PRESETS.admin), off: false, created: { '.sv': 'timestamp' } }; await api('users/' + auth.uid, 'PUT', me); } catch (e) { me = null; }
       }
@@ -1639,7 +1602,6 @@
       $('#app').classList.toggle('solo', pg().length < 2);
       connect();
       route();
-      if (migNote) { const m = migNote; migNote = ''; setTimeout(() => alert(m), 600); }
       setInterval(beat, 25000);
       setInterval(paintDevices, 15000);
       setInterval(async () => { try { await refresh(); Object.keys(MAPS).filter(n => want[n]()).forEach(open); } catch (e) {} }, 45 * 60000);
